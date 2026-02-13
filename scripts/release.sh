@@ -61,7 +61,7 @@ success "Working directory clean"
 
 # 2. Run tests
 info "Running tests..."
-melos test --no-select || error "Tests failed"
+dart run test --no-select || error "Tests failed"
 success "Tests passed"
 
 # 3. Update pubspec.yaml
