@@ -1,6 +1,7 @@
 import 'package:cura/src/commands/base_command.dart';
 import 'package:cura/src/domain/models/package_health.dart';
 import 'package:cura/src/domain/services/score_calculator.dart';
+import 'package:cura/src/presentation/formatters/table_formatter.dart';
 
 class CheckCommand extends BaseCommand {
   @override
@@ -21,19 +22,21 @@ class CheckCommand extends BaseCommand {
     final path = argResults!['path'] as String;
 
     logger.info('📦 Analyse de $path...');
-
-    final packages = await repository.getPackagesFromPubspec(path);
     final results = <PackageHealth>[];
+    TableFormatter.displayListed(results, logger);
 
-    for (final pkg in packages) {
-      final score = ScoreCalculator.calculate(pkg);
-      results.add(PackageHealth(info: pkg, score: score));
-    }
+    //final packages = await repository.getPackagesFromPubspec(path);
+    // final results = <PackageHealth>[];
 
-    _displayResults(results);
+    // for (final pkg in packages) {
+    //   final score = ScoreCalculator.calculate(pkg);
+    //   results.add(PackageHealth(info: pkg, score: score));
+    // }
+
+    // _displayResults(results);
   }
 
-  void _displayResults(List<PackageHealth> results) {
-    // Utiliser TableFormatter
-  }
+  // void _displayResults(List<PackageHealth> results) {
+  //   // Utiliser TableFormatter
+  // }
 }

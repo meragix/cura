@@ -1,4 +1,6 @@
 import 'package:cura/src/commands/base_command.dart';
+import 'package:cura/src/core/error/error_handler.dart';
+import 'package:cura/src/core/error/exception.dart';
 import 'package:cura/src/domain/models/package_health.dart';
 import 'package:cura/src/domain/services/score_calculator.dart';
 import 'package:cura/src/presentation/formatters/table_formatter.dart';
@@ -17,6 +19,12 @@ class ViewCommand extends BaseCommand<int> {
   }) {
     argParser
       ..addFlag(
+        'verbose',
+        aliases: ['-v'],
+        negatable: false,
+        help: 'Output as JSON',
+      )
+      ..addFlag(
         'json',
         negatable: false,
         help: 'Output as JSON',
@@ -25,28 +33,32 @@ class ViewCommand extends BaseCommand<int> {
 
   @override
   Future<int> run() async {
-    final packageName = argResults!.rest.firstOrNull;
-    final outputJson = argResults!['json'] as bool;
+     final outputVerbose = argResults!['verbose'] as bool;
+     final outputJson = argResults!['json'] as bool;
 
-    if (packageName == null) {
-      logger.err('❌ Package name required');
-      logger.info('Usage: cura view <package_name>');
-      return 1;
-    }
+    final errorHandler = ErrorHandler(logger: logger, verbose: outputVerbose);
 
-    if (!outputJson) {
-      logger.info('\n🔍 Fetching data for ${cyan.wrap(packageName)}...\n');
-    }
+    return await errorHandler.handle(() async {
+      final packageName = argResults!.rest.firstOrNull;
+    
+      if (packageName == null) {
+        throw ValidationException(['Package name is required']);
+      }
 
-    final progress = logger.progress('Analyzing');
+      if (!outputJson) {
+        logger.info('\n🔍 Fetching data for ${cyan.wrap(packageName)}...\n');
+      }
 
-    final info = await repository.getPackageInfo(packageName);
-    final score = ScoreCalculator.calculate(info);
-    final health = PackageHealth(info: info, score: score);
+      final progress = logger.progress('Analyzing');
 
-    progress.complete();
+      final info = await repository.getPackageInfo(packageName);
+      final score = ScoreCalculator.calculate(info);
+      final health = PackageHealth(info: info, score: score);
 
-    TableFormatter.displayDetailed(health, logger);
-    return 0;
+      progress.complete();
+
+      TableFormatter.displayDetailed(health, logger);
+      return 0;
+    });
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:cura/src/core/cache_service.dart';
 import 'package:cura/src/core/constants.dart';
+import 'package:cura/src/core/error/exception.dart';
 import 'package:cura/src/domain/models/package_info.dart';
 import 'package:http/http.dart' as http;
 import 'package:retry/retry.dart';
@@ -38,23 +39,32 @@ class PubApiService {
         () async {
           final results = await Future.wait([
             _fetchJson('${CuraConstants.pubDevApiBase}/packages/$packageName', packageName: packageName),
-            _fetchJson('${CuraConstants.pubDevApiBase}packages/$packageName/score', packageName: packageName),
+            _fetchJson('${CuraConstants.pubDevApiBase}/packages/$packageName/score', packageName: packageName),
           ]);
 
           final infoJson = results[0] as Map<String, dynamic>;
           final scoreJson = results[1] as Map<String, dynamic>;
 
-          final packageInfo = PackageInfo.fromPubDevJson(
-            infoJson: infoJson,
-            scoreJson: scoreJson,
-          );
+          try {
+            final packageInfo = PackageInfo.fromPubDevJson(
+              infoJson: infoJson,
+              scoreJson: scoreJson,
+            );
 
-          // Sauvegarder dans le cache
-          _cache.set(packageName, packageInfo);
+            // Sauvegarder dans le cache
+            _cache.set(packageName, packageInfo);
 
-          return packageInfo;
+            return packageInfo;
+          } catch (e) {
+            throw ParseException(
+              'Invalid JSON response',
+              field: 'body',
+              originalError: e,
+            );
+          }
         },
         maxAttempts: 3,
+        retryIf: (e) => e is NetworkException || e is TimeoutException,
         delayFactor: const Duration(seconds: 2),
       );
     } finally {
@@ -98,8 +108,9 @@ class PubApiService {
   }) async {
     final response = await _client.get(Uri.parse(url)).timeout(
           const Duration(seconds: 10),
-          onTimeout: () => throw TimeoutException(
-            'Timeout lors de la récupération de $packageName',
+          onTimeout: () => throw NetworkException(
+            'Request timeout after 10 seconds',
+            url: 'https://pub.dev/api/packages/$packageName',
           ),
         );
 
@@ -107,9 +118,15 @@ class PubApiService {
       throw PackageNotFoundException(packageName);
     }
 
+    if (response.statusCode == 429) {
+      throw RateLimitException('pub.dev');
+    }
+
     if (response.statusCode != 200) {
-      throw PubApiException(
-        'Erreur API pub.dev (${response.statusCode}): ${response.body}',
+      throw NetworkException(
+        'HTTP ${response.statusCode}',
+        url: 'https://pub.dev/api/packages/$packageName',
+        statusCode: response.statusCode,
       );
     }
 
@@ -117,20 +134,4 @@ class PubApiService {
   }
 
   void dispose() => _client.close();
-}
-
-class PackageNotFoundException implements Exception {
-  final String packageName;
-  PackageNotFoundException(this.packageName);
-
-  @override
-  String toString() => 'Paquet "$packageName" introuvable sur pub.dev';
-}
-
-class PubApiException implements Exception {
-  final String message;
-  PubApiException(this.message);
-
-  @override
-  String toString() => message;
 }
