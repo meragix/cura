@@ -20,9 +20,9 @@ class ViewCommand extends BaseCommand<int> {
     argParser
       ..addFlag(
         'verbose',
-        aliases: ['-v'],
+        abbr: 'v',
         negatable: false,
-        help: 'Output as JSON',
+        help: 'More details',
       )
       ..addFlag(
         'json',
@@ -33,14 +33,14 @@ class ViewCommand extends BaseCommand<int> {
 
   @override
   Future<int> run() async {
-     final outputVerbose = argResults!['verbose'] as bool;
-     final outputJson = argResults!['json'] as bool;
+    final outputVerbose = argResults!['verbose'] as bool;
+    final outputJson = argResults!['json'] as bool;
 
     final errorHandler = ErrorHandler(logger: logger, verbose: outputVerbose);
 
     return await errorHandler.handle(() async {
       final packageName = argResults!.rest.firstOrNull;
-    
+
       if (packageName == null) {
         throw ValidationException(['Package name is required']);
       }
@@ -57,7 +57,7 @@ class ViewCommand extends BaseCommand<int> {
 
       progress.complete();
 
-      TableFormatter.displayDetailed(health, logger);
+      TableFormatter.displayDetailed(health, logger, outputVerbose);
       return 0;
     });
   }

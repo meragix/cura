@@ -8,7 +8,7 @@ class TableFormatter {
     logger.info('');
   }
 
-  static displayDetailed(PackageHealth health, Logger logger) {
+  static displayDetailed(PackageHealth health, Logger logger, bool verbose) {
     final daysAgo = DateTime.now().difference(health.info.published).inDays;
 
     logger.info('Package: ${health.info.name} (${health.info.version})');
