@@ -1,6 +1,5 @@
 import 'package:cura/src/commands/base_command.dart';
 import 'package:cura/src/domain/models/package_health.dart';
-import 'package:cura/src/domain/services/score_calculator.dart';
 import 'package:cura/src/presentation/formatters/table_formatter.dart';
 
 class CheckCommand extends BaseCommand {
