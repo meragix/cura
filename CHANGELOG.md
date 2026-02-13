@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Complete error management system
 - Functional `cura view <package>` command
 - Basic scoring (maintenance + trust + popularity)
 - Simple terminal display (no elegant table yet)
