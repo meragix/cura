@@ -167,7 +167,27 @@ class ScoreCalculator {
       flags.add('Sound null safety disabled');
     }
 
-    // Shadow Dependency detection
+    if (pkg.isNew) {
+      flags.add('New package, limited track record');
+    }
+
+    if (!pkg.isDart3Compatible) {
+      flags.add('Does not exploit Dart 3 features (Class modifiers/Records)');
+    }
+
+    if (pkg.platforms.contains('web') && !pkg.tags.contains('is:wasm-ready')) {
+      flags.add('Not WASM ready: Degraded performance on modern Flutter Web');
+    }
+
+    if (pkg.tags.contains('runtime:native-jit') && !pkg.tags.contains('runtime:native-aot')) {
+      flags.add('JIT-only: Incompatible with iOS/Android Release builds');
+    }
+
+    if (pkg.tags.any((t) => t.startsWith('topic:'))) {
+      // This can be used to validate if the package is properly "focused"
+      // or if it's an overly large "Swiss knife" package.
+    }
+
     if (flags.length >= 3 && !pkg.hasVerifiedPublisher) {
       flags.insert(0, 'SUSPICIOUS: Potential shadow dependency detected');
     }
@@ -230,6 +250,29 @@ class ScoreCalculator {
 
     if (recs.isEmpty) {
       recs.add('⚠️ CAUTION: Moderate score - Manual evaluation recommended');
+    }
+
+    final isRecent = flags.any((f) => f.contains('New package'));
+
+    if (isRecent) {
+      recs.add('🆕 NEW: Recently published. Monitor for API breaking changes');
+    }
+
+    // If it's recent AND the score is low
+    if (isRecent && score < 50) {
+      recs.add('⚠️ ADVISORY: Early stage package. Use only for non-critical features');
+    }
+
+    if (flags.any((f) => f.contains('Not WASM ready'))) {
+      recs.add('⚠️ Not WASM ready. This will fallback to canvaskit/html, increasing bundle size.');
+    }
+
+    if (!pkg.licenseOsiApproved) {
+      recs.add('⚖️ Non-OSI approved license detected. Legal review might be required for commercial use.');
+    }
+
+    if (flags.any((f) => f.contains('JIT-only'))) {
+      recs.add('🚫 Incompatible with AOT compilation. App will crash in Release mode.');
     }
 
     return recs;

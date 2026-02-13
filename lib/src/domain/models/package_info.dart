@@ -153,10 +153,12 @@ class PackageInfo {
     return 5;
   }
 
-  /// Helpers pour vérifier des tags spécifiques
+  /// Helpers to check specific tags
   bool get isNullSafe => tags.contains('is:null-safe');
   bool get isDart3Compatible => tags.contains('is:dart3-compatible');
   bool get isPlugin => tags.contains('is:plugin');
+  bool get isNew => tags.contains('is:recent');
+  bool get licenseOsiApproved => tags.contains('license:osi-approved') || tags.contains('license:fsf-libre');
 
   String? get license {
     final licenseTag = tags.firstWhere(
