@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Cura Check",
+      "type": "dart",
+      "request": "launch",
+      "program": "bin/cura.dart",
+      "args": ["check"]
+    },
+    {
+      "name": "Cura View Dio",
+      "type": "dart",
+      "request": "launch",
+      "program": "bin/cura.dart",
+      "args": ["view", "dio"]
+    }
+  ]
+}

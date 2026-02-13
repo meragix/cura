@@ -1,5 +1,5 @@
 name: cura
-description: "CLI pour auditer la santé des packages Dart."
+description: "Flutter/Dart package health audit CLI tool."
 version: 0.1.0
 homepage: https://github.com/meragix/cura
 repository: https://github.com/meragix/cura
@@ -8,15 +8,16 @@ environment:
   sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
-  args: ^2.4.0
-  http: ^1.1.0
-  mason_logger: ^0.2.0
-  yaml: ^3.1.0
+  args: ^2.4.2
+  cli_util: ^0.4.0
+  http: ^1.2.0
+  retry: ^3.1.2
+  mason_logger: ^0.3.3
+  yaml: ^3.1.2
 
 dev_dependencies:
+  test: ^1.26.3
   lints: ^6.0.0
-  test: ^1.24.0
-  mocktail: ^1.0.0
 
 executables:
   cura:
