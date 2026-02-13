@@ -66,7 +66,8 @@ class ScoreCalculator {
       return true;
     }
 
-    return pkg.panaScore >= CuraConstants.stablePackageMinScore && pkg.popularity > 0.7;
+    return pkg.panaScore >= CuraConstants.stablePackageMinScore &&
+        pkg.popularity > 0.7;
   }
 
   static _calculateTrustScore(PackageInfo pkg) {
@@ -139,8 +140,10 @@ class ScoreCalculator {
 
     final daysSinceRelease = DateTime.now().difference(pkg.published).inDays;
 
-    if (pkg.daysSinceLastRelease > CuraConstants.legacyThreshold && !_isStablePackage(pkg)) {
-      flags.add('Legacy: No release for ${(daysSinceRelease / 30).round()} months');
+    if (pkg.daysSinceLastRelease > CuraConstants.legacyThreshold &&
+        !_isStablePackage(pkg)) {
+      flags.add(
+          'Legacy: No release for ${(daysSinceRelease / 30).round()} months');
     }
 
     if (pkg.platforms.length < 3) {
@@ -156,7 +159,8 @@ class ScoreCalculator {
     }
 
     if (pkg.panaScore < 100) {
-      flags.add('Suboptimal static analysis score (${pkg.panaScore}/${pkg.maxPanaScore})');
+      flags.add(
+          'Suboptimal static analysis score (${pkg.panaScore}/${pkg.maxPanaScore})');
     }
 
     if (pkg.version.startsWith('0.0.')) {
@@ -179,7 +183,8 @@ class ScoreCalculator {
       flags.add('Not WASM ready: Degraded performance on modern Flutter Web');
     }
 
-    if (pkg.tags.contains('runtime:native-jit') && !pkg.tags.contains('runtime:native-aot')) {
+    if (pkg.tags.contains('runtime:native-jit') &&
+        !pkg.tags.contains('runtime:native-aot')) {
       flags.add('JIT-only: Incompatible with iOS/Android Release builds');
     }
 
@@ -228,20 +233,24 @@ class ScoreCalculator {
 
     if (flags.any((f) => f.contains('SUSPICIOUS'))) {
       recs.add('❌ AVOID: Likely an experimental or test package');
-      recs.add('🔍 Search for a maintained alternative from a verified publisher');
+      recs.add(
+          '🔍 Search for a maintained alternative from a verified publisher');
       return recs;
     }
 
     if (flags.any((f) => f.contains('Legacy')) && !_isStablePackage(pkg)) {
-      recs.add('⏳ WARNING: Active maintenance not detected. Seek modern alternatives');
+      recs.add(
+          '⏳ WARNING: Active maintenance not detected. Seek modern alternatives');
     }
 
     if (flags.any((f) => f.contains('Unverified'))) {
-      recs.add('🛡️ ACTION: Verify author reputation and repository activity on GitHub');
+      recs.add(
+          '🛡️ ACTION: Verify author reputation and repository activity on GitHub');
     }
 
     if (flags.any((f) => f.contains('Source code'))) {
-      recs.add('🚫 CRITICAL: Cannot audit source code. Avoid in professional projects');
+      recs.add(
+          '🚫 CRITICAL: Cannot audit source code. Avoid in professional projects');
     }
 
     if (flags.any((f) => f.contains('Experimental'))) {
@@ -260,19 +269,23 @@ class ScoreCalculator {
 
     // If it's recent AND the score is low
     if (isRecent && score < 50) {
-      recs.add('⚠️ ADVISORY: Early stage package. Use only for non-critical features');
+      recs.add(
+          '⚠️ ADVISORY: Early stage package. Use only for non-critical features');
     }
 
     if (flags.any((f) => f.contains('Not WASM ready'))) {
-      recs.add('⚠️ Not WASM ready. This will fallback to canvaskit/html, increasing bundle size.');
+      recs.add(
+          '⚠️ Not WASM ready. This will fallback to canvaskit/html, increasing bundle size.');
     }
 
     if (!pkg.licenseOsiApproved) {
-      recs.add('⚖️ Non-OSI approved license detected. Legal review might be required for commercial use.');
+      recs.add(
+          '⚖️ Non-OSI approved license detected. Legal review might be required for commercial use.');
     }
 
     if (flags.any((f) => f.contains('JIT-only'))) {
-      recs.add('🚫 Incompatible with AOT compilation. App will crash in Release mode.');
+      recs.add(
+          '🚫 Incompatible with AOT compilation. App will crash in Release mode.');
     }
 
     return recs;

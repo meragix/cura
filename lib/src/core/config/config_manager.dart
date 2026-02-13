@@ -120,11 +120,13 @@ class ConfigManager {
     // Valider le thème
     final validThemes = ['dark', 'light', 'minimal', 'dracula'];
     if (!validThemes.contains(config.theme)) {
-      errors.add('Invalid theme: ${config.theme}. Valid: ${validThemes.join(", ")}');
+      errors.add(
+          'Invalid theme: ${config.theme}. Valid: ${validThemes.join(", ")}');
     }
 
     if (errors.isNotEmpty) {
-      throw ConfigException('Invalid config:\n${errors.map((e) => '  - $e').join('\n')}');
+      throw ConfigException(
+          'Invalid config:\n${errors.map((e) => '  - $e').join('\n')}');
     }
   }
 

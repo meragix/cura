@@ -62,8 +62,12 @@ class PackageInfo {
       popularity: (json['popularity'] as num).toInt(),
       downloads30Days: (json['downloads30Days'] as num).toInt(),
       repositoryUrl: json['repositoryUrl'] as String?,
-      platforms: (json['platforms'] as List<dynamic>? ?? []).map((e) => e as String).toList(),
-      tags: (json['tags'] as List<dynamic>? ?? []).map((e) => e as String).toList(),
+      platforms: (json['platforms'] as List<dynamic>? ?? [])
+          .map((e) => e as String)
+          .toList(),
+      tags: (json['tags'] as List<dynamic>? ?? [])
+          .map((e) => e as String)
+          .toList(),
     );
   }
 
@@ -122,13 +126,17 @@ class PackageInfo {
       orElse: () => '',
     );
 
-    return publisherTag.isEmpty ? null : publisherTag.replaceFirst('publisher:', '');
+    return publisherTag.isEmpty
+        ? null
+        : publisherTag.replaceFirst('publisher:', '');
   }
 
   /// Extrait les plateformes depuis les tags
   static List<String> _extractPlatformsFromTags(List<String> tags) {
-    final platforms =
-        tags.where((tag) => tag.startsWith('platform:')).map((tag) => tag.replaceFirst('platform:', '')).toList();
+    final platforms = tags
+        .where((tag) => tag.startsWith('platform:'))
+        .map((tag) => tag.replaceFirst('platform:', ''))
+        .toList();
 
     // Si aucune plateforme et pas Flutter, c'est un package Dart pur
     if (platforms.isEmpty && !tags.contains('sdk:flutter')) {
@@ -158,11 +166,16 @@ class PackageInfo {
   bool get isDart3Compatible => tags.contains('is:dart3-compatible');
   bool get isPlugin => tags.contains('is:plugin');
   bool get isNew => tags.contains('is:recent');
-  bool get licenseOsiApproved => tags.contains('license:osi-approved') || tags.contains('license:fsf-libre');
+  bool get licenseOsiApproved =>
+      tags.contains('license:osi-approved') ||
+      tags.contains('license:fsf-libre');
 
   String? get license {
     final licenseTag = tags.firstWhere(
-      (tag) => tag.startsWith('license:') && !tag.contains('fsf') && !tag.contains('osi'),
+      (tag) =>
+          tag.startsWith('license:') &&
+          !tag.contains('fsf') &&
+          !tag.contains('osi'),
       orElse: () => '',
     );
     return licenseTag.isEmpty ? null : licenseTag.replaceFirst('license:', '');

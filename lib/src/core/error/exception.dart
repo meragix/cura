@@ -61,7 +61,9 @@ class RateLimitException extends CuraException {
   }) : super(
           'Rate limit exceeded for $apiName API',
           code: 'RATE_LIMIT',
-          context: retryAfter != null ? 'Retry after ${retryAfter.difference(DateTime.now()).inSeconds}s' : null,
+          context: retryAfter != null
+              ? 'Retry after ${retryAfter.difference(DateTime.now()).inSeconds}s'
+              : null,
         );
 }
 

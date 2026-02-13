@@ -27,7 +27,7 @@ class CuraConstants {
     'tools.dart.dev',
     'flutter.dev',
     'fluttercommunity.dev'
-    'google.dev',
+        'google.dev',
     'firebase.google.com',
   ];
 }

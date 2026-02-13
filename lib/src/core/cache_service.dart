@@ -37,7 +37,8 @@ class CacheService {
   late final File _cacheFile;
   Map<String, CacheEntry> _cache = {};
 
-  CacheService({String? cacheDir}) : _cacheDir = cacheDir ?? _getDefaultCacheDir() {
+  CacheService({String? cacheDir})
+      : _cacheDir = cacheDir ?? _getDefaultCacheDir() {
     _cacheFile = File(path.join(_cacheDir, CuraConstants.cacheFileName));
     _loadCache();
   }
@@ -81,7 +82,8 @@ class CacheService {
 
   void _saveCache() {
     try {
-      final jsonData = _cache.map((key, value) => MapEntry(key, value.toJson()));
+      final jsonData =
+          _cache.map((key, value) => MapEntry(key, value.toJson()));
       _cacheFile.writeAsStringSync(jsonEncode(jsonData));
     } catch (e) {
       // Échec silencieux de sauvegarde
@@ -91,7 +93,8 @@ class CacheService {
   void _cleanExpiredEntries() {
     final now = DateTime.now();
     _cache.removeWhere((_, entry) {
-      return now.difference(entry.cachedAt) > CuraConstants.cacheValidityDuration;
+      return now.difference(entry.cachedAt) >
+          CuraConstants.cacheValidityDuration;
     });
   }
 

@@ -58,12 +58,15 @@ class CuraConfig {
       timeoutSeconds: yaml['timeout_seconds'] as int? ?? 10,
       maxRetries: yaml['max_retries'] as int? ?? 3,
       showSuggestions: yaml['show_suggestions'] as bool? ?? true,
-      maxSuggestionsPerPackage: yaml['max_suggestions_per_package'] as int? ?? 3,
+      maxSuggestionsPerPackage:
+          yaml['max_suggestions_per_package'] as int? ?? 3,
       scoreWeights: yaml.containsKey('score_weights')
           ? ScoreWeights.fromYaml(yaml['score_weights'] as YamlMap)
           : const ScoreWeights(),
-      ignorePackages: (yaml['ignore_packages'] as YamlList?)?.cast<String>() ?? [],
-      trustedPublishers: (yaml['trusted_publishers'] as YamlList?)?.cast<String>() ?? [],
+      ignorePackages:
+          (yaml['ignore_packages'] as YamlList?)?.cast<String>() ?? [],
+      trustedPublishers:
+          (yaml['trusted_publishers'] as YamlList?)?.cast<String>() ?? [],
     );
   }
 
@@ -155,7 +158,8 @@ ${trustedPublishers.isEmpty ? '  # - dart.dev\n  # - flutter.dev' : trustedPubli
       timeoutSeconds: timeoutSeconds ?? this.timeoutSeconds,
       maxRetries: maxRetries ?? this.maxRetries,
       showSuggestions: showSuggestions ?? this.showSuggestions,
-      maxSuggestionsPerPackage: maxSuggestionsPerPackage ?? this.maxSuggestionsPerPackage,
+      maxSuggestionsPerPackage:
+          maxSuggestionsPerPackage ?? this.maxSuggestionsPerPackage,
       scoreWeights: scoreWeights,
       ignorePackages: ignorePackages,
       trustedPublishers: trustedPublishers,

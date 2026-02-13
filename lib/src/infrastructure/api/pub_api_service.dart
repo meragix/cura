@@ -22,7 +22,8 @@ class PubApiService {
     int? maxConcurrentRequests,
   })  : _client = client ?? http.Client(),
         _cache = cache ?? CacheService(),
-        _maxConcurrentRequests = maxConcurrentRequests ?? CuraConstants.maxConcurrentRequests;
+        _maxConcurrentRequests =
+            maxConcurrentRequests ?? CuraConstants.maxConcurrentRequests;
 
   Future<PackageInfo> getPackageInfo(String packageName) async {
     // Vérifier le cache d'abord
@@ -38,8 +39,11 @@ class PubApiService {
       return retry(
         () async {
           final results = await Future.wait([
-            _fetchJson('${CuraConstants.pubDevApiBase}/packages/$packageName', packageName: packageName),
-            _fetchJson('${CuraConstants.pubDevApiBase}/packages/$packageName/score', packageName: packageName),
+            _fetchJson('${CuraConstants.pubDevApiBase}/packages/$packageName',
+                packageName: packageName),
+            _fetchJson(
+                '${CuraConstants.pubDevApiBase}/packages/$packageName/score',
+                packageName: packageName),
           ]);
 
           final infoJson = results[0] as Map<String, dynamic>;

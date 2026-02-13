@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:cura/src/commands/check_command.dart';
 import 'package:cura/src/commands/config_cli_command.dart';
-import 'package:cura/src/commands/config_command.dart';
 import 'package:cura/src/commands/view_command.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:mason_logger/mason_logger.dart';

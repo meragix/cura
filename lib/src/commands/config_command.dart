@@ -1,4 +1,3 @@
-
 import 'package:cura/src/core/config/config_manager.dart';
 import 'package:cura/src/core/error/exception.dart';
 import 'package:mason_logger/mason_logger.dart';
@@ -11,23 +10,23 @@ class ConfigCommand {
   /// Affiche la config actuelle
   void show() {
     final config = ConfigManager.load();
-    
+
     logger.info('');
     logger.info(styleBold.wrap('Current Configuration'));
     logger.info('Location: ${cyan.wrap(ConfigManager.getConfigPath())}');
     logger.info('');
-    
+
     logger.info(styleBold.wrap('Appearance:'));
     logger.info('  Theme: ${config.theme}');
     logger.info('  Use Emojis: ${config.useEmojis}');
     logger.info('  Use Colors: ${config.useColors}');
     logger.info('');
-    
+
     logger.info(styleBold.wrap('Cache:'));
     logger.info('  Max Age: ${config.cacheMaxAge}h');
     logger.info('  Auto Update: ${config.autoUpdate}');
     logger.info('');
-    
+
     logger.info(styleBold.wrap('Scoring:'));
     logger.info('  Min Score: ${config.minScore}');
     logger.info('  Weights:');
@@ -36,13 +35,14 @@ class ConfigCommand {
     logger.info('    Trust: ${config.scoreWeights.trust}');
     logger.info('    Maintenance: ${config.scoreWeights.maintenance}');
     logger.info('');
-    
+
     logger.info(styleBold.wrap('API:'));
     logger.info('  Timeout: ${config.timeoutSeconds}s');
     logger.info('  Max Retries: ${config.maxRetries}');
-    logger.info('  GitHub Token: ${config.githubToken != null ? '✓ Set' : '✗ Not set'}');
+    logger.info(
+        '  GitHub Token: ${config.githubToken != null ? '✓ Set' : '✗ Not set'}');
     logger.info('');
-    
+
     if (config.ignorePackages.isNotEmpty) {
       logger.info(styleBold.wrap('Ignored Packages:'));
       for (final pkg in config.ignorePackages) {
@@ -50,7 +50,7 @@ class ConfigCommand {
       }
       logger.info('');
     }
-    
+
     if (config.trustedPublishers.isNotEmpty) {
       logger.info(styleBold.wrap('Trusted Publishers:'));
       for (final pub in config.trustedPublishers) {
@@ -76,7 +76,7 @@ class ConfigCommand {
   /// Set une valeur
   void set(String key, String value) {
     var config = ConfigManager.load();
-    
+
     config = switch (key) {
       'theme' => config.merge(theme: value),
       'use_emojis' => config.merge(useEmojis: value.toLowerCase() == 'true'),
@@ -87,7 +87,8 @@ class ConfigCommand {
       'github_token' => config.merge(githubToken: value),
       'timeout_seconds' => config.merge(timeoutSeconds: int.parse(value)),
       'max_retries' => config.merge(maxRetries: int.parse(value)),
-      'show_suggestions' => config.merge(showSuggestions: value.toLowerCase() == 'true'),
+      'show_suggestions' =>
+        config.merge(showSuggestions: value.toLowerCase() == 'true'),
       _ => throw ConfigException('Unknown config key: $key'),
     };
 
@@ -98,7 +99,7 @@ class ConfigCommand {
   /// Get une valeur
   void get(String key) {
     final config = ConfigManager.load();
-    
+
     final value = switch (key) {
       'theme' => config.theme,
       'use_emojis' => config.useEmojis.toString(),
