@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:cura/src/core/constants.dart';
+import 'package:cura/src/core/helper/utils.dart';
 import 'package:cura/src/domain/models/package_info.dart';
 import 'package:path/path.dart' as path;
 
@@ -42,8 +43,8 @@ class CacheService {
   }
 
   static String _getDefaultCacheDir() {
-    final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-    return path.join(home!, '.cura');
+    final home = HelperUtils.getHomeDirectory();
+    return path.join(home, CuraConstants.curaDirName);
   }
 
   void _loadCache() {

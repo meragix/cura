@@ -2,7 +2,10 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:cura/src/commands/check_command.dart';
+import 'package:cura/src/commands/config_cli_command.dart';
+import 'package:cura/src/commands/config_command.dart';
 import 'package:cura/src/commands/view_command.dart';
+import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:cura/src/infrastructure/api/pub_api_service.dart';
 import 'package:cura/src/infrastructure/respositories/pub_dev_repository.dart';
@@ -12,10 +15,31 @@ void main(List<String> arguments) async {
   final repository = PubDevRepository(service);
   final logger = Logger();
 
+  final themeArg = arguments.firstWhere(
+    (arg) => arg.startsWith('--theme='),
+    orElse: () => '',
+  );
+
+  if (themeArg.isNotEmpty) {
+    final themeName = themeArg.split('=')[1];
+    try {
+      ThemeManager.setTheme(themeName);
+    } catch (e) {
+      print('Invalid theme. Available: ${ThemeManager.availableThemes()}');
+      exit(1);
+    }
+  } else {
+    ThemeManager.autoDetect();
+  }
+
+  // Remove --theme from arguments to avoid polluting args
+  final cleanArgs = arguments.where((a) => !a.startsWith('--theme=')).toList();
+
   final runner = CommandRunner(
     'cura',
     '🩺 Flutter/Dart package health audit tool',
   )
+    ..run(cleanArgs)
     ..addCommand(CheckCommand(
       repository: repository,
       logger: logger,
@@ -23,7 +47,8 @@ void main(List<String> arguments) async {
     ..addCommand(ViewCommand(
       repository: repository,
       logger: logger,
-    ));
+    ))
+    ..addCommand(ConfigCLICommand());
 
   try {
     final exitCode = await runner.run(arguments);

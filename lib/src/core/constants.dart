@@ -1,5 +1,7 @@
 class CuraConstants {
+  static const String curaDirName = '.cura';
   static const String cacheFileName = '.cura_cache.json';
+  static const String configFileName = '.config.yaml';
   static const Duration cacheValidityDuration = Duration(hours: 24);
   static const int maxConcurrentRequests = 5;
   static const String pubDevApiBase = 'https://pub.dev/api';

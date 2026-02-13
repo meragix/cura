@@ -104,3 +104,15 @@ class CacheException extends CuraException {
           originalError: originalError,
         );
 }
+
+/// Config error
+class ConfigException extends CuraException {
+  ConfigException(
+    String message, {
+    dynamic originalError,
+  }) : super(
+          message,
+          code: 'CONFIG_ERROR',
+          originalError: originalError,
+        );
+}
