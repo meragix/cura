@@ -2,10 +2,10 @@ import 'package:cura/src/presentation/themes/theme.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:mason_logger/mason_logger.dart';
 
-class ThemedLogger {
+class CuraLogger {
   final Logger _logger;
 
-  ThemedLogger({Logger? logger}) : _logger = logger ?? Logger();
+  CuraLogger({Logger? logger}) : _logger = logger ?? Logger();
 
   CuraTheme get theme => ThemeManager.current;
 
@@ -18,8 +18,12 @@ class ThemedLogger {
     _logger.info('${theme.symbolSuccess} ${theme.success.wrap(message)}');
   }
 
-  void warning(String message) {
-    _logger.warn('${theme.symbolWarning} ${theme.warning.wrap(message)}');
+  void warning(String message, {bool showSymbol = true}) {
+    if (showSymbol) {
+      _logger.info('${theme.symbolWarning} ${theme.warning.wrap(message)}');
+    } else {
+      _logger.info('${theme.warning.wrap(message)}');
+    }
   }
 
   void error(String message) {

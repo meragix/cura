@@ -4,6 +4,8 @@ import 'package:args/command_runner.dart';
 import 'package:cura/src/commands/check_command.dart';
 import 'package:cura/src/commands/config_cli_command.dart';
 import 'package:cura/src/commands/view_command.dart';
+import 'package:cura/src/presentation/loggers/cura_logger.dart';
+import 'package:cura/src/presentation/loggers/specialized/view_logger.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:cura/src/infrastructure/api/pub_api_service.dart';
@@ -13,6 +15,8 @@ void main(List<String> arguments) async {
   final service = PubApiService();
   final repository = PubDevRepository(service);
   final logger = Logger();
+  final curaLogger = CuraLogger();
+  final viewLogger = ViewLogger(logger: curaLogger);
 
   final themeArg = arguments.firstWhere(
     (arg) => arg.startsWith('--theme='),
@@ -46,6 +50,7 @@ void main(List<String> arguments) async {
     ..addCommand(ViewCommand(
       repository: repository,
       logger: logger,
+      viewLogger: viewLogger
     ))
     ..addCommand(ConfigCLICommand());
 

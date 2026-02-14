@@ -1,15 +1,20 @@
-import 'package:cura/src/presentation/themes/theme.dart';
-import 'package:cura/src/presentation/themes/theme_logger.dart';
-import 'package:cura/src/presentation/themes/theme_manager.dart';
+import 'package:cura/src/presentation/loggers/cura_logger.dart';
+import 'package:cura/src/presentation/loggers/specialized/view_logger.dart';
 
 class CommandContext {
-  final ThemedLogger logger;
+  final CuraLogger logger;
+  final bool verbose;
+  final bool json;
+
+  // Lazy loading des services
+  ViewLogger? _viewLogger;
 
   CommandContext({
-    bool verbose = false,
-    bool json = false,
-  }) : logger = ThemedLogger();
+    required this.logger,
+    required this.verbose,
+    required this.json,
+  });
 
-  // Accès au thème
-  CuraTheme get theme => ThemeManager.current;
+  // Getters avec lazy loading
+  ViewLogger get viewLogger => _viewLogger ??= ViewLogger(logger: logger);
 }

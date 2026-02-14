@@ -222,70 +222,70 @@ class ScoreCalculator {
     List<String> flags,
   ) {
     if (pkg.isTrustedPublisher) {
-      return ['✅ Official ${pkg.publisherId} package - Highly recommended'];
+      return ['Official ${pkg.publisherId} package - Highly recommended'];
     }
 
     if (score >= 80) {
-      return ['✨ Verified health - Suitable for production use'];
+      return ['Verified health - Suitable for production use'];
     }
 
     final recs = <String>[];
 
     if (flags.any((f) => f.contains('SUSPICIOUS'))) {
-      recs.add('❌ AVOID: Likely an experimental or test package');
+      recs.add('AVOID: Likely an experimental or test package');
       recs.add(
-          '🔍 Search for a maintained alternative from a verified publisher');
+          'Search for a maintained alternative from a verified publisher');
       return recs;
     }
 
     if (flags.any((f) => f.contains('Legacy')) && !_isStablePackage(pkg)) {
       recs.add(
-          '⏳ WARNING: Active maintenance not detected. Seek modern alternatives');
+          'WARNING: Active maintenance not detected. Seek modern alternatives');
     }
 
     if (flags.any((f) => f.contains('Unverified'))) {
       recs.add(
-          '🛡️ ACTION: Verify author reputation and repository activity on GitHub');
+          'ACTION: Verify author reputation and repository activity on GitHub');
     }
 
     if (flags.any((f) => f.contains('Source code'))) {
       recs.add(
-          '🚫 CRITICAL: Cannot audit source code. Avoid in professional projects');
+          'CRITICAL: Cannot audit source code. Avoid in professional projects');
     }
 
     if (flags.any((f) => f.contains('Experimental'))) {
-      recs.add('🧪 WARNING: Unstable version - Wait for a 1.0.0 release');
+      recs.add('WARNING: Unstable version - Wait for a 1.0.0 release');
     }
 
     if (recs.isEmpty) {
-      recs.add('⚠️ CAUTION: Moderate score - Manual evaluation recommended');
+      recs.add('CAUTION: Moderate score - Manual evaluation recommended');
     }
 
     final isRecent = flags.any((f) => f.contains('New package'));
 
     if (isRecent) {
-      recs.add('🆕 NEW: Recently published. Monitor for API breaking changes');
+      recs.add('NEW: Recently published. Monitor for API breaking changes');
     }
 
     // If it's recent AND the score is low
     if (isRecent && score < 50) {
       recs.add(
-          '⚠️ ADVISORY: Early stage package. Use only for non-critical features');
+          'ADVISORY: Early stage package. Use only for non-critical features');
     }
 
     if (flags.any((f) => f.contains('Not WASM ready'))) {
       recs.add(
-          '⚠️ Not WASM ready. This will fallback to canvaskit/html, increasing bundle size.');
+          'Not WASM ready. This will fallback to canvaskit/html, increasing bundle size.');
     }
 
     if (!pkg.licenseOsiApproved) {
       recs.add(
-          '⚖️ Non-OSI approved license detected. Legal review might be required for commercial use.');
+          'Non-OSI approved license detected. Legal review might be required for commercial use.');
     }
 
     if (flags.any((f) => f.contains('JIT-only'))) {
       recs.add(
-          '🚫 Incompatible with AOT compilation. App will crash in Release mode.');
+          'Incompatible with AOT compilation. App will crash in Release mode.');
     }
 
     return recs;

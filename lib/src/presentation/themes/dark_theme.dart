@@ -63,16 +63,16 @@ class DarkTheme implements CuraTheme {
 
   // Symboles
   @override
-  String get symbolSuccess => '✅';
+  String get symbolSuccess => '✓';
 
   @override
-  String get symbolWarning => '⚠️';
+  String get symbolWarning => '⚠';
 
   @override
-  String get symbolError => '❌';
+  String get symbolError => '✗';
 
   @override
-  String get symbolInfo => '💡';
+  String get symbolInfo => 'ℹ';
 
   // Barres de progression (caractères pleins pour visibilité)
   @override
