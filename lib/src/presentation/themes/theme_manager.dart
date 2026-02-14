@@ -1,6 +1,8 @@
 import 'dart:io';
 
-import 'package:cura/src/presentation/themes/color_scheme.dart';
+import 'package:cura/src/presentation/themes/dark_theme.dart';
+import 'package:cura/src/presentation/themes/light_theme.dart';
+import 'package:cura/src/presentation/themes/minimal_theme.dart';
 import 'package:cura/src/presentation/themes/theme.dart';
 
 class ThemeManager {
@@ -22,8 +24,7 @@ class ThemeManager {
     if (theme != null) {
       _currentTheme = theme;
     } else {
-      throw ArgumentError(
-          'Theme "$themeName" not found. Available: ${_themes.keys.join(", ")}');
+      throw ArgumentError('Theme "$themeName" not found. Available: ${_themes.keys.join(", ")}');
     }
   }
 
@@ -55,13 +56,7 @@ class ThemeManager {
 
   /// Détecte si on est dans un environnement CI/CD
   static bool _isCIEnvironment() {
-    final ciEnvVars = [
-      'CI',
-      'GITHUB_ACTIONS',
-      'GITLAB_CI',
-      'CIRCLECI',
-      'TRAVIS'
-    ];
+    final ciEnvVars = ['CI', 'GITHUB_ACTIONS', 'GITLAB_CI', 'CIRCLECI', 'TRAVIS'];
     return ciEnvVars.any((v) => Platform.environment.containsKey(v));
   }
 

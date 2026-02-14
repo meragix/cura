@@ -1,3 +1,5 @@
+import 'package:yaml/yaml.dart';
+
 class CuraScore {
   final int total;
   final int maintenance;
@@ -51,3 +53,4 @@ enum HealthStatus {
 //     security * 0.2
 //   ).round();
 // }
+

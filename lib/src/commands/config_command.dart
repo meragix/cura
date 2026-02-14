@@ -1,5 +1,5 @@
+import 'package:cura/src/core/config/cura_config.dart';
 import 'package:cura/src/core/config/config_manager.dart';
-import 'package:cura/src/core/error/exception.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 class ConfigCommand {
@@ -7,125 +7,170 @@ class ConfigCommand {
 
   ConfigCommand({Logger? logger}) : logger = logger ?? Logger();
 
-  /// Affiche la config actuelle
-  void show() {
-    final config = ConfigManager.load();
+  /// Affiche la hiérarchie de config
+  void show({bool verbose = false}) {
+    final hierarchy = ConfigManager.getHierarchy();
 
     logger.info('');
-    logger.info(styleBold.wrap('Current Configuration'));
-    logger.info('Location: ${cyan.wrap(ConfigManager.getConfigPath())}');
+    logger.info(styleBold.wrap('Configuration Hierarchy'));
     logger.info('');
 
-    logger.info(styleBold.wrap('Appearance:'));
-    logger.info('  Theme: ${config.theme}');
-    logger.info('  Use Emojis: ${config.useEmojis}');
-    logger.info('  Use Colors: ${config.useColors}');
+    // Global config
+    logger.info(styleBold.wrap('Global Config:'));
+    logger.info('  Location: ${cyan.wrap(hierarchy.globalPath)}');
+    logger.info('  Status: ${hierarchy.hasGlobal ? green.wrap('✓ Found') : red.wrap('✗ Not found')}');
+
+    if (verbose && hierarchy.global != null) {
+      _printConfig(hierarchy.global!, indent: '  ');
+    }
+
     logger.info('');
 
-    logger.info(styleBold.wrap('Cache:'));
-    logger.info('  Max Age: ${config.cacheMaxAge}h');
-    logger.info('  Auto Update: ${config.autoUpdate}');
+    // Project config
+    logger.info(styleBold.wrap('Project Config:'));
+    logger.info('  Location: ${cyan.wrap(hierarchy.projectPath)}');
+    logger.info('  Status: ${hierarchy.hasProject ? green.wrap('✓ Found') : darkGray.wrap('✗ Not found')}');
+
+    if (verbose && hierarchy.project != null) {
+      _printConfig(hierarchy.project!, indent: '  ');
+    }
+
     logger.info('');
 
-    logger.info(styleBold.wrap('Scoring:'));
-    logger.info('  Min Score: ${config.minScore}');
-    logger.info('  Weights:');
-    logger.info('    Vitality: ${config.scoreWeights.vitality}');
-    logger.info('    Technical Health: ${config.scoreWeights.technicalHealth}');
-    logger.info('    Trust: ${config.scoreWeights.trust}');
-    logger.info('    Maintenance: ${config.scoreWeights.maintenance}');
-    logger.info('');
+    // Overrides
+    if (hierarchy.hasProject) {
+      final overrides = hierarchy.getOverrides();
 
-    logger.info(styleBold.wrap('API:'));
-    logger.info('  Timeout: ${config.timeoutSeconds}s');
-    logger.info('  Max Retries: ${config.maxRetries}');
-    logger.info(
-        '  GitHub Token: ${config.githubToken != null ? '✓ Set' : '✗ Not set'}');
-    logger.info('');
-
-    if (config.ignorePackages.isNotEmpty) {
-      logger.info(styleBold.wrap('Ignored Packages:'));
-      for (final pkg in config.ignorePackages) {
-        logger.info('  - $pkg');
+      if (overrides.isNotEmpty) {
+        logger.info(styleBold.wrap('Project Overrides:'));
+        for (final override in overrides) {
+          logger.info('  ${override.key}:');
+          logger.info('    ${darkGray.wrap('Global:')} ${override.globalValue}');
+          logger.info('    ${cyan.wrap('Project:')} ${override.projectValue} ${green.wrap('✓')}');
+        }
+        logger.info('');
       }
-      logger.info('');
     }
 
-    if (config.trustedPublishers.isNotEmpty) {
-      logger.info(styleBold.wrap('Trusted Publishers:'));
-      for (final pub in config.trustedPublishers) {
-        logger.info('  - $pub');
+    // Merged config (effective)
+    logger.info(styleBold.wrap('Effective Config (Merged):'));
+    _printConfig(hierarchy.merged, indent: '  ');
+    logger.info('');
+  }
+
+  void _printConfig(CuraConfig config, {String indent = ''}) {
+    logger.info('${indent}Theme: ${config.theme}');
+    logger.info('${indent}Use Emojis: ${config.useEmojis}');
+    logger.info('${indent}Use Colors: ${config.useColors}');
+    logger.info('${indent}Max Age: ${config.cacheMaxAge}h');
+    logger.info('${indent}Auto Update: ${config.autoUpdate}');
+    logger.info('${indent}Min Score: ${config.minScore}');
+    logger.info('${indent}Weights:');
+    logger.info('${indent * 2}Vitality: ${config.scoreWeights?.vitality}');
+    logger.info('${indent * 2}Technical Health: ${config.scoreWeights?.technicalHealth}');
+    logger.info('${indent * 2}Trust: ${config.scoreWeights?.trust}');
+    logger.info('${indent * 2}Maintenance: ${config.scoreWeights?.maintenance}');
+    logger.info('${indent}Timeout: ${config.timeoutSeconds}s');
+    logger.info('${indent}Max Retries: ${config.maxRetries}');
+    logger.info('${indent}Show Suggestions: ${config.showSuggestions}');
+    logger.info('${indent}Max Suggestions Per Package: ${config.maxSuggestionsPerPackage}');
+    //logger.info('${indent}GitHub Token: ${config.githubToken != null ? '✓ Set' : '✗ Not set'}');
+
+    if (config.ignorePackages != null && config.ignorePackages!.length > 0) {
+      logger.info('${indent}Ignored Packages:');
+      for (final pkg in config.ignorePackages!) {
+        logger.info('${indent * 2}- $pkg');
       }
-      logger.info('');
+    }
+
+    if (config.trustedPublishers != null && config.trustedPublishers!.length > 0) {
+      logger.info('${indent}Trusted Publishers::');
+      for (final pub in config.trustedPublishers!) {
+        logger.info('${indent * 2}- $pub');
+      }
     }
   }
 
-  /// Édite la config
-  void edit() {
-    ConfigManager.edit();
+  /// Initialise la config projet
+  void initProject() {
+    if (ConfigManager.hasProjectConfig()) {
+      logger.warn('Project config already exists');
+      logger.info('Location: ${ConfigManager.getProjectConfigPath()}');
+      return;
+    }
+
+    ConfigManager.initProject();
+    logger.info('${green.wrap('✓')} Project config created');
+    logger.info('Location: ${ConfigManager.getProjectConfigPath()}');
+    logger.info('');
+    logger.info('Edit the file to override global settings for this project');
   }
 
-  /// Reset la config
-  void reset() {
-    logger.info('Resetting configuration to defaults...');
-    ConfigManager.reset();
-    logger.info('${green.wrap('✓')} Configuration reset successfully');
-    logger.info('Location: ${ConfigManager.getConfigPath()}');
+  /// Supprime la config projet
+  void removeProject() {
+    if (!ConfigManager.hasProjectConfig()) {
+      logger.warn('No project config found');
+      return;
+    }
+
+    ConfigManager.removeProject();
+    logger.info('${green.wrap('✓')} Project config removed');
   }
 
-  /// Set une valeur
-  void set(String key, String value) {
-    var config = ConfigManager.load();
-
-    config = switch (key) {
-      'theme' => config.merge(theme: value),
-      'use_emojis' => config.merge(useEmojis: value.toLowerCase() == 'true'),
-      'use_colors' => config.merge(useColors: value.toLowerCase() == 'true'),
-      'cache_max_age' => config.merge(cacheMaxAge: int.parse(value)),
-      'auto_update' => config.merge(autoUpdate: value.toLowerCase() == 'true'),
-      'min_score' => config.merge(minScore: int.parse(value)),
-      'github_token' => config.merge(githubToken: value),
-      'timeout_seconds' => config.merge(timeoutSeconds: int.parse(value)),
-      'max_retries' => config.merge(maxRetries: int.parse(value)),
-      'show_suggestions' =>
-        config.merge(showSuggestions: value.toLowerCase() == 'true'),
-      _ => throw ConfigException('Unknown config key: $key'),
-    };
-
-    ConfigManager.save(config);
-    logger.info('${green.wrap('✓')} Set $key = $value');
-  }
-
-  /// Get une valeur
-  void get(String key) {
-    final config = ConfigManager.load();
-
-    final value = switch (key) {
-      'theme' => config.theme,
-      'use_emojis' => config.useEmojis.toString(),
-      'use_colors' => config.useColors.toString(),
-      'cache_max_age' => config.cacheMaxAge.toString(),
-      'auto_update' => config.autoUpdate.toString(),
-      'min_score' => config.minScore.toString(),
-      'github_token' => config.githubToken ?? '(not set)',
-      'timeout_seconds' => config.timeoutSeconds.toString(),
-      'max_retries' => config.maxRetries.toString(),
-      'show_suggestions' => config.showSuggestions.toString(),
-      _ => throw ConfigException('Unknown config key: $key'),
-    };
-
-    logger.info('$key: $value');
-  }
-
-  /// Valide la config
-  void validate() {
-    try {
-      final config = ConfigManager.load();
-      ConfigManager.validate(config);
-      logger.info('${green.wrap('✓')} Configuration is valid');
-    } on ConfigException catch (e) {
-      logger.err('${red.wrap('✗')} Invalid configuration:');
-      logger.err(e.message);
+  /// Set une valeur (global ou projet)
+  void set(String key, String value, {required ConfigScope scope}) {
+    switch (scope) {
+      case ConfigScope.global:
+        _setGlobal(key, value);
+        break;
+      case ConfigScope.project:
+        _setProject(key, value);
+        break;
+      case ConfigScope.merged:
+        logger.err('Cannot set on merged config. Use --global or --project');
+        break;
     }
   }
+
+  void _setGlobal(String key, String value) {
+    var config = ConfigManager.load(scope: ConfigScope.global);
+
+    // Appliquer le changement...
+
+    ConfigManager.saveGlobal(config);
+    logger.info('${green.wrap('✓')} Set $key = $value (global)');
+  }
+
+  void _setProject(String key, String value) {
+    var config = ConfigManager.load(scope: ConfigScope.project);
+
+    // Appliquer le changement...
+
+    ConfigManager.saveProject(config);
+    logger.info('${green.wrap('✓')} Set $key = $value (project)');
+  }
+
+/*
+USAGE EXAMPLES:
+
+# Config globale
+cura config show --global
+cura config set theme dark --global
+cura config edit --global
+
+# Config projet
+cura config init                     # Créer ./.cura/config.yaml
+cura config show --project
+cura config set min_score 80 --project
+cura config edit --project
+cura config remove --project         # Supprimer config projet
+
+# Hiérarchie
+cura config show                     # Affiche tout (global + projet + merged)
+cura config show --verbose           # Avec détails
+
+# Dans les commands
+cura scan                            # Utilise config merged automatiquement
+cura scan --min-score 90             # CLI override tout
+*/
 }

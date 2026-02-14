@@ -28,9 +28,20 @@ class ConfigShowCommand extends Command {
   @override
   final description = 'Show current configuration';
 
+  ConfigShowCommand() {
+    argParser
+      ..addFlag(
+        'verbose',
+        abbr: 'v',
+        negatable: false,
+        help: 'More details',
+      );
+  }
+
   @override
   Future<void> run() async {
-    ConfigCommand().show();
+    final outputVerbose = argResults!['verbose'] as bool;
+    ConfigCommand().show(verbose: outputVerbose);
     // return 0;
   }
 }
@@ -43,9 +54,9 @@ class ConfigEditCommand extends Command {
   final description = 'Edit configuration in your editor';
 
   @override
-  Future<int> run() async {
-    ConfigCommand().edit();
-    return 0;
+  Future<void> run() async {
+    //ConfigCommand().edit();
+    //return 0;
   }
 }
 
@@ -58,7 +69,7 @@ class ConfigResetCommand extends Command {
 
   @override
   Future<void> run() async {
-    ConfigCommand().reset();
+    //ConfigCommand().reset();
     //return 0;
   }
 }
@@ -78,7 +89,7 @@ class ConfigSetCommand extends Command {
       //return 1;
     }
 
-    ConfigCommand().set(args[0], args[1]);
+    //ConfigCommand().set(args[0], args[1]);
     //return 0;
   }
 }
@@ -98,7 +109,7 @@ class ConfigGetCommand extends Command {
       //return 1;
     }
 
-    ConfigCommand().get(args[0]);
+    // ConfigCommand().get(args[0]);
     // return 0;
   }
 }
@@ -112,7 +123,7 @@ class ConfigValidateCommand extends Command {
 
   @override
   Future<void> run() async {
-    ConfigCommand().validate();
+    //ConfigCommand().validate();
     //return 0;
   }
 }

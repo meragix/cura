@@ -55,9 +55,8 @@ class ThemedLogger {
     final filled = (percentage * width).round();
     final empty = width - filled;
 
-    final bar =
-        '${theme.success.wrap(theme.barFilled * filled) ?? (theme.barFilled * filled)}' +
-            '${theme.textMuted.wrap(theme.barEmpty * empty) ?? (theme.barEmpty * empty)}';
+    final bar = '${theme.success.wrap(theme.barFilled * filled) ?? (theme.barFilled * filled)}' +
+        '${theme.textMuted.wrap(theme.barEmpty * empty) ?? (theme.barEmpty * empty)}';
 
     _logger.info(bar);
   }
