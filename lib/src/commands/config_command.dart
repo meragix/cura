@@ -74,7 +74,7 @@ class ConfigCommand {
     logger.info('${indent}Max Retries: ${config.maxRetries}');
     logger.info('${indent}Show Suggestions: ${config.showSuggestions}');
     logger.info('${indent}Max Suggestions Per Package: ${config.maxSuggestionsPerPackage}');
-    //logger.info('${indent}GitHub Token: ${config.githubToken != null ? '✓ Set' : '✗ Not set'}');
+    logger.info('${indent}GitHub Token: ${config.githubToken != null ? '✓ Set' : '✗ Not set'}');
 
     if (config.ignorePackages != null && config.ignorePackages!.length > 0) {
       logger.info('${indent}Ignored Packages:');

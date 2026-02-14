@@ -572,7 +572,7 @@ cura scan
 - `dark` - Default, vibrant colors
 - `light` - For light terminals
 - `minimal` - Monochrome, CI/CD friendly
-- `dracula` - Popular Dracula color scheme
+<!-- - `dracula` - Popular Dracula color scheme -->
 
 **See also:** [docs/themes.md](docs/themes.md) for theme customization
 
@@ -611,7 +611,7 @@ cura scan --no-cache
 **See also:** [docs/caching.md](docs/caching.md) for cache strategies
 
 ---
-
+<!-- 
 ### Suggestions Engine
 
 Cura suggests better alternatives for low-scoring packages.
@@ -639,7 +639,7 @@ Cura suggests better alternatives for low-scoring packages.
 
 **See also:** [docs/suggestions.md](docs/suggestions.md) for details
 
----
+--- -->
 
 ### Multi-API Aggregation
 
@@ -706,12 +706,12 @@ dart run bin/cura.dart --help
 dart test
 ```
 
-### Suggesting Package Alternatives
+<!-- ### Suggesting Package Alternatives
 
 Contribute to [cura-data](https://github.com/meragix/cura-data):
 
 1. Fork the repo
-2. Edit `alternatives.yaml`
+2. Edit `alternatives.yaml` -->
 3. Submit PR (auto-validated by CI)
 
 **See also:** [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
@@ -755,15 +755,15 @@ Contribute to [cura-data](https://github.com/meragix/cura-data):
 - 📅 Package comparison tool
 - 📅 Custom scoring weights
 
-**Vote on features:** [GitHub Discussions](https://github.com/meragix/cura/discussions)
+**Vote on features:** [GitHub Discussions](https://github.com/orgs/meragix/discussions)
 
 ---
 
 ## 💬 Community
 
-- **Discord:** [Join our server](https://discord.gg/cura)
-- **Twitter:** [@CuraCLI](https://twitter.com/CuraCLI)
-- **Discussions:** [GitHub Discussions](https://github.com/meragix/cura/discussions)
+- **Discord:** [Join our server](https://discord.gg/meragix)
+- **Twitter:** [@Meragix](https://twitter.com/meragix)
+- **Discussions:** [GitHub Discussions](https://github.com/orgs/meragix/discussions)
 
 ---
 
@@ -788,5 +788,5 @@ Cura is MIT licensed. See [LICENSE](LICENSE) for details.
 <p align="center">
   <a href="https://github.com/meragix/cura">⭐ Star us on GitHub</a> •
   <a href="https://github.com/meragix/cura/issues">🐛 Report Bug</a> •
-  <a href="https://github.com/meragix/cura/discussions">💬 Discussions</a>
+  <a href="https://github.com/orgs/meragix/discussions">💬 Discussions</a>
 </p>
