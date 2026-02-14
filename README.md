@@ -1,8 +1,8 @@
-# 🩺 Cura - Flutter/Dart Package Health Audit
+# 🩺 Cura
 
-<p align="center">
+<!-- <p align="center">
   <img src="assets/logo.png" alt="Cura Logo" width="200"/>
-</p>
+</p> -->
 
 <p align="center">
   <strong>Replace "Vibe Code" with data-driven decisions</strong>
@@ -55,7 +55,7 @@ Cura analyzes packages across **4 key dimensions**:
 
 | Dimension | Weight | What it measures |
 |-----------|--------|------------------|
-| **Vitality** | 40pts | Update frequency, release freshness |
+| **Vitality** | 40pts |Release frequency, commit recency, active maintenance. |
 | **Technical Health** | 30pts | Pana score, null safety, platform support |
 | **Trust** | 20pts | Popularity, community engagement |
 | **Maintenance** | 10pts | Verified publisher, Flutter Favorite |

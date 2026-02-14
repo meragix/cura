@@ -2,7 +2,8 @@ name: cura
 description: "Flutter/Dart package health audit CLI tool."
 version: 0.2.0
 homepage: https://github.com/meragix/cura
-repository: https://github.com/meragix/cura
+repository: https://github.com/meragix/cura/tree/main
+documentation: https://github.com/meragix/cura/tree/main/docs
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
