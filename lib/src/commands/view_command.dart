@@ -1,4 +1,4 @@
-import 'package:cura/src/commands/base_command.dart';
+import 'package:cura/src/commands/base/base_command.dart';
 import 'package:cura/src/core/error/error_handler.dart';
 import 'package:cura/src/core/error/exception.dart';
 import 'package:cura/src/domain/models/package_health.dart';

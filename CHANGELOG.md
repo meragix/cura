@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Config Hierarchy - Global vs Project Config
 - add README documentation with base file in ./docs
 - configuration system support
 - complete theme system with dark/light mode

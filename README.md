@@ -10,9 +10,9 @@
 
 <p align="center">
   <a href="https://pub.dev/packages/cura"><img src="https://img.shields.io/pub/v/cura.svg" alt="Pub Version"></a>
-  <a href="https://github.com/your-org/cura/actions"><img src="https://github.com/your-org/cura/workflows/CI/badge.svg" alt="CI Status"></a>
-  <a href="https://github.com/your-org/cura/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-  <a href="https://github.com/your-org/cura"><img src="https://img.shields.io/github/stars/your-org/cura?style=social" alt="GitHub Stars"></a>
+  <a href="https://github.com/meragix/cura/actions"><img src="https://github.com/meragix/cura/workflows/CI/badge.svg" alt="CI Status"></a>
+  <a href="https://github.com/meragix/cura/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="https://github.com/meragix/cura"><img src="https://img.shields.io/github/stars/meragix/cura?style=social" alt="GitHub Stars"></a>
 </p>
 
 ---
@@ -633,7 +633,7 @@ Cura suggests better alternatives for low-scoring packages.
 
 **Contributing suggestions:**
 
-1. Fork [cura-data](https://github.com/your-org/cura-data)
+1. Fork [cura-data](https://github.com/meragix/cura-data)
 2. Edit `alternatives.yaml`
 3. Submit PR (auto-validated)
 
@@ -677,7 +677,7 @@ We welcome contributions! Here's how you can help:
 
 ### Bug Reports & Feature Requests
 
-[Open an issue](https://github.com/your-org/cura/issues/new) with:
+[Open an issue](https://github.com/meragix/cura/issues/new) with:
 
 - Clear description
 - Steps to reproduce (for bugs)
@@ -694,7 +694,7 @@ We welcome contributions! Here's how you can help:
 **Development setup:**
 
 ```bash
-git clone https://github.com/your-org/cura.git
+git clone https://github.com/meragix/cura.git
 cd cura
 dart pub get
 dart run bin/cura.dart --help
@@ -708,7 +708,7 @@ dart test
 
 ### Suggesting Package Alternatives
 
-Contribute to [cura-data](https://github.com/your-org/cura-data):
+Contribute to [cura-data](https://github.com/meragix/cura-data):
 
 1. Fork the repo
 2. Edit `alternatives.yaml`
@@ -755,7 +755,7 @@ Contribute to [cura-data](https://github.com/your-org/cura-data):
 - 📅 Package comparison tool
 - 📅 Custom scoring weights
 
-**Vote on features:** [GitHub Discussions](https://github.com/your-org/cura/discussions)
+**Vote on features:** [GitHub Discussions](https://github.com/meragix/cura/discussions)
 
 ---
 
@@ -763,7 +763,7 @@ Contribute to [cura-data](https://github.com/your-org/cura-data):
 
 - **Discord:** [Join our server](https://discord.gg/cura)
 - **Twitter:** [@CuraCLI](https://twitter.com/CuraCLI)
-- **Discussions:** [GitHub Discussions](https://github.com/your-org/cura/discussions)
+- **Discussions:** [GitHub Discussions](https://github.com/meragix/cura/discussions)
 
 ---
 
@@ -786,7 +786,7 @@ Cura is MIT licensed. See [LICENSE](LICENSE) for details.
 </p>
 
 <p align="center">
-  <a href="https://github.com/your-org/cura">⭐ Star us on GitHub</a> •
-  <a href="https://github.com/your-org/cura/issues">🐛 Report Bug</a> •
-  <a href="https://github.com/your-org/cura/discussions">💬 Discussions</a>
+  <a href="https://github.com/meragix/cura">⭐ Star us on GitHub</a> •
+  <a href="https://github.com/meragix/cura/issues">🐛 Report Bug</a> •
+  <a href="https://github.com/meragix/cura/discussions">💬 Discussions</a>
 </p>
