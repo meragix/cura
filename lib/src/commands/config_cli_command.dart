@@ -1,7 +1,7 @@
 import 'package:args/command_runner.dart';
 import 'package:cura/src/commands/config_command.dart';
 
-class ConfigCLICommand extends Command<int> {
+class ConfigCLICommand extends Command {
   @override
   final name = 'config';
 
@@ -18,10 +18,10 @@ class ConfigCLICommand extends Command<int> {
   }
 
   @override
-  Future<int> run() async => 0;
+  Future<void> run() async => {};
 }
 
-class ConfigShowCommand extends Command<int> {
+class ConfigShowCommand extends Command {
   @override
   final name = 'show';
 
@@ -29,13 +29,13 @@ class ConfigShowCommand extends Command<int> {
   final description = 'Show current configuration';
 
   @override
-  Future<int> run() async {
+  Future<void> run() async {
     ConfigCommand().show();
-    return 0;
+    // return 0;
   }
 }
 
-class ConfigEditCommand extends Command<int> {
+class ConfigEditCommand extends Command {
   @override
   final name = 'edit';
 
@@ -49,7 +49,7 @@ class ConfigEditCommand extends Command<int> {
   }
 }
 
-class ConfigResetCommand extends Command<int> {
+class ConfigResetCommand extends Command {
   @override
   final name = 'reset';
 
@@ -57,13 +57,13 @@ class ConfigResetCommand extends Command<int> {
   final description = 'Reset configuration to defaults';
 
   @override
-  Future<int> run() async {
+  Future<void> run() async {
     ConfigCommand().reset();
-    return 0;
+    //return 0;
   }
 }
 
-class ConfigSetCommand extends Command<int> {
+class ConfigSetCommand extends Command {
   @override
   final name = 'set';
 
@@ -71,19 +71,19 @@ class ConfigSetCommand extends Command<int> {
   final description = 'Set a configuration value';
 
   @override
-  Future<int> run() async {
+  Future<void> run() async {
     final args = argResults!.rest;
     if (args.length != 2) {
       print('Usage: cura config set <key> <value>');
-      return 1;
+      //return 1;
     }
 
     ConfigCommand().set(args[0], args[1]);
-    return 0;
+    //return 0;
   }
 }
 
-class ConfigGetCommand extends Command<int> {
+class ConfigGetCommand extends Command {
   @override
   final name = 'get';
 
@@ -91,19 +91,19 @@ class ConfigGetCommand extends Command<int> {
   final description = 'Get a configuration value';
 
   @override
-  Future<int> run() async {
+  Future<void> run() async {
     final args = argResults!.rest;
     if (args.length != 1) {
       print('Usage: cura config get <key>');
-      return 1;
+      //return 1;
     }
 
     ConfigCommand().get(args[0]);
-    return 0;
+    // return 0;
   }
 }
 
-class ConfigValidateCommand extends Command<int> {
+class ConfigValidateCommand extends Command {
   @override
   final name = 'validate';
 
@@ -111,8 +111,8 @@ class ConfigValidateCommand extends Command<int> {
   final description = 'Validate configuration file';
 
   @override
-  Future<int> run() async {
+  Future<void> run() async {
     ConfigCommand().validate();
-    return 0;
+    //return 0;
   }
 }

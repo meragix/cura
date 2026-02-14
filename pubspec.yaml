@@ -8,15 +8,33 @@ environment:
   sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
+  # Core
   args: ^2.4.2
+
+  # HTTP
   http: ^1.2.0
   retry: ^3.1.2
+
+  # Logger
   mason_logger: ^0.3.3
+
+  # YAML
   yaml: ^3.1.2
-  path: ^1.9.1
+  yaml_writer: ^2.0.0
+
+  # Database
+  sqflite_common_ffi: ^2.3.0
+  path: ^1.8.3
+
+  # Utils
+  pool: ^1.5.1
 
 dev_dependencies:
-  test: ^1.26.3
+  # Testing
+  test: ^1.29.0
+  mocktail: ^1.0.0
+
+  # Linting
   lints: ^6.0.0
 
 executables:

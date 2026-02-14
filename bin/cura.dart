@@ -32,13 +32,13 @@ void main(List<String> arguments) async {
   }
 
   // Remove --theme from arguments to avoid polluting args
-  final cleanArgs = arguments.where((a) => !a.startsWith('--theme=')).toList();
+  // final cleanArgs = arguments.where((a) => !a.startsWith('--theme=')).toList();
 
   final runner = CommandRunner(
     'cura',
     '🩺 Flutter/Dart package health audit tool',
   )
-    ..run(cleanArgs)
+    // ..run(cleanArgs)
     ..addCommand(CheckCommand(
       repository: repository,
       logger: logger,
