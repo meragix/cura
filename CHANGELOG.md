@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- implement ui logger for scan command output
 - implement logic to analize packages form path
 - Config Hierarchy - Global vs Project Config
 
