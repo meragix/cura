@@ -1,4 +1,3 @@
-
 import 'package:cura/src/domain/models/package_health.dart';
 import 'package:cura/src/presentation/loggers/cura_logger.dart';
 import 'package:mason_logger/mason_logger.dart';

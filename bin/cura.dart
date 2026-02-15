@@ -46,15 +46,9 @@ void main(List<String> arguments) async {
   )
     // ..run(cleanArgs)
     ..addCommand(ScanCommand(
-      repository: repository,
-      logger: logger,
-      scanLogger: scanLogger
-    ))
+        repository: repository, logger: logger, scanLogger: scanLogger))
     ..addCommand(ViewCommand(
-      repository: repository,
-      logger: logger,
-      viewLogger: viewLogger
-    ))
+        repository: repository, logger: logger, viewLogger: viewLogger))
     ..addCommand(ConfigCLICommand());
 
   try {

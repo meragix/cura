@@ -45,7 +45,8 @@ class PackageInfo {
   }
 
   bool get isStale {
-    final eighteenMonthsAgo = DateTime.now().subtract(const Duration(days: 547));
+    final eighteenMonthsAgo =
+        DateTime.now().subtract(const Duration(days: 547));
     return published.isBefore(eighteenMonthsAgo);
   }
 

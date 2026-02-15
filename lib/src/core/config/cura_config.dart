@@ -59,9 +59,12 @@ class CuraConfig {
       maxRetries: yaml['max_retries'] as int?,
       showSuggestions: yaml['show_suggestions'] as bool?,
       maxSuggestionsPerPackage: yaml['max_suggestions_per_package'] as int?,
-      scoreWeights: yaml.containsKey('score_weights') ? ScoreWeights.fromYaml(yaml['score_weights'] as YamlMap) : null,
+      scoreWeights: yaml.containsKey('score_weights')
+          ? ScoreWeights.fromYaml(yaml['score_weights'] as YamlMap)
+          : null,
       ignorePackages: (yaml['ignore_packages'] as YamlList?)?.cast<String>(),
-      trustedPublishers: (yaml['trusted_publishers'] as YamlList?)?.cast<String>(),
+      trustedPublishers:
+          (yaml['trusted_publishers'] as YamlList?)?.cast<String>(),
     );
   }
 
@@ -156,9 +159,11 @@ ${trustedPublishers!.isEmpty ? '  # - dart.dev\n  # - flutter.dev' : trustedPubl
     buffer.writeln('# This config overrides global settings for this project');
     buffer.writeln('# Global config: ~/.cura/config.yaml');
     buffer.writeln('');
-    buffer.writeln('# ============================================================================');
+    buffer.writeln(
+        '# ============================================================================');
     buffer.writeln('# PROJECT-SPECIFIC SETTINGS');
-    buffer.writeln('# ============================================================================');
+    buffer.writeln(
+        '# ============================================================================');
     buffer.writeln('');
 
     // N'écrire que les valeurs non-null (overrides)
@@ -186,10 +191,12 @@ ${trustedPublishers!.isEmpty ? '  # - dart.dev\n  # - flutter.dev' : trustedPubl
       buffer.writeln('');
     }
 
-    buffer.writeln('# ============================================================================');
+    buffer.writeln(
+        '# ============================================================================');
     buffer.writeln('# OPTIONAL OVERRIDES');
     buffer.writeln('# Uncomment to override global settings');
-    buffer.writeln('# ============================================================================');
+    buffer.writeln(
+        '# ============================================================================');
     buffer.writeln('');
     buffer.writeln('# theme: dark');
     buffer.writeln('# show_suggestions: true');
@@ -268,7 +275,8 @@ ${trustedPublishers!.isEmpty ? '  # - dart.dev\n  # - flutter.dev' : trustedPubl
       timeoutSeconds: timeoutSeconds ?? this.timeoutSeconds,
       maxRetries: maxRetries ?? this.maxRetries,
       showSuggestions: showSuggestions ?? this.showSuggestions,
-      maxSuggestionsPerPackage: maxSuggestionsPerPackage ?? this.maxSuggestionsPerPackage,
+      maxSuggestionsPerPackage:
+          maxSuggestionsPerPackage ?? this.maxSuggestionsPerPackage,
       scoreWeights: scoreWeights,
       ignorePackages: ignorePackages,
       trustedPublishers: trustedPublishers,
@@ -288,7 +296,8 @@ ${trustedPublishers!.isEmpty ? '  # - dart.dev\n  # - flutter.dev' : trustedPubl
       timeoutSeconds: other.timeoutSeconds ?? timeoutSeconds,
       maxRetries: other.maxRetries ?? maxRetries,
       showSuggestions: other.showSuggestions ?? showSuggestions,
-      maxSuggestionsPerPackage: other.maxSuggestionsPerPackage ?? maxSuggestionsPerPackage,
+      maxSuggestionsPerPackage:
+          other.maxSuggestionsPerPackage ?? maxSuggestionsPerPackage,
       scoreWeights: other.scoreWeights ?? scoreWeights,
       ignorePackages: other.ignorePackages ?? ignorePackages,
       trustedPublishers: other.trustedPublishers ?? trustedPublishers,

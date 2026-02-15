@@ -26,11 +26,15 @@ class ScanCommand extends BaseCommand {
   }) {
     argParser
       ..addOption('path',
-          abbr: 'p', defaultsTo: './pubspec.yaml', help: 'Project directory (default: current directory)')
+          abbr: 'p',
+          defaultsTo: './pubspec.yaml',
+          help: 'Project directory (default: current directory)')
       ..addOption('min-score', help: 'Fail if average score below threshold')
       ..addOption('json', help: 'Output results as JSON')
-      ..addOption('no-github', help: 'Skip GitHub metrics (faster, offline mode)')
-      ..addOption('theme', help: 'Override theme (dark, light, minimal, dracula)');
+      ..addOption('no-github',
+          help: 'Skip GitHub metrics (faster, offline mode)')
+      ..addOption('theme',
+          help: 'Override theme (dark, light, minimal, dracula)');
   }
 
   @override
@@ -76,7 +80,8 @@ class ScanCommand extends BaseCommand {
       final bar = '█' * filled + '░' * (20 - filled);
       final time = (_stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
 
-      progress.update('Analyzing packages... [$bar] $completed/$total (${time}s)');
+      progress
+          .update('Analyzing packages... [$bar] $completed/$total (${time}s)');
     }
 
     progress.complete('Analyzing packages... [${'█' * 20}] $total/$total');
@@ -117,7 +122,8 @@ class ScanCommand extends BaseCommand {
         : summary.overallScore >= 60
             ? '⚠️'
             : '❌';
-    logger.info('  Overall health: ${scoreColor.wrap('${summary.overallScore}/100')} $scoreEmoji');
+    logger.info(
+        '  Overall health: ${scoreColor.wrap('${summary.overallScore}/100')} $scoreEmoji');
   }
 
   void _printFooter(AnalysisSummary summary) {
@@ -137,13 +143,17 @@ class ScanCommand extends BaseCommand {
   }
 
   AnalysisSummary _calculateSummary(List<PackageHealth> results) {
-    final healthy = results.where((p) => p.score.status == HealthStatus.healthy).length;
-    final warning = results.where((p) => p.score.status == HealthStatus.warning).length;
-    final critical = results.where((p) => p.score.status == HealthStatus.critical).length;
+    final healthy =
+        results.where((p) => p.score.status == HealthStatus.healthy).length;
+    final warning =
+        results.where((p) => p.score.status == HealthStatus.warning).length;
+    final critical =
+        results.where((p) => p.score.status == HealthStatus.critical).length;
     final total = results.length;
     //final apiCalls = results.where((r) => !r.cached).length;
 
-    final avgScore = results.map((p) => p.score.total).reduce((a, b) => a + b) ~/ total;
+    final avgScore =
+        results.map((p) => p.score.total).reduce((a, b) => a + b) ~/ total;
 
     return AnalysisSummary(
       healthy: healthy,

@@ -63,11 +63,9 @@ class ViewCommand extends BaseCommand<int> {
       final health = PackageHealth(info: info, score: score);
 
       progress.complete('Analysis complete');
-      
+
       viewLogger.printPackageView(health);
       return 0;
     });
   }
-
-  
 }

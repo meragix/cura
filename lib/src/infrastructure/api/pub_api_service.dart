@@ -24,7 +24,8 @@ class PubApiService {
     int? maxConcurrentRequests,
   })  : _client = client ?? http.Client(),
         _cache = cache ?? CacheService(),
-        _maxConcurrentRequests = maxConcurrentRequests ?? CuraConstants.maxConcurrentRequests;
+        _maxConcurrentRequests =
+            maxConcurrentRequests ?? CuraConstants.maxConcurrentRequests;
 
   Future<PackageInfo> getPackageInfo(String packageName) async {
     // Vérifier le cache d'abord
@@ -41,8 +42,12 @@ class PubApiService {
         () async {
           // Business Rule: On a besoin des deux endpoints pour un score complet
           final (infoJson, scoreJson) = await (
-            _client.fetchJson('${CuraConstants.pubDevApiBase}/packages/$packageName', packageName: packageName),
-            _client.fetchJson('${CuraConstants.pubDevApiBase}/packages/$packageName/score', packageName: packageName),
+            _client.fetchJson(
+                '${CuraConstants.pubDevApiBase}/packages/$packageName',
+                packageName: packageName),
+            _client.fetchJson(
+                '${CuraConstants.pubDevApiBase}/packages/$packageName/score',
+                packageName: packageName),
           ).wait;
 
           try {

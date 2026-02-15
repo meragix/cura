@@ -32,7 +32,8 @@ class ScanLogger {
     _logger.info('');
     _logger.error('CRITICAL ISSUES (require action):');
     for (final pkg in criticalPackages) {
-      _logger.error('   ${red.wrap('✗')} ${styleBold.wrap(pkg.info.name)} (score: ${pkg.score.total})');
+      _logger.error(
+          '   ${red.wrap('✗')} ${styleBold.wrap(pkg.info.name)} (score: ${pkg.score.total})');
       for (final issue in pkg.score.redFlags) {
         _logger.error('     └─ $issue');
       }

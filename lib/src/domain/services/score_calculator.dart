@@ -233,8 +233,7 @@ class ScoreCalculator {
 
     if (flags.any((f) => f.contains('SUSPICIOUS'))) {
       recs.add('AVOID: Likely an experimental or test package');
-      recs.add(
-          'Search for a maintained alternative from a verified publisher');
+      recs.add('Search for a maintained alternative from a verified publisher');
       return recs;
     }
 

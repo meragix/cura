@@ -18,7 +18,8 @@ class ConfigCommand {
     // Global config
     logger.info(styleBold.wrap('Global Config:'));
     logger.info('  Location: ${cyan.wrap(hierarchy.globalPath)}');
-    logger.info('  Status: ${hierarchy.hasGlobal ? green.wrap('✓ Found') : red.wrap('✗ Not found')}');
+    logger.info(
+        '  Status: ${hierarchy.hasGlobal ? green.wrap('✓ Found') : red.wrap('✗ Not found')}');
 
     if (verbose && hierarchy.global != null) {
       _printConfig(hierarchy.global!, indent: '  ');
@@ -29,7 +30,8 @@ class ConfigCommand {
     // Project config
     logger.info(styleBold.wrap('Project Config:'));
     logger.info('  Location: ${cyan.wrap(hierarchy.projectPath)}');
-    logger.info('  Status: ${hierarchy.hasProject ? green.wrap('✓ Found') : darkGray.wrap('✗ Not found')}');
+    logger.info(
+        '  Status: ${hierarchy.hasProject ? green.wrap('✓ Found') : darkGray.wrap('✗ Not found')}');
 
     if (verbose && hierarchy.project != null) {
       _printConfig(hierarchy.project!, indent: '  ');
@@ -45,8 +47,10 @@ class ConfigCommand {
         logger.info(styleBold.wrap('Project Overrides:'));
         for (final override in overrides) {
           logger.info('  ${override.key}:');
-          logger.info('    ${darkGray.wrap('Global:')} ${override.globalValue}');
-          logger.info('    ${cyan.wrap('Project:')} ${override.projectValue} ${green.wrap('✓')}');
+          logger
+              .info('    ${darkGray.wrap('Global:')} ${override.globalValue}');
+          logger.info(
+              '    ${cyan.wrap('Project:')} ${override.projectValue} ${green.wrap('✓')}');
         }
         logger.info('');
       }
@@ -67,14 +71,18 @@ class ConfigCommand {
     logger.info('${indent}Min Score: ${config.minScore}');
     logger.info('${indent}Weights:');
     logger.info('${indent * 2}Vitality: ${config.scoreWeights?.vitality}');
-    logger.info('${indent * 2}Technical Health: ${config.scoreWeights?.technicalHealth}');
+    logger.info(
+        '${indent * 2}Technical Health: ${config.scoreWeights?.technicalHealth}');
     logger.info('${indent * 2}Trust: ${config.scoreWeights?.trust}');
-    logger.info('${indent * 2}Maintenance: ${config.scoreWeights?.maintenance}');
+    logger
+        .info('${indent * 2}Maintenance: ${config.scoreWeights?.maintenance}');
     logger.info('${indent}Timeout: ${config.timeoutSeconds}s');
     logger.info('${indent}Max Retries: ${config.maxRetries}');
     logger.info('${indent}Show Suggestions: ${config.showSuggestions}');
-    logger.info('${indent}Max Suggestions Per Package: ${config.maxSuggestionsPerPackage}');
-    logger.info('${indent}GitHub Token: ${config.githubToken != null ? '✓ Set' : '✗ Not set'}');
+    logger.info(
+        '${indent}Max Suggestions Per Package: ${config.maxSuggestionsPerPackage}');
+    logger.info(
+        '${indent}GitHub Token: ${config.githubToken != null ? '✓ Set' : '✗ Not set'}');
 
     if (config.ignorePackages != null && config.ignorePackages!.length > 0) {
       logger.info('${indent}Ignored Packages:');
@@ -83,7 +91,8 @@ class ConfigCommand {
       }
     }
 
-    if (config.trustedPublishers != null && config.trustedPublishers!.length > 0) {
+    if (config.trustedPublishers != null &&
+        config.trustedPublishers!.length > 0) {
       logger.info('${indent}Trusted Publishers::');
       for (final pub in config.trustedPublishers!) {
         logger.info('${indent * 2}- $pub');

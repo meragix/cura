@@ -28,13 +28,15 @@ class ViewLogger {
   void _printHealthyPackage(PackageHealth data) {
     // Header
     _logger.info('');
-    _logger.info('${_scoreFormatter.getGradeEmoji(data.score.grade)} ${styleBold.wrap(data.info.name)} '
+    _logger.info(
+        '${_scoreFormatter.getGradeEmoji(data.score.grade)} ${styleBold.wrap(data.info.name)} '
         '${darkGray.wrap('v${data.info.version}')}');
     _logger.info('');
 
     // Score
     final gradeColor = _scoreFormatter.getGradeColor(data.score.grade);
-    _logger.info('${gradeColor.wrap('●')} Score: ${gradeColor.wrap('${data.score.total}/100')} '
+    _logger.info(
+        '${gradeColor.wrap('●')} Score: ${gradeColor.wrap('${data.score.total}/100')} '
         '${gradeColor.wrap('(${data.score.grade})')}');
 
     // Breakdown
@@ -55,13 +57,15 @@ class ViewLogger {
   void _printUnhealthyPackage(PackageHealth data) {
     // Header compact
     _logger.info('');
-    _logger.info('${_scoreFormatter.getGradeEmoji(data.score.grade)} ${styleBold.wrap(data.info.name)} '
+    _logger.info(
+        '${_scoreFormatter.getGradeEmoji(data.score.grade)} ${styleBold.wrap(data.info.name)} '
         '${darkGray.wrap('v${data.info.version}')}');
     _logger.info('');
 
     // Score principal avec warning
     final gradeColor = _scoreFormatter.getGradeColor(data.score.grade);
-    _logger.info('${gradeColor.wrap('●')} Score: ${gradeColor.wrap('${data.score.total}/100')} '
+    _logger.info(
+        '${gradeColor.wrap('●')} Score: ${gradeColor.wrap('${data.score.total}/100')} '
         '${gradeColor.wrap('(${data.score.grade})')}');
 
     // Mini breakdown
@@ -82,11 +86,13 @@ class ViewLogger {
     // Métriques clés (plus succinct que pour healthy)
     _logger.info('${styleBold.wrap('Analysis Details')}');
 
-    final publisher = data.info.publisherId ?? red.wrap('Unverified Publisher ⚠');
+    final publisher =
+        data.info.publisherId ?? red.wrap('Unverified Publisher ⚠');
     _logger.info('  • Source:      $publisher');
 
     final timeAgo = DateFormatter.timeAgo(data.info.published);
-    _logger.info('  • Last Sync:   $timeAgo ${data.info.isStale ? red.wrap('(Outdated)') : ''}');
+    _logger.info(
+        '  • Last Sync:   $timeAgo ${data.info.isStale ? red.wrap('(Outdated)') : ''}');
     _logger.info(
         '  • Pub Points:  ${data.info.panaScore}/${data.info.maxPanaScore} ${_getScoreIndicator(data.info.panaScore, data.info.maxPanaScore)}');
 
@@ -111,7 +117,8 @@ class ViewLogger {
     final trust = _scoreFormatter.miniBar(score.maintenance, 20);
     final maint = _scoreFormatter.miniBar(score.maintenance, 10);
 
-    _logger.info('└─ $vitality Vitality  $tech Tech  $trust Trust  $maint Maint');
+    _logger
+        .info('└─ $vitality Vitality  $tech Tech  $trust Trust  $maint Maint');
   }
 
   void _printMetrics(PackageInfo pkg) {
@@ -126,7 +133,8 @@ class ViewLogger {
 
     _logger.info(
         '  • Pub Score:   ${pkg.panaScore}/${pkg.maxPanaScore} ${_getScoreIndicator(pkg.panaScore, pkg.maxPanaScore)}');
-    _logger.info('  • Popularity:  ${pkg.popularity}% ${_getPopularityIndicator(pkg.popularity)}');
+    _logger.info(
+        '  • Popularity:  ${pkg.popularity}% ${_getPopularityIndicator(pkg.popularity)}');
 
     // if (pkg.githubStars != null) {
     //   logger.info('  GitHub:      ⭐ ${_formatNumber(data.githubStars!)}');
@@ -138,7 +146,8 @@ class ViewLogger {
         : days < 365
             ? '🟡'
             : '🟠';
-    _logger.info('  • Last Sync:   ${DateFormatter.formatDaysAgo(days)} $updateEmoji');
+    _logger.info(
+        '  • Last Sync:   ${DateFormatter.formatDaysAgo(days)} $updateEmoji');
 
     // Repository
     if (pkg.hasRepository) {

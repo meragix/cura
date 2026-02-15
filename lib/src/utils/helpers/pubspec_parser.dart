@@ -49,7 +49,8 @@ class Pubspec {
   });
 
   /// Helper pour obtenir uniquement les packages à auditer sur pub.dev
-  List<PubDevSource> get auditableDependencies => dependencies.whereType<PubDevSource>().toList();
+  List<PubDevSource> get auditableDependencies =>
+      dependencies.whereType<PubDevSource>().toList();
 }
 
 class PubspecParser {
