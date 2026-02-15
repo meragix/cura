@@ -66,6 +66,4 @@ jobs:
           dart pub global activate pana
 
       - name: Run Pana
-        run: |
-          cd packages/zema
-          pana --exit-code-threshold 20
+        run: pana --exit-code-threshold 20
