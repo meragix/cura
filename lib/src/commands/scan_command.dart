@@ -5,7 +5,6 @@ import 'package:cura/src/domain/models/cura_score.dart';
 import 'package:cura/src/domain/models/package_health.dart';
 import 'package:cura/src/domain/services/score_calculator.dart';
 import 'package:cura/src/presentation/loggers/specialized/scan_logger.dart';
-import 'package:cura/src/presentation/renderers/table_renderer.dart';
 import 'package:cura/src/utils/helpers/pubspec_parser.dart';
 import 'package:mason_logger/mason_logger.dart';
 

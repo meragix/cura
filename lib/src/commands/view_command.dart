@@ -38,7 +38,7 @@ class ViewCommand extends BaseCommand<int> {
   @override
   Future<int> run() async {
     final outputVerbose = argResults!['verbose'] as bool;
-    final outputJson = argResults!['json'] as bool;
+    // final outputJson = argResults!['json'] as bool;
 
     final errorHandler = ErrorHandler(logger: logger, verbose: outputVerbose);
 
