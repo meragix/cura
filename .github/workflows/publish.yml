@@ -1,0 +1,21 @@
+name: Publish to pub.dev
+
+on:
+  push:
+    tags:
+      - 'cura-*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for authentication using OIDC
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "stable"
+      
+      - name: Publish to pub.dev
+        run: dart pub publish --force
