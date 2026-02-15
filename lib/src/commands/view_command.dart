@@ -8,13 +8,13 @@ import 'package:cura/src/presentation/themes/symbols.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 class ViewCommand extends BaseCommand<int> {
+  ViewLogger viewLogger;
+
   @override
   String get name => 'view';
 
   @override
   String get description => 'Displays the health of a specific package';
-
-  ViewLogger viewLogger;
 
   ViewCommand({
     required super.repository,
@@ -26,7 +26,7 @@ class ViewCommand extends BaseCommand<int> {
         'verbose',
         abbr: 'v',
         negatable: false,
-        help: 'More details',
+        help: 'Show detailed debug information',
       )
       ..addFlag(
         'json',
@@ -68,4 +68,6 @@ class ViewCommand extends BaseCommand<int> {
       return 0;
     });
   }
+
+  
 }

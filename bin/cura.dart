@@ -5,6 +5,7 @@ import 'package:cura/src/commands/config_cli_command.dart';
 import 'package:cura/src/commands/scan_command.dart';
 import 'package:cura/src/commands/view_command.dart';
 import 'package:cura/src/presentation/loggers/cura_logger.dart';
+import 'package:cura/src/presentation/loggers/specialized/scan_logger.dart';
 import 'package:cura/src/presentation/loggers/specialized/view_logger.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:mason_logger/mason_logger.dart';
@@ -16,6 +17,7 @@ void main(List<String> arguments) async {
   final repository = PubDevRepository(service);
   final logger = Logger();
   final curaLogger = CuraLogger();
+  final scanLogger = ScanLogger(logger: curaLogger);
   final viewLogger = ViewLogger(logger: curaLogger);
 
   final themeArg = arguments.firstWhere(
@@ -46,6 +48,7 @@ void main(List<String> arguments) async {
     ..addCommand(ScanCommand(
       repository: repository,
       logger: logger,
+      scanLogger: scanLogger
     ))
     ..addCommand(ViewCommand(
       repository: repository,

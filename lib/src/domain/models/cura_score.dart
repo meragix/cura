@@ -1,5 +1,3 @@
-import 'package:yaml/yaml.dart';
-
 class CuraScore {
   final int total;
   final int maintenance;
