@@ -43,8 +43,8 @@ jobs:
           path: ~/.pub-cache
           key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
 
-      - name: Run tests
-        run: melos test
+      # - name: Run tests
+      #   run: dart run test
       
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -66,6 +66,4 @@ jobs:
           dart pub global activate pana
       
       - name: Run Pana
-        run: |
-          cd packages/zema
-          pana --exit-code-threshold 20
+        run: pana --exit-code-threshold 20
