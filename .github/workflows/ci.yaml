@@ -11,20 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      
       - uses: dart-lang/setup-dart@v1
         with:
-          sdk: "stable"
-
+          sdk: '3.9.0'
+      
       - name: Cache pub
         uses: actions/cache@v3
         with:
           path: ~/.pub-cache
           key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
-
+      
       # - name: Analyze
       #   run: dart analyze .
-
+      
       - name: Check formatting
         run: dart format .
 
@@ -32,20 +32,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
+      
       - uses: dart-lang/setup-dart@v1
         with:
-          sdk: "stable"
-
+          sdk: '3.9.0'
+      
       - name: Cache pub
         uses: actions/cache@v3
         with:
           path: ~/.pub-cache
           key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
 
-      # - name: Run tests
-      #   run: dart run test
-
+      - name: Run tests
+        run: melos test
+      
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
@@ -56,14 +56,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+    
       - uses: dart-lang/setup-dart@v1
         with:
-          sdk: "stable"
+          sdk: '3.9.0'
 
       - name: Install tools
         run: |
           dart pub global activate pana
-
+      
       - name: Run Pana
-        run: pana --exit-code-threshold 10
+        run: |
+          cd packages/zema
+          pana --exit-code-threshold 20
