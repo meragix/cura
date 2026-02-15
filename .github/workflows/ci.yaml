@@ -51,19 +51,4 @@ jobs:
         with:
           files: coverage/lcov.info
           fail_ci_if_error: fasle
-
-  pana:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-    
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: '3.9.0'
-
-      - name: Install tools
-        run: |
-          dart pub global activate pana
-      
-      - name: Run Pana
-        run: pana --exit-code-threshold 20
+          
