@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:cura/src/core/cache_service.dart';
 import 'package:cura/src/core/constants.dart';
 import 'package:cura/src/core/error/exception.dart';
 import 'package:cura/src/domain/models/package_info.dart';
+import 'package:cura/src/utils/helpers/pubspec_parser.dart';
 import 'package:http/http.dart' as http;
 import 'package:retry/retry.dart';
 
@@ -22,8 +24,7 @@ class PubApiService {
     int? maxConcurrentRequests,
   })  : _client = client ?? http.Client(),
         _cache = cache ?? CacheService(),
-        _maxConcurrentRequests =
-            maxConcurrentRequests ?? CuraConstants.maxConcurrentRequests;
+        _maxConcurrentRequests = maxConcurrentRequests ?? CuraConstants.maxConcurrentRequests;
 
   Future<PackageInfo> getPackageInfo(String packageName) async {
     // Vérifier le cache d'abord
@@ -38,16 +39,11 @@ class PubApiService {
     try {
       return retry(
         () async {
-          final results = await Future.wait([
-            _fetchJson('${CuraConstants.pubDevApiBase}/packages/$packageName',
-                packageName: packageName),
-            _fetchJson(
-                '${CuraConstants.pubDevApiBase}/packages/$packageName/score',
-                packageName: packageName),
-          ]);
-
-          final infoJson = results[0] as Map<String, dynamic>;
-          final scoreJson = results[1] as Map<String, dynamic>;
+          // Business Rule: On a besoin des deux endpoints pour un score complet
+          final (infoJson, scoreJson) = await (
+            _client.fetchJson('${CuraConstants.pubDevApiBase}/packages/$packageName', packageName: packageName),
+            _client.fetchJson('${CuraConstants.pubDevApiBase}/packages/$packageName/score', packageName: packageName),
+          ).wait;
 
           try {
             final packageInfo = PackageInfo.fromPubDevJson(
@@ -76,15 +72,7 @@ class PubApiService {
     }
   }
 
-  Future<List<PackageInfo>> getMultiplePackages(
-    List<String> packageNames,
-  ) async {
-    final results = await Future.wait(
-      packageNames.map((name) => getPackageInfo(name)),
-    );
-    return results;
-  }
-
+  // todo: replace this with pool connection
   Future<void> _acquireSlot() async {
     if (_activeRequests < _maxConcurrentRequests) {
       _activeRequests++;
@@ -105,18 +93,21 @@ class PubApiService {
     }
   }
 
-  // Helpers
-  Future<dynamic> _fetchJson(
+  void dispose() => _client.close();
+}
+
+extension PubDevClientX on http.Client {
+  Future<Map<String, dynamic>> fetchJson(
     String url, {
     required String packageName,
   }) async {
-    final response = await _client.get(Uri.parse(url)).timeout(
-          const Duration(seconds: 10),
-          onTimeout: () => throw NetworkException(
-            'Request timeout after 10 seconds',
-            url: 'https://pub.dev/api/packages/$packageName',
-          ),
-        );
+    final response = await get(Uri.parse(url)).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => throw NetworkException(
+        'Request timeout after 10 seconds',
+        url: 'https://pub.dev/api/packages/$packageName',
+      ),
+    );
 
     if (response.statusCode == 404) {
       throw PackageNotFoundException(packageName);
@@ -134,8 +125,30 @@ class PubApiService {
       );
     }
 
-    return jsonDecode(response.body);
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
-
-  void dispose() => _client.close();
 }
+
+// Future<Result<PackageInfo>> getPackageInfo(String packageName) async {
+//   final baseUrl = CuraConstants.pubDevApiBase;
+
+//   return _connectionPool.withResource(() async {
+//     try {
+//       // Dart 3 Parallelism : On lance les deux en même temps
+//       // Les Records (.wait) attendent que les deux soient finis
+//       final (infoJson, scoreJson) = await (
+//         _client.fetchJson('$baseUrl/packages/$packageName'),
+//         _client.fetchJson('$baseUrl/packages/$packageName/score'),
+//       ).wait;
+
+//       final packageInfo = PackageInfo.fromPubDevJson(
+//         infoJson: infoJson,
+//         scoreJson: scoreJson,
+//       );
+
+//       return Success(packageInfo);
+//     } catch (e) {
+//       return Failure('Network error for $packageName: $e');
+//     }
+//   });
+// }

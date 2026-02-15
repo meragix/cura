@@ -17,12 +17,12 @@ class DateFormatter {
     return '$years ${years == 1 ? 'year' : 'years'} ago';
   }
 
-  static String formatDate(DateTime date) {
+  static String timeAgo(DateTime date) {
     final days = DateTime.now().difference(date).inDays;
     return formatDaysAgo(days);
   }
 
-  static int formatInDays(DateTime date) {
+  static int dateInDay(DateTime date) {
     return DateTime.now().difference(date).inDays;
   }
 }

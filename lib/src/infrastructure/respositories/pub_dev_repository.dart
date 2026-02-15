@@ -11,10 +11,4 @@ class PubDevRepository implements PackageRepository {
   Future<PackageInfo> getPackageInfo(String packageName) async {
     return _service.getPackageInfo(packageName);
   }
-
-  @override
-  Future<List<PackageInfo>> getPackagesFromPubspec(String pubspecPath) {
-    // TODO: implement getPackagesFromPubspec
-    throw UnimplementedError();
-  }
 }

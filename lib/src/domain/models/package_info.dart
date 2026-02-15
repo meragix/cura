@@ -44,6 +44,11 @@ class PackageInfo {
     return DateTime.now().difference(published).inDays;
   }
 
+  bool get isStale {
+    final eighteenMonthsAgo = DateTime.now().subtract(const Duration(days: 547));
+    return published.isBefore(eighteenMonthsAgo);
+  }
+
   bool get hasRepository => repositoryUrl != null && repositoryUrl!.isNotEmpty;
 
   double get healthRatio => panaScore / maxPanaScore;

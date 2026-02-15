@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
-import 'package:cura/src/commands/check_command.dart';
 import 'package:cura/src/commands/config_cli_command.dart';
+import 'package:cura/src/commands/scan_command.dart';
 import 'package:cura/src/commands/view_command.dart';
 import 'package:cura/src/presentation/loggers/cura_logger.dart';
 import 'package:cura/src/presentation/loggers/specialized/view_logger.dart';
@@ -43,7 +43,7 @@ void main(List<String> arguments) async {
     '🩺 Flutter/Dart package health audit tool',
   )
     // ..run(cleanArgs)
-    ..addCommand(CheckCommand(
+    ..addCommand(ScanCommand(
       repository: repository,
       logger: logger,
     ))

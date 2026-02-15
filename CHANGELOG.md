@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- implement logic to analize packages form path
 - Config Hierarchy - Global vs Project Config
+
+### Change
+
+- update view command logger
 
 ## [0.2.0] - 2026-02-13
 

@@ -47,7 +47,7 @@ class ViewLogger {
     _logger.info('');
     _logger.section('✓ Recommended');
     for (final r in data.score.recommendations) {
-      _logger.info('  • $r');
+      _logger.info('  → $r');
     }
     _logger.info('');
   }
@@ -68,35 +68,34 @@ class ViewLogger {
     _printMiniBreakdown(data.score);
 
     // Issues (section importante pour packages problématiques)
-    _logger.info('');
-    _logger.warning('${styleBold.wrap('Issues Detected')}');
-    for (final issue in data.score.redFlags) {
-      _logger.info('  ${red.wrap('●')} $issue');
+    if (data.score.redFlags.isNotEmpty) {
+      _logger.info('');
+      //  _logger.warning('${styleBold.wrap('CRITICAL ISSUES')}');
+      _logger.info('${red.wrap(styleBold.wrap('CRITICAL ISSUES'))}');
+      for (final issue in data.score.redFlags) {
+        _logger.info('  ${red.wrap('✖')} $issue');
+      }
     }
+
     _logger.info('');
 
     // Métriques clés (plus succinct que pour healthy)
-    _logger.info('${styleBold.wrap('Details')}');
+    _logger.info('${styleBold.wrap('Analysis Details')}');
 
-    if (data.info.publisherId != null) {
-      _logger.info('  Publisher:   ${data.info.publisherId}');
-    } else {
-      _logger.warning('  Publisher:   ${red.wrap('None')} (unverified)', showSymbol: false);
-    }
+    final publisher = data.info.publisherId ?? red.wrap('Unverified Publisher ⚠');
+    _logger.info('  • Source:      $publisher');
 
+    final timeAgo = DateFormatter.timeAgo(data.info.published);
+    _logger.info('  • Last Sync:   $timeAgo ${data.info.isStale ? red.wrap('(Outdated)') : ''}');
     _logger.info(
-        '  Pub Score:   ${data.info.panaScore}/${data.info.maxPanaScore} ${_getScoreIndicator(data.info.panaScore, data.info.maxPanaScore)}');
-    _logger.info('  Popularity:  ${data.info.popularity}% ${_getPopularityIndicator(data.info.popularity)}');
-
-    final updateText = DateFormatter.formatDate(data.info.published);
-    _logger.info('  Last Update: $updateText ${red.wrap('⚠')}');
+        '  • Pub Points:  ${data.info.panaScore}/${data.info.maxPanaScore} ${_getScoreIndicator(data.info.panaScore, data.info.maxPanaScore)}');
 
     // Recommandation (critiques pour packages problématiques)
     if (data.score.recommendations.isNotEmpty) {
       _logger.info('');
-      _logger.warning('Recommandation');
+      _logger.warning('Suggested Actions:', showSymbol: false);
       for (final r in data.score.recommendations) {
-        _logger.info('  → $r} ');
+        _logger.info('  ${yellow.wrap('→')} $r');
       }
     }
 
@@ -122,28 +121,28 @@ class ViewLogger {
 
     if (pkg.publisherId != null) {
       final publisherEmoji = pkg.hasVerifiedPublisher ? '✓' : '';
-      _logger.info('  Publisher:   ${pkg.publisherId} $publisherEmoji');
+      _logger.info('  • Source:      ${pkg.publisherId} $publisherEmoji');
     }
 
     _logger.info(
-        '  Pub Score:   ${pkg.panaScore}/${pkg.maxPanaScore} ${_getScoreIndicator(pkg.panaScore, pkg.maxPanaScore)}');
-    _logger.info('  Popularity:  ${pkg.popularity}% ${_getPopularityIndicator(pkg.popularity)}');
+        '  • Pub Score:   ${pkg.panaScore}/${pkg.maxPanaScore} ${_getScoreIndicator(pkg.panaScore, pkg.maxPanaScore)}');
+    _logger.info('  • Popularity:  ${pkg.popularity}% ${_getPopularityIndicator(pkg.popularity)}');
 
     // if (pkg.githubStars != null) {
     //   logger.info('  GitHub:      ⭐ ${_formatNumber(data.githubStars!)}');
     // }
 
-    final days = DateFormatter.formatInDays(pkg.published);
+    final days = DateFormatter.dateInDay(pkg.published);
     final updateEmoji = days < 90
         ? '🟢'
         : days < 365
             ? '🟡'
             : '🟠';
-    _logger.info('  Last Update: ${DateFormatter.formatDaysAgo(days)} $updateEmoji');
+    _logger.info('  • Last Sync:   ${DateFormatter.formatDaysAgo(days)} $updateEmoji');
 
     // Repository
     if (pkg.hasRepository) {
-      _logger.info('  Repository:  ${pkg.repositoryUrl}');
+      _logger.info('  • Repository:  ${pkg.repositoryUrl}');
     }
   }
 
