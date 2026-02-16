@@ -22,40 +22,15 @@ This document provides guidelines and instructions for contributing. Whether you
 
 ## 📜 Code of Conduct
 
-### Our Pledge
+This project follows the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
 
-We are committed to providing a welcoming and inclusive environment for all contributors, regardless of:
+**In short:**
 
-- Experience level
-- Gender identity and expression
-- Sexual orientation
-- Disability
-- Personal appearance
-- Body size
-- Race, ethnicity, or nationality
-- Age
-- Religion
-
-### Our Standards
-
-**Examples of behavior that contributes to a positive environment:**
-
-- ✅ Using welcoming and inclusive language
-- ✅ Being respectful of differing viewpoints
-- ✅ Gracefully accepting constructive criticism
-- ✅ Focusing on what is best for the community
-- ✅ Showing empathy towards other community members
-
-**Examples of unacceptable behavior:**
-
-- ❌ Trolling, insulting/derogatory comments, and personal attacks
-- ❌ Public or private harassment
-- ❌ Publishing others' private information without permission
-- ❌ Other conduct which could reasonably be considered inappropriate
-
-### Enforcement
-
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at <conduct@cura.dev>. All complaints will be reviewed and investigated promptly and fairly.
+- ✅ Be respectful and inclusive
+- ✅ Focus on constructive feedback
+- ✅ Accept criticism gracefully
+- ✅ Adherence to this code is mandatory for all contributors and maintainers.
+- ❌ No harassment, trolling, or personal attacks
 
 ---
 
@@ -188,11 +163,28 @@ Help build the alternatives database:
 
 ## 🛠️ Development Setup
 
+### Project Structure
+
+````bash
+lib/
+├── src/
+│   ├── domain/          # Business logic (no dependencies)
+│   ├── infrastructure/  # External adapters (APIs, DB, cache)
+│   ├── application/     # Commands (orchestration)
+│   ├── presentation/    # CLI UI (formatters, presenters)
+│   └── shared/          # Utilities, constants
+test/
+├── unit/               # Unit tests (fast, isolated)
+├── integration/        # Integration tests (with real APIs)
+└── e2e/                # End-to-end CLI tests
+````
+
 ### Prerequisites
 
 - **Dart SDK** ≥ 3.0.0
 - **Git**
 - **Code editor** (VS Code recommended)
+- Basic understanding of Clean Architecture principles
 
 ### Quick Start
 
