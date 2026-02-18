@@ -5,7 +5,7 @@ import 'package:cura/src/domain/models/cura_score.dart';
 import 'package:cura/src/domain/models/package_health.dart';
 import 'package:cura/src/domain/services/score_calculator.dart';
 import 'package:cura/src/presentation/loggers/specialized/scan_logger.dart';
-import 'package:cura/src/utils/helpers/pubspec_parser.dart';
+import 'package:cura/src/shared/utils/pubspec_parser.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 class ScanCommand extends BaseCommand {
@@ -47,15 +47,15 @@ class ScanCommand extends BaseCommand {
     final results = <PackageHealth>[];
     final criticalPackages = <PackageHealth>[];
     var completed = 0;
-    // var cached = 0;
-    // var apiCalls = 0;
+     var cached = 0;
+    var apiCalls = 0;
 
     _stopwatch.start();
 
     final content = await file.readAsString();
     final pubspec = PubspecParser.parse(content);
     // On extrait les noms (Business Rule: on ignore peut-être les dev_dependencies ?)
-    final packages = pubspec.auditableDependencies;
+    final packages = pubspec.auditableDeps;
     final total = packages.length;
 
     logger.info('Project: ${styleBold.wrap(pubspec.name)}');
