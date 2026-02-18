@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:cura/src/core/cache_service.dart';
 import 'package:cura/src/core/constants.dart';
-import 'package:cura/src/core/error/exception.dart';
+import 'package:cura/src/domain/value_objects/exception.dart';
 import 'package:cura/src/domain/models/package_info.dart';
-import 'package:cura/src/utils/helpers/pubspec_parser.dart';
 import 'package:http/http.dart' as http;
 import 'package:retry/retry.dart';
 
