@@ -1,4 +1,4 @@
-import 'package:cura/src/core/config/cura_config.dart';
+import 'package:cura/src/infrastructure/config/models/cura_config.dart';
 
 /// Représente la hiérarchie de configuration
 class ConfigHierarchy {
