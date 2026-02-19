@@ -48,9 +48,10 @@ class Pubspec {
     required this.overrides,
   });
 
-  /// Helper pour obtenir uniquement les packages à auditer sur pub.dev
-  List<PubDevSource> get auditableDependencies =>
-      dependencies.whereType<PubDevSource>().toList();
+  /// Helper to retrieve only the packages to audit on pub.dev
+  List<PubDevSource> get auditableDeps => dependencies.whereType<PubDevSource>().toList();
+
+  List<PubDevSource> get auditableDevDeps => devDependencies.whereType<PubDevSource>().toList();
 }
 
 class PubspecParser {

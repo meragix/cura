@@ -1,6 +1,6 @@
 import 'package:cura/src/domain/models/cura_score.dart';
 import 'package:cura/src/domain/models/package_health.dart';
-import 'package:cura/src/presentation/formatters/date_formatter.dart';
+import 'package:cura/src/presentation/cli/formatters/date_formatter.dart';
 import 'package:cura/src/presentation/loggers/cura_logger.dart';
 import 'package:mason_logger/mason_logger.dart';
 
@@ -12,8 +12,7 @@ class TableRenderer {
 
   void render(List<PackageHealth> data) {
     // Trier : critiques en bas pour visibilité
-    final sorted = data.toList()
-      ..sort((a, b) => b.score.total.compareTo(a.score.total));
+    final sorted = data.toList()..sort((a, b) => b.score.total.compareTo(a.score.total));
 
     _printHeader();
 
@@ -47,8 +46,7 @@ class TableRenderer {
     logger.info(divider);
 
     //final header = '│ Package                │ Score │ Status │ Last Update  │';
-    final header =
-        '│ ${'Package'.padRight(22)} │ Score │ Status │ Last Update  │';
+    final header = '│ ${'Package'.padRight(22)} │ Score │ Status │ Last Update  │';
     logger.info(styleBold.wrap(header)!);
 
     final headerDivider = '├${'─' * 24}┼${'─' * 7}┼${'─' * 8}┼${'─' * 14}┤';
@@ -59,9 +57,8 @@ class TableRenderer {
     final name = _truncate(item.info.name, 22).padRight(22);
     final score = item.score.total.toString().padLeft(3);
     final statusEmoji = _getStatusEmoji(item.score.status).padRight(6);
-    final lastUpdate = _formatDate(item.info.published).padRight(12);
-    final stableEmoji =
-        item.info.isFlutterFavorite ? ' ⭐' : ''; // todo: change to isStable
+    final lastUpdate = DateFormatter.formatToMonth(item.info.published).padRight(12);
+    final stableEmoji = item.info.isFlutterFavorite ? ' ⭐' : ''; // todo: change to isStable
 
     final row = '│ $name │  $score  │ $statusEmoji │ $lastUpdate$stableEmoji │';
 
@@ -79,8 +76,7 @@ class TableRenderer {
     logger.info(divider);
 
     // Légende
-    final legend =
-        '${styleItalic.wrap('Legend')}: ${yellow.wrap('⭐ Stable package')}  '
+    final legend = '${styleItalic.wrap('Legend')}: ${yellow.wrap('⭐ Stable package')}  '
         '${yellow.wrap('! Needs review')}  '
         '${red.wrap('✗ Critical')}';
     logger.info(legend);
@@ -103,13 +99,6 @@ class TableRenderer {
       case HealthStatus.critical:
         return red.wrap(row)!;
     }
-  }
-
-  String _formatDate(DateTime date) {
-    final days = DateFormatter.dateInDay(date);
-    if (days < 30) return '$days days';
-    final months = (days / 30).round();
-    return '$months month${months > 1 ? 's' : ' '}';
   }
 
   String _getStatusEmoji(HealthStatus status) {

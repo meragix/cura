@@ -53,7 +53,7 @@ class NetworkException extends CuraException {
 /// Rate limiting error
 class RateLimitException extends CuraException {
   final String apiName;
-  final DateTime? retryAfter;
+  final Duration? retryAfter;
 
   RateLimitException(
     this.apiName, {
@@ -61,9 +61,7 @@ class RateLimitException extends CuraException {
   }) : super(
           'Rate limit exceeded for $apiName API',
           code: 'RATE_LIMIT',
-          context: retryAfter != null
-              ? 'Retry after ${retryAfter.difference(DateTime.now()).inSeconds}s'
-              : null,
+          context: retryAfter != null ? 'Retry after ${retryAfter}' : null,
         );
 }
 

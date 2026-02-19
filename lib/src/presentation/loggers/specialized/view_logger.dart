@@ -1,7 +1,7 @@
 import 'package:cura/src/domain/models/cura_score.dart';
 import 'package:cura/src/domain/models/package_health.dart';
 import 'package:cura/src/domain/models/package_info.dart';
-import 'package:cura/src/presentation/formatters/date_formatter.dart';
+import 'package:cura/src/presentation/cli/formatters/date_formatter.dart';
 import 'package:cura/src/presentation/formatters/score_formatter.dart';
 import 'package:cura/src/presentation/loggers/cura_logger.dart';
 import 'package:mason_logger/mason_logger.dart';
@@ -90,7 +90,7 @@ class ViewLogger {
         data.info.publisherId ?? red.wrap('Unverified Publisher ⚠');
     _logger.info('  • Source:      $publisher');
 
-    final timeAgo = DateFormatter.timeAgo(data.info.published);
+    final timeAgo = DateFormatter.format(data.info.published);
     _logger.info(
         '  • Last Sync:   $timeAgo ${data.info.isStale ? red.wrap('(Outdated)') : ''}');
     _logger.info(
@@ -140,14 +140,14 @@ class ViewLogger {
     //   logger.info('  GitHub:      ⭐ ${_formatNumber(data.githubStars!)}');
     // }
 
-    final days = DateFormatter.dateInDay(pkg.published);
+    final days = DateTime.now().difference(pkg.published).inDays;
     final updateEmoji = days < 90
         ? '🟢'
         : days < 365
             ? '🟡'
             : '🟠';
     _logger.info(
-        '  • Last Sync:   ${DateFormatter.formatDaysAgo(days)} $updateEmoji');
+        '  • Last Sync:   ${DateFormatter.format(pkg.published)} $updateEmoji');
 
     // Repository
     if (pkg.hasRepository) {

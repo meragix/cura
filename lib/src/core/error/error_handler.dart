@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:cura/src/core/error/exception.dart';
+import 'package:cura/src/domain/value_objects/exception.dart';
 import 'package:cura/src/presentation/formatters/error_formatter.dart';
 import 'package:http/http.dart' as http;
 import 'package:mason_logger/mason_logger.dart';
