@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:cura/src/core/error/exception.dart';
+import 'package:cura/src/domain/value_objects/exception.dart';
 import 'package:mason_logger/mason_logger.dart';
 // import 'package:io/ansi.dart';
 import 'package:http/http.dart' as http;
@@ -96,8 +96,7 @@ class ErrorFormatter {
     logger.info('');
     logger.info(yellow.wrap('💡 Suggestions:'));
     logger.info('   ${darkGray.wrap('•')} Check your internet connection');
-    logger
-        .info('   ${darkGray.wrap('•')} Verify the API endpoint is accessible');
+    logger.info('   ${darkGray.wrap('•')} Verify the API endpoint is accessible');
     logger.info('   ${darkGray.wrap('•')} Try again in a few moments');
     logger.err(red.wrap('─' * 60));
     logger.info('');
@@ -111,15 +110,13 @@ class ErrorFormatter {
     logger.err('');
     logger.err('Unable to connect to the network');
     logger.info('');
-    logger
-        .info('${darkGray.wrap('Host:')} ${error.address?.host ?? 'unknown'}');
+    logger.info('${darkGray.wrap('Host:')} ${error.address?.host ?? 'unknown'}');
     logger.info('${darkGray.wrap('Port:')} ${error.port ?? 'unknown'}');
     logger.info('');
     logger.info(yellow.wrap('💡 Suggestions:'));
     logger.info('   ${darkGray.wrap('•')} Check your internet connection');
     logger.info('   ${darkGray.wrap('•')} Verify DNS resolution is working');
-    logger.info(
-        '   ${darkGray.wrap('•')} Check if you\'re behind a proxy/firewall');
+    logger.info('   ${darkGray.wrap('•')} Check if you\'re behind a proxy/firewall');
     logger.err(red.wrap('─' * 60));
     logger.info('');
   }
@@ -197,8 +194,7 @@ class ErrorFormatter {
     if (error is RateLimitException) {
       final retryAfter = error.retryAfter;
       return [
-        if (retryAfter != null)
-          'Wait ${retryAfter.difference(DateTime.now()).inSeconds} seconds before retrying',
+        if (retryAfter != null) 'Wait $retryAfter before retrying',
         'Use ${cyan.wrap('--use-cache')} to reduce API calls',
         'Consider using a GitHub token for higher rate limits',
       ];
