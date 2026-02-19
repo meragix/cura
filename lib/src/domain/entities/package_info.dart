@@ -67,12 +67,24 @@ class PackageInfo {
   }
 
   int get daysSinceLastUpdate => DateTime.now().difference(lastPublished).inDays;
-
   double get scorePercentage => maxPoints > 0 ? (grantedPoints / maxPoints * 100) : 0;
 
   bool get isPopular => likes > 1000 || popularity > 90;
-  bool get isStable => version.startsWith('1.') || version.startsWith('2.');
-  bool get isWeb =>  supportedPlatforms.contains('platform:web'); // show WasmMessage later
+  bool get isWeb => supportedPlatforms.contains('platform:web'); // show WasmMessage later
+
+  bool get isStable {
+    try {
+      // We extract the first segment before the period or hyphen
+      final majorStr = version.split(RegExp(r'[.-]')).first;
+      final major = int.parse(majorStr);
+
+      // A version is stable if Major >= 1
+      // AND it is not a pre-release (e.g., does not contain a hyphen)
+      return major >= 1 && !version.contains('-') && !isDiscontinued;
+    } catch (_) {
+      return false; // In case of an unusual version format
+    }
+  }
 
   // Todo: perform it later
   factory PackageInfo.fromPubDevJson({

@@ -11,6 +11,9 @@ class TableRenderer {
 
   /// Render audit results as table
   String renderAuditTable(List<PackageAuditResult> results) {
+    // Sort: reviews at the bottom for visibility
+    final sorted = results.toList()..sort((a, b) => b.score.total.compareTo(a.score.total));
+
     final table = Table(
       header: [
         'Package',
@@ -18,19 +21,34 @@ class TableRenderer {
         'Status',
         'Last Update',
       ],
-      // columnWidths: [25, 7, 8, 15],
+      columnWidths: [25, 7, 8, 15],
       // style: TableStyle(
       //   border: _useColors ? _coloredBorder() : _plainBorder(),
       // ),
     );
 
-    for (final result in results) {
-      table.add([
-        _formatPackageName(result),
-        _formatScore(result.score.total),
-        _formatStatus(result.status, result.packageInfo.isStable),
-        _formatLastUpdate(result.packageInfo.daysSinceLastUpdate),
-      ]);
+    // Rows (display the first and last 15)
+    final showAll = sorted.length <= 15;
+
+    final top = showAll ? sorted : sorted.take(7).toList();
+    final bottom = showAll ? <PackageAuditResult>[] : sorted.skip(sorted.length - 3).toList();
+
+    void _addRows(Table table, List<PackageAuditResult> list) {
+      for (final result in list) {
+        table.add([
+          _formatPackageName(result),
+          _formatScore(result.score.total),
+          {'content': _formatStatus(result.status, result.packageInfo.isStable), 'vAlign': HorizontalAlign.center},
+          _formatLastUpdate(result.packageInfo.daysSinceLastUpdate),
+        ]);
+      }
+    }
+
+    _addRows(table, top);
+
+    if (!showAll) {
+      table.add(['...', '...', '...', '...']);
+      _addRows(table, bottom);
     }
 
     return table.toString();
@@ -108,17 +126,17 @@ class TableRenderer {
 
   String _formatStatus(AuditStatus status, bool isStable) {
     final icon = switch (status) {
-      AuditStatus.excellent => '✅',
-      AuditStatus.good => '✅',
-      AuditStatus.warning => '⚠️',
-      AuditStatus.critical => '❌',
-      AuditStatus.discontinued => '❌',
+      AuditStatus.excellent => '✓',
+      AuditStatus.good => '✓',
+      AuditStatus.warning => '!',
+      AuditStatus.critical => '✗',
+      AuditStatus.discontinued => '✗',
     };
 
     // Add star for stable packages
-    final suffix = isStable ? ' ⭐' : '';
+    // final suffix = isStable ? ' ⭐' : '';
 
-    if (!_useColors) return '$icon$suffix';
+    if (!_useColors) return '$icon';
 
     final colored = switch (status) {
       AuditStatus.excellent || AuditStatus.good => green.wrap(icon),
@@ -126,7 +144,7 @@ class TableRenderer {
       AuditStatus.critical || AuditStatus.discontinued => red.wrap(icon),
     };
 
-    return '${colored!}$suffix';
+    return '$colored';
   }
 
   String _formatLastUpdate(int days) {

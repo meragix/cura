@@ -1,5 +1,6 @@
 import 'dart:io' as io;
 
+import 'package:cura/src/presentation/cli/themes/theme.dart';
 import 'package:cura/src/presentation/cli/themes/theme_manager.dart';
 import 'package:mason_logger/mason_logger.dart';
 
@@ -31,6 +32,8 @@ class ConsoleLogger {
           // theme: useColors ? LogTheme() : LogTheme.noColor(),
         );
 
+  CuraTheme get theme => ThemeManager.current;
+
   // ==========================================================================
   // BASIC LOGGING
   // ==========================================================================
@@ -48,13 +51,22 @@ class ConsoleLogger {
   }
 
   /// Log warning message (yellow)
-  void warn(String message) {
-    _logger.warn(_applyEmoji(message, '⚠'), tag: '');
+  // void warn(String message, {bool showSymbol = true}) {
+  //   _logger.warn(_applyEmoji(message, '⚠'), tag: '');
+  // }
+
+  void warn(String message, {bool showSymbol = true}) {
+    if (showSymbol) {
+      _logger.info('${theme.warning.wrap(message)}');
+    } else {
+      _logger.info('${theme.warning.wrap(message)}');
+    }
   }
 
   /// Log error message (red)
   void error(String message) {
-    _logger.err(_applyEmoji(message, '✗'));
+    _logger.err('${theme.error.wrap(message)}');
+    //_logger.err(_applyEmoji(message, '✗'));
   }
 
   /// Log detail message (gray/dim)

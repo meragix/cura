@@ -33,11 +33,11 @@ class DateFormatter {
 
     final months = (days / 30).floor();
     if (months == 1) return '1 month';
-    if (months < 12) return '$months months';
+    return '$months months';
 
-    final years = (days / 365).floor();
-    if (years == 1) return '1 year';
-    return '$years years';
+    // final years = (days / 365).floor();
+    // if (years == 1) return '1 year';
+    // return '$years years';
   }
 
   /// Format: "2024-01-15"

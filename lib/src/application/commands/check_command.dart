@@ -95,50 +95,43 @@ class CheckCommand extends Command<int> {
     // 3. Show header
     _presenter.showHeader(total: packagesToAudit.length);
 
-    // 4. Stream audit results (reactive UI)
-    final results = <PackageAuditResult>[];
-    final criticalPackages = <PackageAuditResult>[];
+    // 4. Stream audit results (collect, don't print yet)
     var processedCount = 0;
-    var completedCount = 0;
     var failureCount = 0;
-    var cacheHits = 0;
-    var apiCalls = 0;
-    // final results = <dynamic>[]; // Pour JSON output
+
+    // final results = <PackageAuditResult>[];
+    // final criticalPackages = <PackageAuditResult>[];
+    // var processedCount = 0;
+    // var completedCount = 0;
+    // var failureCount = 0;
+    // var cacheHits = 0;
+    // var apiCalls = 0;
+    // // final results = <dynamic>[]; // Pour JSON output
+
+    final progess = _presenter.showProgess();
 
     await for (final result in _checkUseCase.execute(packagesToAudit)) {
       processedCount++;
 
       // Update progress bar
-      _presenter.updateProgress(
-        current: processedCount,
-        total: packagesToAudit.length,
-      );
+      _presenter.updateProgress(current: processedCount, total: packagesToAudit.length, progress: progess);
 
       switch (result) {
         case Success<PackageAuditResult>(:final value):
-          _presenter.showPackageResult(value); //Todo: just to test
-          value.fromCache ? cacheHits++ : apiCalls++;
-          completedCount++;
-
-          if (value.status == AuditStatus.critical) {
-            criticalPackages.add(value);
-          }
-          results.add(value);
-
+          _presenter.collectPackageResult(value);
         case Failure<PackageAuditResult>(:final error):
           failureCount++;
-          _presenter.showPackageError(error);
+          _presenter.showPackageError(error, progess);
       }
     }
 
+    _presenter.stopProgess(current: processedCount, total: packagesToAudit.length, progress: progess);
+
     // 5. Show summary
     if (jsonOutput) {
-      _presenter.showJsonOutput(results);
+      _presenter.showJsonOutput([]);
     } else {
-      _presenter.showSummary(
-        total: packagesToAudit.length,
-        failures: failureCount,
-      );
+      _presenter.showSummary(total: packagesToAudit.length, failures: failureCount, stopwatch: _stopwatch);
     }
 
     return failureCount > 0 ? 1 : 0;

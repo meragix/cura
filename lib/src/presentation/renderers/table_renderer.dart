@@ -1,6 +1,5 @@
 import 'package:cura/src/domain/models/cura_score.dart';
 import 'package:cura/src/domain/models/package_health.dart';
-import 'package:cura/src/presentation/cli/formatters/date_formatter.dart';
 import 'package:cura/src/presentation/loggers/cura_logger.dart';
 import 'package:mason_logger/mason_logger.dart';
 
@@ -57,14 +56,14 @@ class TableRenderer {
     final name = _truncate(item.info.name, 22).padRight(22);
     final score = item.score.total.toString().padLeft(3);
     final statusEmoji = _getStatusEmoji(item.score.status).padRight(6);
-    final lastUpdate = DateFormatter.formatToMonth(item.info.published).padRight(12);
+    //final lastUpdate = DateFormatter.formatDaysAgo(item.info.published).padRight(12);
     final stableEmoji = item.info.isFlutterFavorite ? ' ⭐' : ''; // todo: change to isStable
 
-    final row = '│ $name │  $score  │ $statusEmoji │ $lastUpdate$stableEmoji │';
+    //final row = '│ $name │  $score  │ $statusEmoji │ $lastUpdate$stableEmoji │';
 
     // Colorer la ligne selon le status
-    final coloredRow = _colorizeRow(row, item.score.status);
-    logger.info(coloredRow);
+    //final coloredRow = _colorizeRow(row, item.score.status);
+    //logger.info(coloredRow);
   }
 
   void _printEllipsisRow() {
