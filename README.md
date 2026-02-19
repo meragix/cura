@@ -211,7 +211,7 @@ echo $?  # 0 = pass, 1 = fail
 
 ---
 
-**See also:** [docs/scan.md](docs/check.md) for advanced usage
+**See also:** [doc/scan.md](doc/check.md) for advanced usage
 
 **GitHub Actions Integration:**
 
@@ -220,7 +220,7 @@ echo $?  # 0 = pass, 1 = fail
   run: cura check --min-score 75
 ```
 
-**See also:** [docs/ci-cd.md](docs/ci-cd.md) for CI/CD best practices
+**See also:** [doc/ci-cd.md](doc/ci-cd.md) for CI/CD best practices
 
 ---
 
@@ -291,7 +291,7 @@ Key Metrics
 ⏱️  315ms (1 API call, now cached)
 ```
 
-**See also:** [docs/view.md](docs/view.md) for output customization
+**See also:** [doc/view.md](doc/view.md) for output customization
 
 ---
 
@@ -332,7 +332,7 @@ cura config set min_score 85 --project
 cura config edit --global
 ```
 
-**See also:** [docs/configuration.md](docs/configuration.md) for all options
+**See also:** [doc/configuration.md](doc/configuration.md) for all options
 
 ---
 
@@ -401,7 +401,7 @@ Automatic score of **0** if:
 - Package is marked as discontinued
 - Critical security vulnerabilities detected (via OSV.dev)
 
-**See also:** [docs/scoring.md](docs/scoring.md) for detailed algorithm explanation
+**See also:** [doc/scoring.md](doc/scoring.md) for detailed algorithm explanation
 
 ---
 
@@ -480,7 +480,7 @@ trusted_publishers:
 | `ignore_packages` | list | `[]` | Packages to skip during analysis |
 | `trusted_publishers` | list | `[]` | Auto-approve publishers |
 
-**See also:** [docs/configuration.md](docs/configuration.md) for full reference
+**See also:** [doc/configuration.md](doc/configuration.md) for full reference
 
 ---
 
@@ -524,7 +524,7 @@ cura_check:
 - `0` - All checks passed
 - `1` - Failed (score below threshold, vulnerabilities, etc.)
 
-**See also:** [docs/ci-cd.md](docs/ci-cd.md) for advanced workflows
+**See also:** [doc/ci-cd.md](doc/ci-cd.md) for advanced workflows
 
 ---
 
@@ -553,7 +553,7 @@ cura check
 - `minimal` - Monochrome, CI/CD friendly
 <!-- - `dracula` - Popular Dracula color scheme -->
 
-**See also:** [docs/themes.md](docs/themes.md) for theme customization
+**See also:** [doc/themes.md](doc/themes.md) for theme customization
 
 ---
 
@@ -646,7 +646,7 @@ cura scan --no-github
 - GitHub: 60 req/h (5000/h with token)
 - OSV.dev: No limit
 
-**See also:** [docs/api-integration.md](docs/api-integration.md)
+**See also:** [docs/api-integration.md](doc/api-integration.md)
 
 ---
 
@@ -699,17 +699,17 @@ Contribute to [cura-data](https://github.com/meragix/cura-data):
 
 ## 📚 Documentation
 
-- [Scoring Algorithm](docs/scoring.md) - Detailed score calculation
-- [Configuration](docs/configuration.md) - All config options
-- [CI/CD Integration](docs/ci-cd.md) - GitHub Actions, GitLab CI examples
-- [Themes](docs/themes.md) - Theme customization
-- [API Integration](docs/api-integration.md) - Multi-API architecture
-- [Caching](docs/caching.md) - Cache strategies
-- [Suggestions](docs/suggestions.md) - Alternatives engine
+- [Scoring Algorithm](doc/scoring.md) - Detailed score calculation
+- [Configuration](doc/configuration.md) - All config options
+- [CI/CD Integration](doc/ci-cd.md) - GitHub Actions, GitLab CI examples
+- [Themes](doc/themes.md) - Theme customization
+- [API Integration](doc/api-integration.md) - Multi-API architecture
+- [Caching](doc/caching.md) - Cache strategies
+- [Suggestions](doc/suggestions.md) - Alternatives engine
 
 ---
 
-## 🗺️ Roadmap
+<!-- ## 🗺️ Roadmap
 
 ### v1.x (Current)
 
@@ -736,7 +736,7 @@ Contribute to [cura-data](https://github.com/meragix/cura-data):
 
 **Vote on features:** [GitHub Discussions](https://github.com/orgs/meragix/discussions)
 
----
+--- -->
 
 ## 💬 Community
 
