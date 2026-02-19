@@ -1,4 +1,4 @@
-import 'package:io/ansi.dart';
+import 'package:mason_logger/mason_logger.dart';
 
 /// Interface : Thème CLI
 abstract class CuraTheme {

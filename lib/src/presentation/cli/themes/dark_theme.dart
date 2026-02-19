@@ -1,5 +1,5 @@
 import 'package:cura/src/presentation/cli/themes/theme.dart';
-import 'package:io/ansi.dart';
+import 'package:mason_logger/mason_logger.dart';
 
 /// Dark theme (default)
 class DarkTheme implements CuraTheme {
