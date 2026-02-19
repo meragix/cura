@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:cura/src/application/commands/check_command.dart';
 import 'package:cura/src/application/commands/config/config_command.dart';
+import 'package:cura/src/application/commands/version_command.dart';
 import 'package:cura/src/application/commands/view_command.dart';
 import 'package:cura/src/domain/ports/cache_repository.dart';
 import 'package:cura/src/domain/ports/config_repository.dart';
@@ -23,6 +24,7 @@ import 'package:cura/src/presentation/cli/loggers/logger_factory.dart';
 import 'package:cura/src/presentation/cli/presenters/check_presenter.dart';
 import 'package:cura/src/presentation/cli/presenters/view_presenter.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
+import 'package:cura/src/shared/app_info.dart';
 import 'package:cura/src/shared/constants/app_constants.dart';
 import 'package:dio/dio.dart';
 
@@ -34,6 +36,17 @@ import 'package:dio/dio.dart';
 /// - Lifecycle management (Resource cleanup).
 /// - Centralized configuration.
 Future<void> main(List<String> arguments) async {
+  if (arguments.contains('--version') || arguments.contains('-v')) {
+    final version = await AppInfo.getFullVersion();
+    print(version);
+    exit(0);
+  }
+
+  if (arguments.contains('--help') || arguments.contains('-h')) {
+    await _printHelp();
+    exit(0);
+  }
+
   // ===========================================================================
   // PHASE 1 : CONFIGURATION & INITIALIZATION
   // ===========================================================================
@@ -128,6 +141,8 @@ Future<void> main(List<String> arguments) async {
     configRepository: configRepo,
   );
 
+  final versionCommand = VersionCommand(logger: logger);
+
   // ===========================================================================
   // PHASE 6 : CLI RUNNER
   // ===========================================================================
@@ -138,7 +153,8 @@ Future<void> main(List<String> arguments) async {
   )
     ..addCommand(checkCommand)
     ..addCommand(viewCommand)
-    ..addCommand(configCommand);
+    ..addCommand(configCommand)
+    ..addCommand(versionCommand);
 
   // ===========================================================================
   // PHASE 7 : EXECUTION & CLEANUP
@@ -147,11 +163,11 @@ Future<void> main(List<String> arguments) async {
   try {
     // Le code gère déjà gracefully (token optionnel)
     // Mais avertir l'utilisateur si absent :
-    if (config.githubToken == null) {
-      logger.warn('GitHub token not set. Rate limit: 60 req/h');
-      logger.info('  Set token: cura config set github_token YOUR_TOKEN');
-      logger.info('');
-    }
+    // if (config.githubToken == null) {
+    //   logger.warn('! GitHub token not set. Rate limit: 60 req/h');
+    //   logger.info('  Set token: cura config set github_token YOUR_TOKEN');
+    //   logger.info('');
+    // }
 
     final exitCode = await runner.run(arguments) ?? 0;
     exit(exitCode);
@@ -275,4 +291,37 @@ String _resolveCacheDirectory() {
     throw StateError('Cannot resolve HOME directory');
   }
   return '$home/.cura/cache';
+}
+
+/// Print custom help message
+Future<void> _printHelp() async {
+  final version = await AppInfo.getVersion();
+
+  print('''
+${AppInfo.name} v$version - ${AppInfo.description}
+
+Usage: cura <command> [arguments]
+
+Available commands:
+  check       Check and audit all packages in pubspec.yaml
+  view       View detailed information about a package
+  suggest    Suggest better alternatives for packages
+  update     Update alternatives database from remote
+  config     Manage configuration
+  cache      Show cache information
+
+Global options:
+  -h, --help       Show this help message
+  -v, --version    Print version information
+  --verbose        Enable verbose logging
+
+Examples:
+  cura check                   # Scan current project
+  cura view dio                # View dio package details
+  cura check --min-score 80    # CI/CD health check
+  cura suggest http            # Suggest alternatives for http
+  cura update                  # Update alternatives database
+
+For more information, visit: ${AppInfo.homepage}
+''');
 }

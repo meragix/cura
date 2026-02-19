@@ -9,10 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Version Command**: Added a dedicated `version` command for detailed system information (CLI version, Dart SDK, Platform).
+- **Update Checker**: Automatic check against pub.dev API to notify users when a newer version is available.
+- **Global Flag**: Added `--version` / `-v` as a global flag for quick version check.
+- **Versioning Logic**: Centralized `AppInfo` and `VersionUtils` for robust Semantic Versioning (SemVer) comparisons.
 - Multi-API aggregation (pub.dev + GitHub + OSV)
 - Streaming reactive package analysis
 - SQLite caching (24h TTL)
 - GitHub metrics integration
+
+### Changed
+
+- **CLI Output**: Customized the default help message for better UX.
+- **Constants**: Refactored `AppConstants` to use dynamic versioning instead of hardcoded strings.
 
 ## [0.3.0] - 2026-02-15
 
