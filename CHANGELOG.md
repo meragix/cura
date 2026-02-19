@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Visual Score Breakdown**: New bar charts (█ ▓ ▒ ·) for intuitive score reading.
+- **Rich UI Elements**: Added popularity dots (●●●) and Pub score indicators (●/◐/○).
+- **Color-coded Status**: Visual update indicators (🟢/🟡/⚠) and severity colors for vulnerabilities.
+- **GitHub Metrics**: Enhanced formatting for stars, forks, and last commit dates.
+
+### Changed
+
+- **Presenter Refactor**: Complete overhaul of `ViewPresenter` for better information hierarchy.
+- **Output Styling**: Standardized usage of clean separator lines (═) for better scannability.
+
 ## [0.4.0] - 2026-02-19
 
 ### Added

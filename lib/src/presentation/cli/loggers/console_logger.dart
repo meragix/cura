@@ -45,9 +45,13 @@ class ConsoleLogger {
   }
 
   /// Log success message (green)
-  void success(String message) {
+  void success(String message, {bool showSymbol = true}) {
     if (_quiet) return;
-    _logger.success(_applyEmoji(message, '✓'));
+    if (showSymbol) {
+      _logger.success(_applyEmoji(message, '✓'));
+    } else {
+      _logger.success(message);
+    }
   }
 
   /// Log warning message (yellow)
@@ -241,10 +245,10 @@ class ConsoleLogger {
     if (!_useEmojis) return '';
 
     return switch (level) {
-      AlertLevel.info => 'ℹ️',
-      AlertLevel.success => '✅',
-      AlertLevel.warning => '⚠️',
-      AlertLevel.error => '❌',
+      AlertLevel.info => 'i',
+      AlertLevel.success => '✓',
+      AlertLevel.warning => '!',
+      AlertLevel.error => '✗',
     };
   }
 

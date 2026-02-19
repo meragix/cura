@@ -252,43 +252,106 @@ cura view dio --json | jq '.score.total'
 
 **Output (Normal):**
 
-```
-✨ dio v5.4.0
+```terminal
+$ cura view dio
 
-● Score: 92/100 (A+)
-  █ Vitality  ▓ Tech  █ Trust  ▒ Maint
+═════════════════════════════════════════════════════════════════
+
+ ✨ dio v5.4.0
+
+ ● Score: 92/100 (A+)
+ 
+ █ Vitality  ▓ Tech  █ Trust  ▒ Maint
 
 Key Metrics
   Publisher:   dart.dev ✓
   Pub Score:   135/140 ●
   Popularity:  98% ●●●
-  GitHub:      ⭐ 12.0K
+  Likes:       12,450
   Last Update: 1 month ago 🟢
+  Repository:  github.com/cfug/dio
+  Platforms:   android, ios, web, linux, macos, windows
+  Flutter Favorite ✨
+
+GitHub
+  Stars:       ⭐ 12.0K
+  Forks:       1,234
+  Open Issues: 45
+  Activity:    87 commits (90d)
+  Last Commit: 2 days ago
 
 ✓ Recommended - High-quality, actively maintained package
 ```
 
+```terminal
+$ cura view bad_pkg
+
+═════════════════════════════════════════════════════════════════
+
+ ✗ bad_pkg v0.0.1
+
+ ● Score: 25/100 (F)
+ 
+ · Vitality  ░ Tech  ░ Trust  · Maint
+
+Issues Detected
+  ● No updates in 2.6 years
+  ● Unverified publisher
+  ● No repository
+  ● Minimal documentation
+
+Key Metrics
+  Publisher:   None (unverified)
+  Pub Score:   35/140 ○
+  Popularity:  12% ○○○
+  Likes:       8
+  Last Update: 2 yr 7 mo ago ⚠
+  Repository:  None
+
+Better Alternatives
+  → better_package (88/100)
+    Modern alternative with active maintenance
+  
+  → another_option (82/100)
+    Well-documented with good community support
+
+✗ Not Recommended - Appears abandoned, high risk for production use
+```
+
 **Output (Verbose):**
 
-```
-🔍 dio v5.4.0
+```terminal
+$ cura view dio --verbose
 
-[CACHE] ✅ Hit (2h old, valid)
-[DATA]
-  Last update:   45 days ago
-  Publisher:     dart.dev (trusted ✅)
-  Pub points:    135/140 (96%)
-  Popularity:    0.98
-  Repository:    ✅ github.com/cfug/dio
+[... same output as above ...]
 
-[SCORE: 92/100 ✅]
-  Vitality      38/40  ✅ (Updated recently)
-  Tech Health   28/30  ✅ (Excellent Pana score)
-  Trust         19/20  ✅ (High popularity)
-  Maintenance    7/10  ✅ (Verified publisher)
+Detailed Score Breakdown
+  Vitality (38/40):
+    ✓ Last published: 1 month ago (38 pts)
+    ✓ Stable package bonus (v5.x) (+5 pts)
+  
+  Technical Health (28/30):
+    ✓ Pana score: 135/140 (14 pts)
+    ✓ Null safety: Yes (10 pts)
+    ✓ Platform support: 6 platforms (4 pts)
+  
+  Trust (19/20):
+    ✓ Likes: 12,450 (9 pts)
+    ✓ Popularity: 98% (10 pts)
+  
+  Maintenance (7/10):
+    ✓ Verified publisher (5 pts)
+    ✓ Flutter Favorite (2 pts)
 
-💡 Recommended for production
-⏱️  315ms (1 API call, now cached)
+Feature Highlights
+  ✓ Request/Response interceptors
+  ✓ FormData support (file uploads)
+  ✓ Request cancellation
+  ✓ Built-in retry logic
+  ✓ Global configuration
+  ✓ Extensive documentation
+
+[...]
 ```
 
 **See also:** [doc/view.md](doc/view.md) for output customization

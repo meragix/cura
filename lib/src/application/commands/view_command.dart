@@ -1,6 +1,5 @@
 import 'package:args/command_runner.dart';
 import 'package:cura/src/domain/usecases/view_package_details.dart';
-import 'package:cura/src/domain/value_objects/result.dart';
 
 import 'package:cura/src/presentation/cli/presenters/view_presenter.dart';
 
@@ -44,18 +43,21 @@ class ViewCommand extends Command<int> {
     final packageName = argResults!.rest.first;
     final verbose = argResults!['verbose'] as bool;
 
-    _presenter.showHeader(packageName);
+    final progress = _presenter.showProgressHeader(packageName);
 
     // Fetch package details
-    final result = await _viewUseCase.execute(packageName);
+    final auditResult = await _viewUseCase.execute(packageName);
 
-    switch (result) {
-      case Success(:final value):
-        _presenter.showPackageDetails(value, verbose: verbose);
-        return 0;
-      case Failure(:final error):
-        _presenter.showError(error.toString());
-        return 1;
+    if (auditResult.isFailure) {
+      _presenter.showError(auditResult.errorOrNull.toString());
+      return 1;
     }
+
+    final audit = auditResult.valueOrNull!;
+
+    progress.complete('Analysis complete');
+
+    _presenter.showPackageDetails(audit, verbose: verbose);
+    return 0;
   }
 }

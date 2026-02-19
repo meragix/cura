@@ -28,7 +28,7 @@ class DarkTheme implements CuraTheme {
   String get crossMark => '✗';
 
   @override
-  String get warningMark => '⚠';
+  String get warningMark => '!';
 
   @override
   String styleError(String text) {
