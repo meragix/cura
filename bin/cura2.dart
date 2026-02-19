@@ -20,6 +20,7 @@ import 'package:cura/src/infrastructure/api/interceptors/retry_interceptor.dart'
 import 'package:cura/src/infrastructure/respositories/sqlite_cache_repository.dart';
 import 'package:cura/src/infrastructure/respositories/yaml_config_repository.dart';
 import 'package:cura/src/presentation/cli/loggers/console_logger.dart';
+import 'package:cura/src/presentation/cli/loggers/logger_factory.dart';
 import 'package:cura/src/presentation/cli/presenters/check_presenter.dart';
 import 'package:cura/src/presentation/cli/presenters/view_presenter.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
@@ -100,10 +101,7 @@ Future<void> main(List<String> arguments) async {
   // PHASE 4 : PRESENTATION LAYER (CLI)
   // ===========================================================================
 
-  final logger = ConsoleLogger(
-    useColors: config.useColors,
-    useEmojis: config.useEmojis,
-  );
+  final logger = LoggerFactory.fromConfig(config);
 
   final checkPresenter = CheckPresenter(
     logger: logger,
