@@ -24,9 +24,8 @@
 - [Quick Start](#-quick-start)
 - [Installation](#-installation)
 - [Usage](#-usage)
-  - [Scan Command](#scan-command)
-  - [View Command](#view-command)
   - [Check Command](#check-command)
+  - [View Command](#view-command)
   - [Config Command](#config-command)
 - [Scoring Algorithm](#-scoring-algorithm)
 - [Configuration](#️-configuration)
@@ -98,7 +97,7 @@ dart pub global activate cura
 
 # Analyze your Flutter project
 cd my_flutter_app
-cura scan
+cura check
 
 # View detailed score for a specific package
 cura view riverpod
@@ -169,39 +168,59 @@ dart pub global activate --source path .
 
 ## 🚀 Usage
 
-### Scan Command
+### Check Command
 
 Analyze all dependencies in your project.
 
 ```bash
-cura scan [options]
+cura check [options]
 ```
 
 **Options:**
 
 - `-p, --path <path>` - Project directory (default: current directory)
 - `--min-score <score>` - Fail if average score below threshold
-- `--json` - Output results as JSON
+- `--fail-on-vulnerable` - Exit 1 if vulnerabilities found
+- `--fail-on-discontinued` - Exit 1 if discontinued packages found
 - `--no-github` - Skip GitHub metrics (faster, offline mode)
-- `--theme <theme>` - Override theme (dark, light, minimal, dracula)
+- `--json` - Output results as JSON
+- `-q, --quiet` - Minimal output
 
 **Examples:**
 
 ```bash
-# Basic scan
-cura scan
+# Basic check
+cura check
 
 # Scan specific directory
-cura scan --path /path/to/project
+cura check --path /path/to/project
+
+# Strict check for CI/CD
+cura check --min-score 80 --fail-on-vulnerable
 
 # CI/CD mode with threshold
-cura scan --min-score 80 --json > report.json
+cura check --min-score 80 --json > report.json
 
 # Offline mode (cached data only)
-cura scan --no-github
+cura check --no-github
+
+# Quiet mode (only errors)
+cura check --quiet
+echo $?  # 0 = pass, 1 = fail
 ```
 
-**See also:** [docs/scan.md](docs/scan.md) for advanced usage
+---
+
+**See also:** [docs/scan.md](docs/check.md) for advanced usage
+
+**GitHub Actions Integration:**
+
+```yaml
+- name: Cura Health Check
+  run: cura check --min-score 75
+```
+
+**See also:** [docs/ci-cd.md](docs/ci-cd.md) for CI/CD best practices
 
 ---
 
@@ -273,46 +292,6 @@ Key Metrics
 ```
 
 **See also:** [docs/view.md](docs/view.md) for output customization
-
----
-
-### Check Command
-
-Quick health check with exit codes (perfect for CI/CD).
-
-```bash
-cura check [options]
-```
-
-**Options:**
-
-- `--min-score <score>` - Minimum acceptable score (default: 70)
-- `--fail-on-vulnerable` - Exit 1 if vulnerabilities found
-- `--fail-on-discontinued` - Exit 1 if discontinued packages found
-- `-q, --quiet` - Minimal output
-
-**Examples:**
-
-```bash
-# Basic check
-cura check
-
-# Strict check for CI/CD
-cura check --min-score 80 --fail-on-vulnerable
-
-# Quiet mode (only errors)
-cura check --quiet
-echo $?  # 0 = pass, 1 = fail
-```
-
-**GitHub Actions Integration:**
-
-```yaml
-- name: Cura Health Check
-  run: cura check --min-score 75
-```
-
-**See also:** [docs/ci-cd.md](docs/ci-cd.md) for CI/CD best practices
 
 ---
 
@@ -557,14 +536,14 @@ Switch between 4 built-in themes:
 
 ```bash
 # Via CLI flag
-cura scan --theme=dracula
+cura check --theme=dracula
 
 # Via config
 cura config set theme light
 
 # Via environment variable
 export CURA_THEME=minimal
-cura scan
+cura check
 ```
 
 **Available Themes:**
@@ -599,7 +578,7 @@ cura clean
 cura config show
 
 # Disable cache
-cura scan --no-cache
+cura check --no-cache
 ```
 
 **Cache TTL:**
@@ -712,7 +691,7 @@ Contribute to [cura-data](https://github.com/meragix/cura-data):
 
 1. Fork the repo
 2. Edit `alternatives.yaml` -->
-3. Submit PR (auto-validated by CI)
+1. Submit PR (auto-validated by CI)
 
 **See also:** [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
 
