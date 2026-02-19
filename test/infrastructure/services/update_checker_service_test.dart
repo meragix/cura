@@ -38,7 +38,7 @@ void main() {
             requestOptions: RequestOptions(path: ''),
             statusCode: 200,
             data: {
-              'latest': {'version': '0.3.0'},
+              'latest': {'version': '0.4.0'},
             },
           ));
 
