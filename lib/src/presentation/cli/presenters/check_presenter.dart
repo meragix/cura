@@ -215,15 +215,15 @@ class CheckPresenter {
     return (stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
   }
 
-  String _getStatusIcon(AuditStatus status) {
-    return switch (status) {
-      AuditStatus.excellent => '✓',
-      AuditStatus.good => '✓',
-      AuditStatus.warning => '⚠',
-      AuditStatus.critical => '✗',
-      AuditStatus.discontinued => '⛔',
-    };
-  }
+  // String _getStatusIcon(AuditStatus status) {
+  //   return switch (status) {
+  //     AuditStatus.excellent => '✓',
+  //     AuditStatus.good => '✓',
+  //     AuditStatus.warning => '⚠',
+  //     AuditStatus.critical => '✗',
+  //     AuditStatus.discontinued => '⛔',
+  //   };
+  // }
 }
 
 /// Presenter : Check command output (CI/CD friendly)

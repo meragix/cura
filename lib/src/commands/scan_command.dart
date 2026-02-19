@@ -47,8 +47,6 @@ class ScanCommand extends BaseCommand {
     final results = <PackageHealth>[];
     final criticalPackages = <PackageHealth>[];
     var completed = 0;
-    var cached = 0;
-    var apiCalls = 0;
 
     _stopwatch.start();
 

@@ -1,4 +1,3 @@
-import 'package:cura/src/domain/models/cura_score.dart';
 import 'package:cura/src/domain/models/package_health.dart';
 import 'package:cura/src/presentation/loggers/cura_logger.dart';
 import 'package:mason_logger/mason_logger.dart';
@@ -55,12 +54,12 @@ class TableRenderer {
   }
 
   void _printRow(PackageHealth item) {
-    final name = _truncate(item.info.name, 22).padRight(22);
-    final score = item.score.total.toString().padLeft(3);
-    final statusEmoji = _getStatusEmoji(item.score.status).padRight(6);
-    //final lastUpdate = DateFormatter.formatDaysAgo(item.info.published).padRight(12);
-    final stableEmoji =
-        item.info.isFlutterFavorite ? ' ⭐' : ''; // todo: change to isStable
+    // final name = _truncate(item.info.name, 22).padRight(22);
+    // final score = item.score.total.toString().padLeft(3);
+    // final statusEmoji = _getStatusEmoji(item.score.status).padRight(6);
+    // //final lastUpdate = DateFormatter.formatDaysAgo(item.info.published).padRight(12);
+    // final stableEmoji =
+    //     item.info.isFlutterFavorite ? ' ⭐' : ''; // todo: change to isStable
 
     //final row = '│ $name │  $score  │ $statusEmoji │ $lastUpdate$stableEmoji │';
 
@@ -88,30 +87,30 @@ class TableRenderer {
   // String _truncate(String text, int max) {
   //   return text.length > max ? '${text.substring(0, max - 3)}...' : text;
   // }
-  String _truncate(String text, int maxLength) {
-    if (text.length <= maxLength) return text;
-    return '${text.substring(0, maxLength - 3)}...';
-  }
+  // String _truncate(String text, int maxLength) {
+  //   if (text.length <= maxLength) return text;
+  //   return '${text.substring(0, maxLength - 3)}...';
+  // }
 
-  String _colorizeRow(String row, HealthStatus status) {
-    switch (status) {
-      case HealthStatus.healthy:
-        return row; // Pas de couleur pour healthy
-      case HealthStatus.warning:
-        return yellow.wrap(row)!;
-      case HealthStatus.critical:
-        return red.wrap(row)!;
-    }
-  }
+  // String _colorizeRow(String row, HealthStatus status) {
+  //   switch (status) {
+  //     case HealthStatus.healthy:
+  //       return row; // Pas de couleur pour healthy
+  //     case HealthStatus.warning:
+  //       return yellow.wrap(row)!;
+  //     case HealthStatus.critical:
+  //       return red.wrap(row)!;
+  //   }
+  // }
 
-  String _getStatusEmoji(HealthStatus status) {
-    switch (status) {
-      case HealthStatus.healthy:
-        return '✓';
-      case HealthStatus.warning:
-        return '!';
-      case HealthStatus.critical:
-        return '✗';
-    }
-  }
+  // String _getStatusEmoji(HealthStatus status) {
+  //   switch (status) {
+  //     case HealthStatus.healthy:
+  //       return '✓';
+  //     case HealthStatus.warning:
+  //       return '!';
+  //     case HealthStatus.critical:
+  //       return '✗';
+  //   }
+  // }
 }

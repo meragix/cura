@@ -31,8 +31,8 @@ class ConfigHierarchy {
     if (project?.theme != null && project!.theme != global?.theme) {
       overrides.add(ConfigOverride(
         key: 'theme',
-        globalValue: global!.theme!,
-        projectValue: project!.theme!,
+        globalValue: global!.theme,
+        projectValue: project!.theme,
       ));
     }
 
@@ -40,7 +40,7 @@ class ConfigHierarchy {
       overrides.add(ConfigOverride(
         key: 'min_score',
         globalValue: global!.minScore.toString(),
-        projectValue: project!.minScore!.toString(),
+        projectValue: project!.minScore.toString(),
       ));
     }
 

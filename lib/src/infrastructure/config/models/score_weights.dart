@@ -1,6 +1,3 @@
-import 'package:yaml/yaml.dart';
-
-/// Customizable weights for scoring
 class ScoreWeights {
   final int vitality;
   final int technicalHealth;

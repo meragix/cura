@@ -7,15 +7,15 @@ import 'package:mason_logger/mason_logger.dart';
 class ScanLogger {
   final CuraLogger _logger;
   final TableRenderer _tableRenderer;
-  final SummaryRenderer _summaryRenderer;
+  // final SummaryRenderer _summaryRenderer;
 
   ScanLogger({
     required CuraLogger logger,
     TableRenderer? tableRenderer,
     SummaryRenderer? summaryRenderer,
   })  : _logger = logger,
-        _tableRenderer = tableRenderer ?? TableRenderer(logger: logger),
-        _summaryRenderer = summaryRenderer ?? SummaryRenderer(logger: logger);
+        _tableRenderer = tableRenderer ?? TableRenderer(logger: logger);
+  //_summaryRenderer = summaryRenderer ?? SummaryRenderer(logger: logger);
 
   void printTable(List<PackageHealth> results) {
     _tableRenderer.render(results);
@@ -32,8 +32,7 @@ class ScanLogger {
     _logger.info('');
     _logger.error('CRITICAL ISSUES (require action):');
     for (final pkg in criticalPackages) {
-      _logger.error(
-          '   ${red.wrap('✗')} ${styleBold.wrap(pkg.info.name)} (score: ${pkg.score.total})');
+      _logger.error('   ${red.wrap('✗')} ${styleBold.wrap(pkg.info.name)} (score: ${pkg.score.total})');
       for (final issue in pkg.score.redFlags) {
         _logger.error('     └─ $issue');
       }

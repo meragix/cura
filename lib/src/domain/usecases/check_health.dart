@@ -3,7 +3,6 @@ import 'package:cura/src/domain/ports/package_data_aggregator.dart';
 import 'package:cura/src/domain/usecases/calculate_score.dart';
 import 'package:cura/src/domain/value_objects/package_result.dart';
 import 'package:cura/src/domain/value_objects/result.dart';
-import 'package:cura/src/shared/utils/pubspec_parser.dart';
 
 /// Use Case : Check health (CI/CD mode)
 class CheckHealth {
@@ -22,7 +21,7 @@ class CheckHealth {
     required bool failOnDiscontinued,
   }) async {
     // 1. Parse pubspec
-    final parser = PubspecParser();
+    //final parser = PubspecParser();
     // todo: Read pubspec file
 
     // 2. Fetch all packages

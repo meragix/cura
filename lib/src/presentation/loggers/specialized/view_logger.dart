@@ -171,8 +171,8 @@ class ViewLogger {
     return red.wrap('○○○')!;
   }
 
-  void _printFooter(PackageHealth summary) {
-    _logger.muted("ℹ Run 'cura suggest <package>' for detailed analysis");
-    _logger.info('');
-  }
+  // void _printFooter(PackageHealth summary) {
+  //   _logger.muted("ℹ Run 'cura suggest <package>' for detailed analysis");
+  //   _logger.info('');
+  // }
 }

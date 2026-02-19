@@ -74,18 +74,18 @@ class ViewPresenter {
     _logger.info('  Maintenance: ${score.maintenance}/10');
   }
 
-  void _showGitHubMetrics(dynamic metrics) {
-    _logger.info('GitHub:');
-    _logger.info('  Stars: ${metrics.stars}');
-    _logger.info('  Forks: ${metrics.forks}');
-    _logger.info('  Open Issues: ${metrics.openIssues}');
-    _logger.info('  Commits (90d): ${metrics.commitCountLast90Days}');
-    if (metrics.lastCommitDate != null) {
-      _logger.info(
-          '  Last Commit: ${DateFormatter.format(metrics.lastCommitDate)}');
-    }
-    _logger.info('');
-  }
+  // void _showGitHubMetrics(dynamic metrics) {
+  //   _logger.info('GitHub:');
+  //   _logger.info('  Stars: ${metrics.stars}');
+  //   _logger.info('  Forks: ${metrics.forks}');
+  //   _logger.info('  Open Issues: ${metrics.openIssues}');
+  //   _logger.info('  Commits (90d): ${metrics.commitCountLast90Days}');
+  //   if (metrics.lastCommitDate != null) {
+  //     _logger.info(
+  //         '  Last Commit: ${DateFormatter.format(metrics.lastCommitDate)}');
+  //   }
+  //   _logger.info('');
+  // }
 
   void _showVulnerabilities(List<dynamic> vulnerabilities) {
     _logger.warn('⚠ Vulnerabilities:');
