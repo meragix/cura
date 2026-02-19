@@ -5,7 +5,8 @@ import 'package:cura/src/domain/ports/config_repository.dart';
 class ConfigShowCommand extends Command<int> {
   final ConfigRepository _configRepository;
 
-  ConfigShowCommand({required ConfigRepository configRepository}) : _configRepository = configRepository;
+  ConfigShowCommand({required ConfigRepository configRepository})
+      : _configRepository = configRepository;
 
   @override
   String get name => 'show';
@@ -24,7 +25,8 @@ class ConfigShowCommand extends Command<int> {
     print('  Min Score: ${config.minScore}');
     print('  Cache TTL: ${config.cacheMaxAgeHours}h');
     print('  Max Concurrency: ${config.maxConcurrency}');
-    print('  GitHub Token: ${config.githubToken != null ? "✓ Set" : "✗ Not set"}');
+    print(
+        '  GitHub Token: ${config.githubToken != null ? "✓ Set" : "✗ Not set"}');
 
     return 0;
   }

@@ -5,7 +5,8 @@ import 'package:cura/src/domain/ports/config_repository.dart';
 class ConfigSetCommand extends Command<int> {
   final ConfigRepository _configRepository;
 
-  ConfigSetCommand({required ConfigRepository configRepository}) : _configRepository = configRepository;
+  ConfigSetCommand({required ConfigRepository configRepository})
+      : _configRepository = configRepository;
 
   @override
   String get name => 'set';

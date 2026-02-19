@@ -90,7 +90,8 @@ class CheckPresenter {
     _logger.info(tableStr);
 
     // Legend
-    final legend = '${styleItalic.wrap('Legend')}: ${yellow.wrap('⭐ Stable package')}  '
+    final legend =
+        '${styleItalic.wrap('Legend')}: ${yellow.wrap('⭐ Stable package')}  '
         '${yellow.wrap('! Needs review')}  '
         '${red.wrap('✗ Critical')}';
     _logger.info(legend);
@@ -114,21 +115,26 @@ class CheckPresenter {
         .length;
     final critical = _results.where((r) => r.score.total < 50).length;
 
-    final avgScore =
-        _results.isEmpty ? 0 : _results.map((r) => r.score.total).reduce((a, b) => a + b) ~/ _results.length;
+    final avgScore = _results.isEmpty
+        ? 0
+        : _results.map((r) => r.score.total).reduce((a, b) => a + b) ~/
+            _results.length;
 
     _logger.info('');
     _logger.info(styleBold.wrap('SUMMARY')!);
 
     // Colored stats
     if (healthy > 0) {
-      _logger.info('  ${green.wrap("✓ Healthy:")}   $healthy packages (${(healthy / total * 100).round()}%)');
+      _logger.info(
+          '  ${green.wrap("✓ Healthy:")}   $healthy packages (${(healthy / total * 100).round()}%)');
     }
     if (warning > 0) {
-      _logger.info('  ${yellow.wrap("! Warning:")}  $warning packages (${(warning / total * 100).round()}%)');
+      _logger.info(
+          '  ${yellow.wrap("! Warning:")}  $warning packages (${(warning / total * 100).round()}%)');
     }
     if (critical > 0) {
-      _logger.info('  ${red.wrap("✗ Critical:")}  $critical packages (${(critical / total * 100).round()}%)');
+      _logger.info(
+          '  ${red.wrap("✗ Critical:")}  $critical packages (${(critical / total * 100).round()}%)');
     }
 
     _logger.info('');
@@ -152,7 +158,8 @@ class CheckPresenter {
       _logger.error('CRITICAL ISSUES (require action):');
 
       for (final result in criticalResults) {
-        _logger.error('   ${red.wrap('✗')} ${styleBold.wrap(result.name)} (score: ${result.score.total})');
+        _logger.error(
+            '   ${red.wrap('✗')} ${styleBold.wrap(result.name)} (score: ${result.score.total})');
         // _logger.error('  ❌ ${result.name} (score: ${result.score.total})');
 
         // Show issues
@@ -223,7 +230,7 @@ class CheckPresenter {
 // class CheckPresenter {
 //   final ConsoleLogger _logger;
 //   final bool _quiet;
-  
+
 //   CheckPresenter({
 //     required ConsoleLogger logger,
 //     bool quiet = false,
@@ -247,23 +254,23 @@ class CheckPresenter {
 //       }
 //       return;
 //     }
-    
+
 //     // Full report
 //     _logger.info('Results:');
 //     _logger.info('  Total packages: ${report.totalPackages}');
 //     _logger.info('  Average score: ${report.averageScore}/100');
 //     _logger.info('  Below threshold: ${report.belowThreshold}');
-    
+
 //     if (report.vulnerablePackages > 0) {
 //       _logger.warn('  Vulnerable: ${report.vulnerablePackages}');
 //     }
-    
+
 //     if (report.discontinuedPackages > 0) {
 //       _logger.warn('  Discontinued: ${report.discontinuedPackages}');
 //     }
-    
+
 //     _logger.info('');
-    
+
 //     if (report.hasFailed) {
 //       _logger.error('✗ Health check failed');
 //     } else {

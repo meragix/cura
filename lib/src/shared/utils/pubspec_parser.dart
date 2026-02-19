@@ -49,9 +49,11 @@ class Pubspec {
   });
 
   /// Helper to retrieve only the packages to audit on pub.dev
-  List<PubDevSource> get auditableDeps => dependencies.whereType<PubDevSource>().toList();
+  List<PubDevSource> get auditableDeps =>
+      dependencies.whereType<PubDevSource>().toList();
 
-  List<PubDevSource> get auditableDevDeps => devDependencies.whereType<PubDevSource>().toList();
+  List<PubDevSource> get auditableDevDeps =>
+      devDependencies.whereType<PubDevSource>().toList();
 }
 
 class PubspecParser {

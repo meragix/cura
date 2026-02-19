@@ -18,7 +18,7 @@ class PackageAuditResult {
     required this.name,
     required this.version,
     required this.packageInfo,
-     this.githubMetrics,
+    this.githubMetrics,
     required this.score,
     required this.fromCache,
     required this.vulnerabilities,
@@ -48,13 +48,17 @@ class PackageAuditResult {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is PackageAuditResult && runtimeType == other.runtimeType && name == other.name && version == other.version;
+      other is PackageAuditResult &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          version == other.version;
 
   @override
   int get hashCode => name.hashCode ^ version.hashCode;
 
   @override
-  String toString() => 'PackageAuditResult($name@$version, score: ${score.total})';
+  String toString() =>
+      'PackageAuditResult($name@$version, score: ${score.total})';
 }
 
 /// Status d'audit (enum simple)

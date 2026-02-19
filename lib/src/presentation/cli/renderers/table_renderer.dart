@@ -12,7 +12,8 @@ class TableRenderer {
   /// Render audit results as table
   String renderAuditTable(List<PackageAuditResult> results) {
     // Sort: reviews at the bottom for visibility
-    final sorted = results.toList()..sort((a, b) => b.score.total.compareTo(a.score.total));
+    final sorted = results.toList()
+      ..sort((a, b) => b.score.total.compareTo(a.score.total));
 
     final table = Table(
       header: [
@@ -31,14 +32,20 @@ class TableRenderer {
     final showAll = sorted.length <= 15;
 
     final top = showAll ? sorted : sorted.take(7).toList();
-    final bottom = showAll ? <PackageAuditResult>[] : sorted.skip(sorted.length - 3).toList();
+    final bottom = showAll
+        ? <PackageAuditResult>[]
+        : sorted.skip(sorted.length - 3).toList();
 
     void _addRows(Table table, List<PackageAuditResult> list) {
       for (final result in list) {
         table.add([
           _formatPackageName(result),
           _formatScore(result.score.total),
-          {'content': _formatStatus(result.status, result.packageInfo.isStable), 'vAlign': HorizontalAlign.center},
+          {
+            'content':
+                _formatStatus(result.status, result.packageInfo.isStable),
+            'vAlign': HorizontalAlign.center
+          },
           _formatLastUpdate(result.packageInfo.daysSinceLastUpdate),
         ]);
       }

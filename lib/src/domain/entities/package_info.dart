@@ -58,7 +58,8 @@ class PackageInfo {
   });
 
   /// Helpers
-  bool get hasVerifiedPublisher => publisherId != null && publisherId!.isNotEmpty;
+  bool get hasVerifiedPublisher =>
+      publisherId != null && publisherId!.isNotEmpty;
   bool get hasRepository => repositoryUrl != null && repositoryUrl!.isNotEmpty;
 
   bool get isTrustedPublisher {
@@ -66,11 +67,14 @@ class PackageInfo {
     return ConfigDefaults.defaultTrustedPublishers.contains(publisherId);
   }
 
-  int get daysSinceLastUpdate => DateTime.now().difference(lastPublished).inDays;
-  double get scorePercentage => maxPoints > 0 ? (grantedPoints / maxPoints * 100) : 0;
+  int get daysSinceLastUpdate =>
+      DateTime.now().difference(lastPublished).inDays;
+  double get scorePercentage =>
+      maxPoints > 0 ? (grantedPoints / maxPoints * 100) : 0;
 
   bool get isPopular => likes > 1000 || popularity > 90;
-  bool get isWeb => supportedPlatforms.contains('platform:web'); // show WasmMessage later
+  bool get isWeb =>
+      supportedPlatforms.contains('platform:web'); // show WasmMessage later
 
   bool get isStable {
     try {
@@ -126,8 +130,10 @@ class PackageInfo {
 
   /// Extrait les plateformes depuis les tags
   static List<String> _extractPlatformsFromTags(List<String> tags) {
-    final platforms =
-        tags.where((tag) => tag.startsWith('platform:')).map((tag) => tag.replaceFirst('platform:', '')).toList();
+    final platforms = tags
+        .where((tag) => tag.startsWith('platform:'))
+        .map((tag) => tag.replaceFirst('platform:', ''))
+        .toList();
 
     // Si aucune plateforme et pas Flutter, c'est un package Dart pur
     if (platforms.isEmpty && !tags.contains('sdk:flutter')) {
@@ -159,12 +165,17 @@ class PackageInfo {
       orElse: () => '',
     );
 
-    return publisherTag.isEmpty ? null : publisherTag.replaceFirst('publisher:', '');
+    return publisherTag.isEmpty
+        ? null
+        : publisherTag.replaceFirst('publisher:', '');
   }
 
   static String? _extractLicense(List<String> tags) {
     final licenseTag = tags.firstWhere(
-      (tag) => tag.startsWith('license:') && !tag.contains('fsf') && !tag.contains('osi'),
+      (tag) =>
+          tag.startsWith('license:') &&
+          !tag.contains('fsf') &&
+          !tag.contains('osi'),
       orElse: () => '',
     );
     return licenseTag.isEmpty ? null : licenseTag.replaceFirst('license:', '');
@@ -173,7 +184,10 @@ class PackageInfo {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is PackageInfo && runtimeType == other.runtimeType && name == other.name && version == other.version;
+      other is PackageInfo &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          version == other.version;
 
   @override
   int get hashCode => name.hashCode ^ version.hashCode;

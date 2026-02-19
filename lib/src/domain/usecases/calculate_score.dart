@@ -80,7 +80,8 @@ class CalculateScore {
   // ==========================================================================
 
   int _calculateVitality(PackageInfo packageInfo, GitHubMetrics? github) {
-    final daysSinceUpdate = DateTime.now().difference(packageInfo.lastPublished).inDays;
+    final daysSinceUpdate =
+        DateTime.now().difference(packageInfo.lastPublished).inDays;
 
     // Base score selon ancienneté
     int baseScore;
@@ -99,7 +100,9 @@ class CalculateScore {
     }
 
     // Bonus pour packages stables (>v2.0, Pana >130, Popularity >90%)
-    final isStable = packageInfo.version.startsWith('2.') && packageInfo.panaScore > 130 && packageInfo.popularity > 90;
+    final isStable = packageInfo.version.startsWith('2.') &&
+        packageInfo.panaScore > 130 &&
+        packageInfo.popularity > 90;
 
     if (isStable && daysSinceUpdate > 180) {
       baseScore += 5; // Bonus stabilité
@@ -167,7 +170,8 @@ class CalculateScore {
     var score = 0;
 
     // 1. Verified Publisher (5 points)
-    if (packageInfo.publisherId != null && packageInfo.publisherId!.isNotEmpty) {
+    if (packageInfo.publisherId != null &&
+        packageInfo.publisherId!.isNotEmpty) {
       score += 5;
     }
 

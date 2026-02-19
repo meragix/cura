@@ -3,7 +3,7 @@ import 'package:cura/src/shared/constants/api_constants.dart';
 import 'package:dio/dio.dart';
 
 /// HTTP Client for OSV.dev API
-/// 
+///
 /// Doc : https://google.github.io/osv.dev/api/
 class OsvApiClient {
   final Dio _dio;
@@ -45,7 +45,9 @@ class OsvApiClient {
       details: json['details'] as String? ?? '',
       severity: _parseSeverity(json['severity']),
       published: DateTime.parse(json['published'] as String),
-      modified: json['modified'] != null ? DateTime.parse(json['modified'] as String) : null,
+      modified: json['modified'] != null
+          ? DateTime.parse(json['modified'] as String)
+          : null,
       affectedVersions: _parseAffectedVersions(json['affected']),
       fixedVersion: _parseFixedVersion(json['affected']),
       references: _parseReferences(json['references']),
@@ -108,6 +110,9 @@ class OsvApiClient {
 
   List<String> _parseReferences(dynamic references) {
     if (references is! List) return [];
-    return references.map((ref) => ref['url'] as String?).whereType<String>().toList();
+    return references
+        .map((ref) => ref['url'] as String?)
+        .whereType<String>()
+        .toList();
   }
 }

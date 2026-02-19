@@ -17,13 +17,14 @@ void main() {
   group('UpdateCheckerService', () {
     test('detects available update', () async {
       // Mock pub.dev API response
-      when(() => mockDio.get(any(), options: any(named: 'options'))).thenAnswer((_) async => Response(
-            requestOptions: RequestOptions(path: ''),
-            statusCode: 200,
-            data: {
-              'latest': {'version': '2.0.0'},
-            },
-          ));
+      when(() => mockDio.get(any(), options: any(named: 'options')))
+          .thenAnswer((_) async => Response(
+                requestOptions: RequestOptions(path: ''),
+                statusCode: 200,
+                data: {
+                  'latest': {'version': '2.0.0'},
+                },
+              ));
 
       final updateInfo = await service.checkForUpdate();
 
@@ -34,13 +35,14 @@ void main() {
 
     test('handles no update available', () async {
       // Mock current version = latest version
-      when(() => mockDio.get(any(), options: any(named: 'options'))).thenAnswer((_) async => Response(
-            requestOptions: RequestOptions(path: ''),
-            statusCode: 200,
-            data: {
-              'latest': {'version': '0.4.0'},
-            },
-          ));
+      when(() => mockDio.get(any(), options: any(named: 'options')))
+          .thenAnswer((_) async => Response(
+                requestOptions: RequestOptions(path: ''),
+                statusCode: 200,
+                data: {
+                  'latest': {'version': '0.4.0'},
+                },
+              ));
 
       final updateInfo = await service.checkForUpdate();
 
@@ -49,7 +51,8 @@ void main() {
     });
 
     test('handles API failure gracefully', () async {
-      when(() => mockDio.get(any(), options: any(named: 'options'))).thenThrow(Exception('Network error'));
+      when(() => mockDio.get(any(), options: any(named: 'options')))
+          .thenThrow(Exception('Network error'));
 
       final updateInfo = await service.checkForUpdate();
 

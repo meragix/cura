@@ -10,7 +10,8 @@ sealed class PackageResult {
     required bool fromCache,
   }) = PackageSuccess;
 
-  const factory PackageResult.failure(PackageProviderError error) = PackageFailure;
+  const factory PackageResult.failure(PackageProviderError error) =
+      PackageFailure;
 }
 
 final class PackageSuccess extends PackageResult {
@@ -31,10 +32,12 @@ extension PackageResultExtensions on PackageResult {
   ///
   /// Useful to chain an audit or a score calculation after fetching.
   Future<Result<R>> mapAsync<R>(
-    Future<Result<R>> Function(AggregatedPackageData data, bool fromCache) mapper,
+    Future<Result<R>> Function(AggregatedPackageData data, bool fromCache)
+        mapper,
   ) async {
     return switch (this) {
-      PackageSuccess(:final data, :final fromCache) => await mapper(data, fromCache),
+      PackageSuccess(:final data, :final fromCache) =>
+        await mapper(data, fromCache),
       PackageFailure(:final error) => Result.failure(error),
     };
   }
@@ -44,7 +47,8 @@ extension PackageResultExtensions on PackageResult {
     R Function(AggregatedPackageData data, bool fromCache) mapper,
   ) {
     return switch (this) {
-      PackageSuccess(:final data, :final fromCache) => Result.success(mapper(data, fromCache)),
+      PackageSuccess(:final data, :final fromCache) =>
+        Result.success(mapper(data, fromCache)),
       PackageFailure(:final error) => Result.failure(error),
     };
   }

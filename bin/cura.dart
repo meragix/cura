@@ -274,7 +274,8 @@ Future<void> _cleanup({
 // =============================================================================
 
 String _resolveGlobalConfigPath() {
-  final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+  final home =
+      Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
   if (home == null) {
     throw StateError('Cannot resolve HOME directory');
   }
@@ -286,7 +287,8 @@ String _resolveProjectConfigPath() {
 }
 
 String _resolveCacheDirectory() {
-  final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+  final home =
+      Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
   if (home == null) {
     throw StateError('Cannot resolve HOME directory');
   }

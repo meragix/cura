@@ -4,7 +4,7 @@ import 'package:cura/src/shared/constants/api_constants.dart';
 import 'package:dio/dio.dart';
 
 /// HTTP client for pub.dev API
-/// 
+///
 /// Doc : https://github.com/dart-lang/pub-dev/blob/master/doc/api.md
 class PubDevApiClient {
   final Dio _dio;
@@ -12,7 +12,7 @@ class PubDevApiClient {
   PubDevApiClient(this._dio);
 
   /// Fetch package info from pub.dev
-  /// 
+  ///
   /// Endpoint : GET `/api/packages/{package}` and GET  `/api/packages/{package}/score`
   Future<PackageInfo> getPackageInfo(String packageName) async {
     final baseUrl = '${ApiConstants.pubDevApiUrl}/packages';
@@ -39,7 +39,8 @@ class PubDevApiClient {
         );
       }
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException(
           'Request timeout after 10 seconds',
           url: 'https://pub.dev/api/packages/$packageName',

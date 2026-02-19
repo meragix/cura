@@ -88,7 +88,8 @@ class CuraConfig {
       minScore: minScore ?? this.minScore,
       scoreWeights: scoreWeights ?? this.scoreWeights,
       showSuggestions: showSuggestions ?? this.showSuggestions,
-      maxSuggestionsPerPackage: maxSuggestionsPerPackage ?? this.maxSuggestionsPerPackage,
+      maxSuggestionsPerPackage:
+          maxSuggestionsPerPackage ?? this.maxSuggestionsPerPackage,
       failOnVulnerable: failOnVulnerable ?? this.failOnVulnerable,
       failOnDiscontinued: failOnDiscontinued ?? this.failOnDiscontinued,
       ignoredPackages: ignoredPackages ?? this.ignoredPackages,
@@ -111,13 +112,21 @@ class CuraConfig {
       maxConcurrency: json['maxConcurrency'] ?? 5,
       timeoutSeconds: json['timeoutSeconds'] ?? 10,
       minScore: json['minScore'] ?? 70,
-      scoreWeights: json['scoreWeights'] != null ? ScoreWeights.fromJson(json['scoreWeights']) : const ScoreWeights(),
+      scoreWeights: json['scoreWeights'] != null
+          ? ScoreWeights.fromJson(json['scoreWeights'])
+          : const ScoreWeights(),
       showSuggestions: json['showSuggestions'] ?? true,
       maxSuggestionsPerPackage: json['maxSuggestionsPerPackage'] ?? 3,
       failOnVulnerable: json['failOnVulnerable'] ?? true,
       failOnDiscontinued: json['failOnDiscontinued'] ?? true,
-      ignoredPackages: (json['ignoredPackages'] as List?)?.map((e) => e.toString()).toList() ?? const [],
-      trustedPublishers: (json['trustedPublishers'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      ignoredPackages: (json['ignoredPackages'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      trustedPublishers: (json['trustedPublishers'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       verboseLogging: json['verboseLogging'] ?? false,
       quiet: json['quiet'] ?? false,
       githubToken: json['githubToken'],
@@ -210,7 +219,8 @@ class CuraConfig2 {
       //     ? ScoreWeights.fromYaml(yaml['score_weights'] as YamlMap)
       //     : null,
       ignorePackages: (yaml['ignore_packages'] as YamlList?)?.cast<String>(),
-      trustedPublishers: (yaml['trusted_publishers'] as YamlList?)?.cast<String>(),
+      trustedPublishers:
+          (yaml['trusted_publishers'] as YamlList?)?.cast<String>(),
     );
   }
 
@@ -285,9 +295,11 @@ ${trustedPublishers!.isEmpty ? '  # - dart.dev\n  # - flutter.dev' : trustedPubl
     buffer.writeln('# This config overrides global settings for this project');
     buffer.writeln('# Global config: ~/.cura/config.yaml');
     buffer.writeln('');
-    buffer.writeln('# ============================================================================');
+    buffer.writeln(
+        '# ============================================================================');
     buffer.writeln('# PROJECT-SPECIFIC SETTINGS');
-    buffer.writeln('# ============================================================================');
+    buffer.writeln(
+        '# ============================================================================');
     buffer.writeln('');
 
     // N'écrire que les valeurs non-null (overrides)
@@ -315,10 +327,12 @@ ${trustedPublishers!.isEmpty ? '  # - dart.dev\n  # - flutter.dev' : trustedPubl
       buffer.writeln('');
     }
 
-    buffer.writeln('# ============================================================================');
+    buffer.writeln(
+        '# ============================================================================');
     buffer.writeln('# OPTIONAL OVERRIDES');
     buffer.writeln('# Uncomment to override global settings');
-    buffer.writeln('# ============================================================================');
+    buffer.writeln(
+        '# ============================================================================');
     buffer.writeln('');
     buffer.writeln('# theme: dark');
     buffer.writeln('# show_suggestions: true');

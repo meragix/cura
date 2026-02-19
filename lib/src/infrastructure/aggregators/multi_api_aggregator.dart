@@ -86,7 +86,8 @@ class MultiApiAggregator implements PackageDataAggregator {
     } on TimeoutException {
       return PackageResult.failure(PackageProviderError.timeout(packageName));
     } on RateLimitException catch (e) {
-      return PackageResult.failure(PackageProviderError.rateLimit(e.retryAfter!));
+      return PackageResult.failure(
+          PackageProviderError.rateLimit(e.retryAfter!));
     } catch (e) {
       return PackageResult.failure(PackageProviderError.network(e.toString()));
     }

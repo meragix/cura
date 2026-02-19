@@ -35,7 +35,8 @@ class AppInfo {
       }
 
       // Fallback: embedded version (production mode)
-      _version = const String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
+      _version =
+          const String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
       return _version!;
     } catch (e) {
       _version = 'unknown';

@@ -37,7 +37,8 @@ class YamlConfigRepository implements ConfigRepository {
 
   @override
   Future<bool> exists() async {
-    return await File(_globalConfigPath).exists() || await File(_projectConfigPath).exists();
+    return await File(_globalConfigPath).exists() ||
+        await File(_projectConfigPath).exists();
   }
 
   @override

@@ -1,9 +1,11 @@
 sealed class PackageProviderError {
   const PackageProviderError();
 
-  const factory PackageProviderError.notFound(String packageName) = NotFoundError;
+  const factory PackageProviderError.notFound(String packageName) =
+      NotFoundError;
   const factory PackageProviderError.network(String message) = NetworkError;
-  const factory PackageProviderError.rateLimit(Duration retryAfter) = RateLimitError;
+  const factory PackageProviderError.rateLimit(Duration retryAfter) =
+      RateLimitError;
   const factory PackageProviderError.timeout(String packageName) = TimeoutError;
 }
 

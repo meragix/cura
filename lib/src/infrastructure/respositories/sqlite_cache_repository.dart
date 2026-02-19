@@ -107,7 +107,9 @@ class SqliteCacheRepository implements CacheRepository {
   Future<void> cleanup() async {
     _ensureInitialized();
 
-    final cutoff = DateTime.now().subtract(Duration(hours: _maxAgeHours)).millisecondsSinceEpoch;
+    final cutoff = DateTime.now()
+        .subtract(Duration(hours: _maxAgeHours))
+        .millisecondsSinceEpoch;
 
     await _database!.delete(
       'package_cache',
@@ -174,7 +176,8 @@ class SqliteCacheRepository implements CacheRepository {
       isNew: map['isNew'] as bool,
       isWasmReady: map['isWasmReady'] as bool,
       publisherId: map['publisherId'] as String?,
-      supportedPlatforms: (map['supportedPlatforms'] as List<dynamic>).cast<String>(),
+      supportedPlatforms:
+          (map['supportedPlatforms'] as List<dynamic>).cast<String>(),
       repositoryUrl: map['repositoryUrl'] as String?,
       homepageUrl: map['homepageUrl'] as String?,
       license: map['license'] as String?,

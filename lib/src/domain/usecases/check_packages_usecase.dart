@@ -40,7 +40,8 @@ class CheckPackagesUsecase {
             githubMetrics: aggregated.githubMetrics,
             score: score,
             vulnerabilities: aggregated.vulnerabilities,
-            issues: _identifyIssues(aggregated.packageInfo, score, aggregated.vulnerabilities),
+            issues: _identifyIssues(
+                aggregated.packageInfo, score, aggregated.vulnerabilities),
             suggestions: [], // todo Implement suggestion engine
             fromCache: fromCache,
           );
@@ -64,7 +65,9 @@ class CheckPackagesUsecase {
     }
 
     // Issue 2 : Vulnerabilities critiques
-    final criticalVulns = vulnerabilities.where((v) => v.severity == VulnerabilitySeverity.critical).toList();
+    final criticalVulns = vulnerabilities
+        .where((v) => v.severity == VulnerabilitySeverity.critical)
+        .toList();
 
     if (criticalVulns.isNotEmpty) {
       issues.add(AuditIssue.criticalVulnerabilities(
@@ -82,7 +85,8 @@ class CheckPackagesUsecase {
     }
 
     // Issue 4 : Pas de mise à jour depuis longtemps
-    final daysSinceUpdate = DateTime.now().difference(packageInfo.lastPublished).inDays;
+    final daysSinceUpdate =
+        DateTime.now().difference(packageInfo.lastPublished).inDays;
 
     if (daysSinceUpdate > 730) {
       // 2 ans

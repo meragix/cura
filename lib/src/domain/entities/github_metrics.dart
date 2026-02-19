@@ -20,7 +20,9 @@ class GitHubMetrics {
   /// Helpers
   bool get isActivelyMaintained => commitCountLast90Days > 0;
 
-  int get daysSinceLastCommit => lastCommitDate != null ? DateTime.now().difference(lastCommitDate!).inDays : 999;
+  int get daysSinceLastCommit => lastCommitDate != null
+      ? DateTime.now().difference(lastCommitDate!).inDays
+      : 999;
 
   bool get hasRecentActivity => daysSinceLastCommit <= 90;
   bool get isPopular => stars > 1000;

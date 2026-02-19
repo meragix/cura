@@ -96,7 +96,8 @@ class ErrorFormatter {
     logger.info('');
     logger.info(yellow.wrap('💡 Suggestions:'));
     logger.info('   ${darkGray.wrap('•')} Check your internet connection');
-    logger.info('   ${darkGray.wrap('•')} Verify the API endpoint is accessible');
+    logger
+        .info('   ${darkGray.wrap('•')} Verify the API endpoint is accessible');
     logger.info('   ${darkGray.wrap('•')} Try again in a few moments');
     logger.err(red.wrap('─' * 60));
     logger.info('');
@@ -110,13 +111,15 @@ class ErrorFormatter {
     logger.err('');
     logger.err('Unable to connect to the network');
     logger.info('');
-    logger.info('${darkGray.wrap('Host:')} ${error.address?.host ?? 'unknown'}');
+    logger
+        .info('${darkGray.wrap('Host:')} ${error.address?.host ?? 'unknown'}');
     logger.info('${darkGray.wrap('Port:')} ${error.port ?? 'unknown'}');
     logger.info('');
     logger.info(yellow.wrap('💡 Suggestions:'));
     logger.info('   ${darkGray.wrap('•')} Check your internet connection');
     logger.info('   ${darkGray.wrap('•')} Verify DNS resolution is working');
-    logger.info('   ${darkGray.wrap('•')} Check if you\'re behind a proxy/firewall');
+    logger.info(
+        '   ${darkGray.wrap('•')} Check if you\'re behind a proxy/firewall');
     logger.err(red.wrap('─' * 60));
     logger.info('');
   }

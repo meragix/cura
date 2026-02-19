@@ -90,7 +90,8 @@ class CheckCommand extends Command<int> {
     }
 
     // 2. Filter ignored packages
-    final packagesToAudit = packageNames.where((name) => !_ignoredPackages.contains(name)).toList();
+    final packagesToAudit =
+        packageNames.where((name) => !_ignoredPackages.contains(name)).toList();
 
     // 3. Show header
     _presenter.showHeader(total: packagesToAudit.length);
@@ -114,7 +115,10 @@ class CheckCommand extends Command<int> {
       processedCount++;
 
       // Update progress bar
-      _presenter.updateProgress(current: processedCount, total: packagesToAudit.length, progress: progess);
+      _presenter.updateProgress(
+          current: processedCount,
+          total: packagesToAudit.length,
+          progress: progess);
 
       switch (result) {
         case Success<PackageAuditResult>(:final value):
@@ -125,13 +129,19 @@ class CheckCommand extends Command<int> {
       }
     }
 
-    _presenter.stopProgess(current: processedCount, total: packagesToAudit.length, progress: progess);
+    _presenter.stopProgess(
+        current: processedCount,
+        total: packagesToAudit.length,
+        progress: progess);
 
     // 5. Show summary
     if (jsonOutput) {
       _presenter.showJsonOutput([]);
     } else {
-      _presenter.showSummary(total: packagesToAudit.length, failures: failureCount, stopwatch: _stopwatch);
+      _presenter.showSummary(
+          total: packagesToAudit.length,
+          failures: failureCount,
+          stopwatch: _stopwatch);
     }
 
     return failureCount > 0 ? 1 : 0;
