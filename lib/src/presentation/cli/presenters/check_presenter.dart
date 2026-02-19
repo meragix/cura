@@ -1,5 +1,3 @@
-
-
 import 'package:cura/src/domain/entities/package_audit_result.dart';
 import 'package:cura/src/domain/value_objects/errors.dart';
 import 'package:cura/src/presentation/cli/formatters/score_formatter.dart';
@@ -9,7 +7,7 @@ import 'package:cura/src/presentation/cli/loggers/console_logger.dart';
 class CheckPresenter {
   final ConsoleLogger _logger;
   final bool _showSuggestions;
-  
+
   CheckPresenter({
     required ConsoleLogger logger,
     bool showSuggestions = true,
@@ -25,7 +23,7 @@ class CheckPresenter {
   void updateProgress({required int current, required int total}) {
     final percentage = (current / total * 100).round();
     final bar = _buildProgressBar(percentage);
-    
+
     // Clear line and print progress
     _logger.clearLine();
     _logger.write('$bar $percentage% ($current/$total)');
@@ -34,9 +32,9 @@ class CheckPresenter {
   void showPackageResult(PackageAuditResult audit) {
     final icon = _getStatusIcon(audit.status);
     final scoreStr = ScoreFormatter.format(audit.score);
-    
+
     _logger.info('$icon ${audit.name} ${audit.version.padRight(12)} $scoreStr');
-    
+
     // Show issues if any
     if (audit.issues.isNotEmpty) {
       for (final issue in audit.issues) {
@@ -52,8 +50,8 @@ class CheckPresenter {
     //   rateLimit: (retryAfter) => '⚠ Rate limited (retry in ${retryAfter.inSeconds}s)',
     //   timeout: (name) => '✗ $name - Timeout',
     // );
-    
-   // _logger.error(message);
+
+    // _logger.error(message);
   }
 
   void showSummary({
@@ -85,7 +83,7 @@ class CheckPresenter {
     const barLength = 20;
     final filled = (barLength * percentage / 100).round();
     final empty = barLength - filled;
-    
+
     return '[' + ('█' * filled) + ('░' * empty) + ']';
   }
 

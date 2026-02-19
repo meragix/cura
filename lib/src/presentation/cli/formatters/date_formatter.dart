@@ -25,18 +25,23 @@ class DateFormatter {
     return 'just now';
   }
 
+  /// Format days as compact string for tables
+  static String formatDaysAgo(int days) {
+    if (days == 0) return 'today';
+    if (days == 1) return '1 day';
+    if (days < 30) return '$days days';
+
+    final months = (days / 30).floor();
+    if (months == 1) return '1 month';
+    if (months < 12) return '$months months';
+
+    final years = (days / 365).floor();
+    if (years == 1) return '1 year';
+    return '$years years';
+  }
+
   /// Format: "2024-01-15"
   static String formatShort(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  /// Format: "16 days" or "18 months"
-  static String formatToMonth(DateTime date) {
-    final now = DateTime.now();
-    final days = now.difference(date).inDays;
-
-    if (days < 30) return '$days days';
-    final months = (days / 30).round();
-    return '$months month${months > 1 ? 's' : ' '}';
   }
 }

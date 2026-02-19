@@ -30,6 +30,7 @@ dependencies:
 
   # Utils
   pool: ^1.5.1
+  cli_table: ^1.0.2
 
 dev_dependencies:
   # Testing
