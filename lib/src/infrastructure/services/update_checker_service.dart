@@ -1,11 +1,8 @@
-// lib/src/infrastructure/services/update_checker_service.dart
-
 import 'package:cura/src/shared/app_info.dart';
 import 'package:cura/src/shared/constants/api_constants.dart';
 import 'package:cura/src/shared/utils/version_utils.dart';
 import 'package:dio/dio.dart';
 
-/// Service : Check for updates on pub.dev
 class UpdateCheckerService {
   final Dio _httpClient;
 
@@ -55,7 +52,6 @@ class UpdateCheckerService {
   }
 }
 
-/// Update information
 class UpdateInfo {
   final String currentVersion;
   final String latestVersion;
