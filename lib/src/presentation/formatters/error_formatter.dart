@@ -1,24 +1,44 @@
 import 'dart:io';
-import 'package:cura/src/domain/value_objects/exception.dart';
-import 'package:mason_logger/mason_logger.dart';
-// import 'package:io/ansi.dart';
-import 'package:http/http.dart' as http;
 
+import 'package:cura/src/domain/value_objects/exception.dart';
+import 'package:cura/src/presentation/loggers/console_logger.dart';
+import 'package:dio/dio.dart';
+import 'package:mason_logger/mason_logger.dart';
+
+/// Formats domain and infrastructure exceptions into structured, human-readable
+/// CLI output.
+///
+/// Each exception type is dispatched to a dedicated private method that emits:
+/// - A colour-coded header with an appropriate symbol
+/// - The primary error message in bold
+/// - Contextual metadata (error code, URL, host, etc.)
+/// - Actionable suggestions tailored to the error category
+/// - Stack-trace detail when verbose mode is active
+///
+/// This class is an internal collaborator of [ErrorHandler] — callers should
+/// not invoke [format] directly.
 class ErrorFormatter {
-  final Logger logger;
+  /// Underlying mason_logger used for raw ANSI-formatted output.
+  final Logger _logger;
+
+  /// When `true`, prints original errors and stack traces.
+  /// Derived automatically from the injected [ConsoleLogger.isVerbose].
   final bool verbose;
 
-  ErrorFormatter({
-    Logger? logger,
-    this.verbose = false,
-  }) : logger = logger ?? Logger();
+  ErrorFormatter(ConsoleLogger logger)
+      : _logger = logger.raw,
+        verbose = logger.isVerbose;
 
-  /// Formate et affiche une erreur de manière élégante
+  // ===========================================================================
+  // Public API
+  // ===========================================================================
+
+  /// Dispatches [error] to the appropriate formatter and writes to stderr/stdout.
   void format(dynamic error, {StackTrace? stackTrace}) {
     if (error is CuraException) {
       _formatCuraException(error);
-    } else if (error is http.ClientException) {
-      _formatHttpException(error);
+    } else if (error is DioException) {
+      _formatDioException(error);
     } else if (error is SocketException) {
       _formatSocketException(error);
     } else if (error is FormatException) {
@@ -28,178 +48,167 @@ class ErrorFormatter {
     }
   }
 
-  /// Formate une CuraException personnalisée
+  // ===========================================================================
+  // CuraException hierarchy
+  // ===========================================================================
+
   void _formatCuraException(CuraException error) {
-    logger.info('');
-
-    // Header avec emoji selon le type
+    _logger.info('');
     final emoji = _getErrorEmoji(error.code ?? 'ERROR');
-    logger.info('');
-    logger.err('${styleBold.wrap('$emoji Error')}');
-    logger.err(red.wrap('─' * 60));
+    _logger.err('${styleBold.wrap('$emoji Error')}');
+    _logger.err(red.wrap('─' * 60));
+    _logger.err('');
+    _logger.err(styleBold.wrap(error.message));
 
-    // Message principal
-    logger.err('');
-    logger.err(styleBold.wrap(error.message));
-
-    // Code d'erreur
     if (error.code != null) {
-      logger.info('');
-      logger.info('${darkGray.wrap('Code:')} ${error.code}');
+      _logger.info('');
+      _logger.info('${darkGray.wrap('Code:')} ${error.code}');
     }
 
-    // Contexte additionnel
     if (error.context != null) {
-      logger.info('${darkGray.wrap('Context:')} ${error.context}');
+      _logger.info('${darkGray.wrap('Context:')} ${error.context}');
     }
 
-    // Suggestions selon le type d'erreur
     final suggestions = _getSuggestions(error);
     if (suggestions.isNotEmpty) {
-      logger.info('');
-      logger.info(yellow.wrap('💡 Suggestions:'));
-      for (final suggestion in suggestions) {
-        logger.info('   ${darkGray.wrap('•')} $suggestion');
+      _logger.info('');
+      _logger.info(yellow.wrap('💡 Suggestions:'));
+      for (final s in suggestions) {
+        _logger.info('   ${darkGray.wrap('•')} $s');
       }
     }
 
-    // Erreur originale en mode verbose
     if (verbose && error.originalError != null) {
-      logger.info('');
-      logger.info(darkGray.wrap('Original error:'));
-      logger.info(darkGray.wrap('  ${error.originalError}'));
+      _logger.info('');
+      _logger.info(darkGray.wrap('Original error:'));
+      _logger.info(darkGray.wrap('  ${error.originalError}'));
     }
 
-    // Stack trace en mode verbose
     if (verbose && error.stackTrace != null) {
-      logger.info('');
-      logger.info(darkGray.wrap('Stack trace:'));
-      final stackLines = error.stackTrace.toString().split('\n').take(5);
-      for (final line in stackLines) {
-        logger.info(darkGray.wrap('  $line'));
+      _logger.info('');
+      _logger.info(darkGray.wrap('Stack trace:'));
+      for (final line in error.stackTrace.toString().split('\n').take(5)) {
+        _logger.info(darkGray.wrap('  $line'));
       }
     }
 
-    logger.err(red.wrap('─' * 60));
-    logger.info('');
+    _logger.err(red.wrap('─' * 60));
+    _logger.info('');
   }
 
-  /// Formate une erreur HTTP
-  void _formatHttpException(http.ClientException error) {
-    logger.info('');
-    logger.err('${styleBold.wrap('🌐 Network Error')}');
-    logger.err(red.wrap('─' * 60));
-    logger.err('');
-    logger.err('Failed to connect to the server');
-    logger.info('');
-    logger.info('${darkGray.wrap('Details:')} ${error.message}');
-    logger.info('');
-    logger.info(yellow.wrap('💡 Suggestions:'));
-    logger.info('   ${darkGray.wrap('•')} Check your internet connection');
-    logger
-        .info('   ${darkGray.wrap('•')} Verify the API endpoint is accessible');
-    logger.info('   ${darkGray.wrap('•')} Try again in a few moments');
-    logger.err(red.wrap('─' * 60));
-    logger.info('');
-  }
+  // ===========================================================================
+  // Infrastructure exceptions
+  // ===========================================================================
 
-  /// Formate une erreur de socket
-  void _formatSocketException(SocketException error) {
-    logger.info('');
-    logger.err('${styleBold.wrap('🔌 Connection Error')}');
-    logger.err(red.wrap('─' * 60));
-    logger.err('');
-    logger.err('Unable to connect to the network');
-    logger.info('');
-    logger
-        .info('${darkGray.wrap('Host:')} ${error.address?.host ?? 'unknown'}');
-    logger.info('${darkGray.wrap('Port:')} ${error.port ?? 'unknown'}');
-    logger.info('');
-    logger.info(yellow.wrap('💡 Suggestions:'));
-    logger.info('   ${darkGray.wrap('•')} Check your internet connection');
-    logger.info('   ${darkGray.wrap('•')} Verify DNS resolution is working');
-    logger.info(
-        '   ${darkGray.wrap('•')} Check if you\'re behind a proxy/firewall');
-    logger.err(red.wrap('─' * 60));
-    logger.info('');
-  }
-
-  /// Formate une erreur de format
-  void _formatFormatException(FormatException error) {
-    logger.info('');
-    logger.err('${styleBold.wrap('📄 Format Error')}');
-    logger.err(red.wrap('─' * 60));
-    logger.err('');
-    logger.err('Invalid data format detected');
-    logger.info('');
-    logger.info('${darkGray.wrap('Message:')} ${error.message}');
-    if (error.source != null) {
-      logger.info('${darkGray.wrap('Source:')} ${error.source}');
+  void _formatDioException(DioException error) {
+    _logger.info('');
+    _logger.err('${styleBold.wrap('🌐 Network Error')}');
+    _logger.err(red.wrap('─' * 60));
+    _logger.err('');
+    _logger.err('Failed to reach the server');
+    _logger.info('');
+    if (error.response?.statusCode != null) {
+      _logger.info('${darkGray.wrap('Status:')} ${error.response!.statusCode}');
     }
-    logger.err(red.wrap('─' * 60));
-    logger.info('');
+    _logger.info('${darkGray.wrap('Details:')} ${error.message}');
+    _logger.info('');
+    _logger.info(yellow.wrap('💡 Suggestions:'));
+    _logger.info('   ${darkGray.wrap('•')} Check your internet connection');
+    _logger
+        .info('   ${darkGray.wrap('•')} Verify the API endpoint is accessible');
+    _logger.info('   ${darkGray.wrap('•')} Try again in a few moments');
+    _logger.err(red.wrap('─' * 60));
+    _logger.info('');
   }
 
-  /// Formate une erreur générique
+  void _formatSocketException(SocketException error) {
+    _logger.info('');
+    _logger.err('${styleBold.wrap('🔌 Connection Error')}');
+    _logger.err(red.wrap('─' * 60));
+    _logger.err('');
+    _logger.err('Unable to connect to the network');
+    _logger.info('');
+    _logger
+        .info('${darkGray.wrap('Host:')} ${error.address?.host ?? 'unknown'}');
+    _logger.info('${darkGray.wrap('Port:')} ${error.port ?? 'unknown'}');
+    _logger.info('');
+    _logger.info(yellow.wrap('💡 Suggestions:'));
+    _logger.info('   ${darkGray.wrap('•')} Check your internet connection');
+    _logger.info('   ${darkGray.wrap('•')} Verify DNS resolution is working');
+    _logger.info(
+        "   ${darkGray.wrap('•')} Check if you're behind a proxy or firewall");
+    _logger.err(red.wrap('─' * 60));
+    _logger.info('');
+  }
+
+  void _formatFormatException(FormatException error) {
+    _logger.info('');
+    _logger.err('${styleBold.wrap('📄 Format Error')}');
+    _logger.err(red.wrap('─' * 60));
+    _logger.err('');
+    _logger.err('Invalid data format received');
+    _logger.info('');
+    _logger.info('${darkGray.wrap('Message:')} ${error.message}');
+    if (error.source != null) {
+      _logger.info('${darkGray.wrap('Source:')} ${error.source}');
+    }
+    _logger.err(red.wrap('─' * 60));
+    _logger.info('');
+  }
+
   void _formatGenericException(dynamic error, StackTrace? stackTrace) {
-    logger.info('');
-    logger.err('${styleBold.wrap('⚠️  Unexpected Error')}');
-    logger.err(red.wrap('─' * 60));
-    logger.err('');
-    logger.err(error.toString());
+    _logger.info('');
+    _logger.err('${styleBold.wrap('⚠️  Unexpected Error')}');
+    _logger.err(red.wrap('─' * 60));
+    _logger.err('');
+    _logger.err(error.toString());
 
     if (verbose && stackTrace != null) {
-      logger.info('');
-      logger.info(darkGray.wrap('Stack trace:'));
-      final stackLines = stackTrace.toString().split('\n').take(10);
-      for (final line in stackLines) {
-        logger.info(darkGray.wrap('  $line'));
+      _logger.info('');
+      _logger.info(darkGray.wrap('Stack trace:'));
+      for (final line in stackTrace.toString().split('\n').take(10)) {
+        _logger.info(darkGray.wrap('  $line'));
       }
     }
 
-    logger.info('');
-    logger.info(yellow.wrap('💡 This might be a bug. Please report it:'));
-    logger.info('   ${cyan.wrap('https://github.com/meragix/cura/issues')}');
-    logger.err(red.wrap('─' * 60));
-    logger.info('');
+    _logger.info('');
+    _logger.info(yellow.wrap('💡 This might be a bug. Please report it:'));
+    _logger.info('   ${cyan.wrap('https://github.com/meragix/cura/issues')}');
+    _logger.err(red.wrap('─' * 60));
+    _logger.info('');
   }
 
-  /// Retourne l'emoji approprié selon le code d'erreur
+  // ===========================================================================
+  // Helpers
+  // ===========================================================================
+
   String _getErrorEmoji(String code) {
-    switch (code) {
-      case 'PACKAGE_NOT_FOUND':
-        return '📦';
-      case 'NETWORK_ERROR':
-        return '🌐';
-      case 'RATE_LIMIT':
-        return '⏱️';
-      case 'PARSE_ERROR':
-        return '📄';
-      case 'VALIDATION_ERROR':
-        return '✖️';
-      case 'CACHE_ERROR':
-        return '💾';
-      default:
-        return '⚠️';
-    }
+    return switch (code) {
+      'PACKAGE_NOT_FOUND' => '📦',
+      'NETWORK_ERROR' => '🌐',
+      'RATE_LIMIT' => '⏱️',
+      'PARSE_ERROR' => '📄',
+      'VALIDATION_ERROR' => '✖️',
+      'CACHE_ERROR' => '💾',
+      _ => '⚠️',
+    };
   }
 
-  /// Retourne des suggestions contextuelles selon le type d'erreur
   List<String> _getSuggestions(CuraException error) {
     if (error is PackageNotFoundException) {
       return [
         'Verify the package name is spelled correctly',
         'Check if the package exists on pub.dev',
-        'Use ${cyan.wrap('cura search <keyword>')} to find similar packages',
+        "Use ${cyan.wrap('cura search <keyword>')} to find similar packages",
       ];
     }
 
     if (error is RateLimitException) {
-      final retryAfter = error.retryAfter;
       return [
-        if (retryAfter != null) 'Wait $retryAfter before retrying',
-        'Use ${cyan.wrap('--use-cache')} to reduce API calls',
-        'Consider using a GitHub token for higher rate limits',
+        if (error.retryAfter != null)
+          'Wait ${error.retryAfter} before retrying',
+        "Use ${cyan.wrap('--use-cache')} to reduce API calls",
+        'Consider adding a GitHub token for higher rate limits',
       ];
     }
 
@@ -207,7 +216,7 @@ class ErrorFormatter {
       return [
         'Check your internet connection',
         'Verify pub.dev is accessible',
-        'Try using ${cyan.wrap('--offline')} mode with cached data',
+        "Try using ${cyan.wrap('--offline')} mode with cached data",
       ];
     }
 
@@ -220,9 +229,9 @@ class ErrorFormatter {
     }
 
     if (error is ValidationException) {
-      return error.validationErrors.map((e) => e).toList();
+      return error.validationErrors;
     }
 
-    return [];
+    return const [];
   }
 }

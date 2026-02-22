@@ -1,41 +1,16 @@
-import 'package:mason_logger/mason_logger.dart';
+import 'package:cura/src/domain/entities/score.dart';
 
+/// Formatter : Score → String lisible
 class ScoreFormatter {
-  String miniBar(int value, int max) {
-    final percentage = (value / max * 100).round();
+  const ScoreFormatter._();
 
-    if (percentage >= 90) return green.wrap('█')!;
-    if (percentage >= 70) return lightGreen.wrap('▓')!;
-    if (percentage >= 50) return yellow.wrap('▒')!;
-    if (percentage >= 30) return lightYellow.wrap('░')!;
-    return darkGray.wrap('·')!;
+  /// Format: "85/100 (A)"
+  static String format(Score score) {
+    return '${score.total.toString().padLeft(3)}/100 (${score.grade})';
   }
 
-  AnsiCode getGradeColor(String grade) {
-    switch (grade) {
-      case 'A+':
-      case 'A':
-        return green;
-      case 'B':
-        return lightGreen;
-      case 'C':
-        return yellow;
-      default:
-        return red;
-    }
-  }
-
-  String getGradeEmoji(String grade) {
-    switch (grade) {
-      case 'A+':
-      case 'A':
-        return '✨';
-      case 'B':
-        return '✓';
-      case 'C':
-        return '⚠';
-      default:
-        return '✗';
-    }
+  /// Format avec couleurs
+  static String formatColored(Score score) {
+    return format(score);
   }
 }

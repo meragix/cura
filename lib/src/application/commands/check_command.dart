@@ -4,7 +4,7 @@ import 'package:args/command_runner.dart';
 import 'package:cura/src/domain/entities/package_audit_result.dart';
 import 'package:cura/src/domain/usecases/check_packages_usecase.dart';
 import 'package:cura/src/domain/value_objects/result.dart';
-import 'package:cura/src/presentation/cli/presenters/check_presenter.dart';
+import 'package:cura/src/presentation/presenters/check_presenter.dart';
 import 'package:cura/src/shared/utils/pubspec_parser.dart';
 
 /// CLI command that audits all pub.dev packages declared in a `pubspec.yaml`.
@@ -100,7 +100,8 @@ class CheckCommand extends Command<int> {
       )
       ..addFlag(
         'dev-dependencies',
-        help: 'Include dev_dependencies in the audit in addition to dependencies.',
+        help:
+            'Include dev_dependencies in the audit in addition to dependencies.',
         defaultsTo: false,
       )
       ..addOption(
@@ -112,12 +113,14 @@ class CheckCommand extends Command<int> {
       )
       ..addFlag(
         'fail-on-vulnerable',
-        help: 'Exit with code 1 if any package has known security vulnerabilities.',
+        help:
+            'Exit with code 1 if any package has known security vulnerabilities.',
         defaultsTo: true,
       )
       ..addFlag(
         'fail-on-discontinued',
-        help: 'Exit with code 1 if any package is marked as discontinued on pub.dev.',
+        help:
+            'Exit with code 1 if any package is marked as discontinued on pub.dev.',
         defaultsTo: true,
       )
       ..addFlag(
@@ -128,7 +131,8 @@ class CheckCommand extends Command<int> {
       )
       ..addFlag(
         'json',
-        help: 'Emit results as machine-readable JSON instead of the default table.',
+        help:
+            'Emit results as machine-readable JSON instead of the default table.',
         defaultsTo: false,
       );
   }

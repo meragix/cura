@@ -1,40 +1,76 @@
 import 'package:cura/src/infrastructure/config/models/score_weights.dart';
 import 'package:yaml/yaml.dart';
 
+/// Fully-resolved, non-nullable configuration for a Cura session.
+///
+/// ## Hierarchy
+///
+/// Values are resolved in priority order (highest → lowest):
+/// 1. CLI flags
+/// 2. Project config (`./.cura/config.yaml`)
+/// 3. Global config (`~/.cura/config.yaml`)
+/// 4. Defaults (see [ConfigDefaults])
+///
+/// ## Parsing
+///
+/// - JSON round-trip (SQLite cache, inter-process): [fromJson] / [toJson]
+/// - YAML files (human-editable configs):          [fromYaml] / [toYamlString]
+///
+/// ## Merging
+///
+/// Call [mergeWith] to overlay a project config on top of a global config.
+/// Project values always win; [githubToken] falls back to the global value
+/// if the project file does not declare one.
 class CuraConfig {
-  // Appearance
+  // ── Appearance ──────────────────────────────────────────────────────────────
+
   final String theme;
   final bool useColors;
   final bool useEmojis;
 
-  // Cache
+  // ── Cache ───────────────────────────────────────────────────────────────────
+
   final int cacheMaxAgeHours;
   final bool enableCache;
 
-  // Performance
+  // ── Performance ─────────────────────────────────────────────────────────────
+
   final int maxConcurrency;
   final int timeoutSeconds;
 
-  // Scoring
+  /// Maximum number of retry attempts for failed HTTP requests.
+  final int maxRetries;
+
+  /// Whether to refresh the cache automatically in the background.
+  final bool autoUpdate;
+
+  // ── Scoring ─────────────────────────────────────────────────────────────────
+
   final int minScore;
   final ScoreWeights scoreWeights;
 
-  // Behavior
+  // ── Behaviour ───────────────────────────────────────────────────────────────
+
   final bool showSuggestions;
   final int maxSuggestionsPerPackage;
   final bool failOnVulnerable;
   final bool failOnDiscontinued;
 
-  // Exclusions (internally immutable)
+  // ── Exclusions ──────────────────────────────────────────────────────────────
+
   final List<String> ignoredPackages;
   final List<String> trustedPublishers;
 
-  // Logging
+  // ── Logging ─────────────────────────────────────────────────────────────────
+
   final bool verboseLogging;
   final bool quiet;
 
-  // API
+  // ── API ─────────────────────────────────────────────────────────────────────
+
   final String? githubToken;
+
+  // ── Constructor ─────────────────────────────────────────────────────────────
 
   const CuraConfig({
     this.theme = 'dark',
@@ -44,6 +80,8 @@ class CuraConfig {
     this.enableCache = true,
     this.maxConcurrency = 5,
     this.timeoutSeconds = 10,
+    this.maxRetries = 3,
+    this.autoUpdate = false,
     this.minScore = 70,
     this.scoreWeights = const ScoreWeights(),
     this.showSuggestions = true,
@@ -57,6 +95,8 @@ class CuraConfig {
     this.githubToken,
   });
 
+  // ── copyWith ─────────────────────────────────────────────────────────────────
+
   CuraConfig copyWith({
     String? theme,
     bool? useColors,
@@ -65,6 +105,8 @@ class CuraConfig {
     bool? enableCache,
     int? maxConcurrency,
     int? timeoutSeconds,
+    int? maxRetries,
+    bool? autoUpdate,
     int? minScore,
     ScoreWeights? scoreWeights,
     bool? showSuggestions,
@@ -85,6 +127,8 @@ class CuraConfig {
       enableCache: enableCache ?? this.enableCache,
       maxConcurrency: maxConcurrency ?? this.maxConcurrency,
       timeoutSeconds: timeoutSeconds ?? this.timeoutSeconds,
+      maxRetries: maxRetries ?? this.maxRetries,
+      autoUpdate: autoUpdate ?? this.autoUpdate,
       minScore: minScore ?? this.minScore,
       scoreWeights: scoreWeights ?? this.scoreWeights,
       showSuggestions: showSuggestions ?? this.showSuggestions,
@@ -100,25 +144,62 @@ class CuraConfig {
     );
   }
 
-  // -------- JSON --------
+  // ── Merge ────────────────────────────────────────────────────────────────────
+
+  /// Returns a new config where every field is taken from [other] (typically
+  /// the project config), with this config (typically global) as the fallback.
+  ///
+  /// The [githubToken] is the only field where the global value is preferred
+  /// when [other] has none, because API tokens are usually stored globally.
+  CuraConfig mergeWith(CuraConfig? other) {
+    if (other == null) return this;
+    return CuraConfig(
+      theme: other.theme,
+      useColors: other.useColors,
+      useEmojis: other.useEmojis,
+      cacheMaxAgeHours: other.cacheMaxAgeHours,
+      enableCache: other.enableCache,
+      maxConcurrency: other.maxConcurrency,
+      timeoutSeconds: other.timeoutSeconds,
+      maxRetries: other.maxRetries,
+      autoUpdate: other.autoUpdate,
+      minScore: other.minScore,
+      scoreWeights: other.scoreWeights,
+      showSuggestions: other.showSuggestions,
+      maxSuggestionsPerPackage: other.maxSuggestionsPerPackage,
+      failOnVulnerable: other.failOnVulnerable,
+      failOnDiscontinued: other.failOnDiscontinued,
+      ignoredPackages: other.ignoredPackages,
+      trustedPublishers: other.trustedPublishers,
+      verboseLogging: other.verboseLogging,
+      quiet: other.quiet,
+      githubToken: other.githubToken ?? githubToken,
+    );
+  }
+
+  // ── JSON (cache / inter-process) ─────────────────────────────────────────────
 
   factory CuraConfig.fromJson(Map<String, dynamic> json) {
     return CuraConfig(
-      theme: json['theme'] ?? 'dark',
-      useColors: json['useColors'] ?? true,
-      useEmojis: json['useEmojis'] ?? true,
-      cacheMaxAgeHours: json['cacheMaxAgeHours'] ?? 24,
-      enableCache: json['enableCache'] ?? true,
-      maxConcurrency: json['maxConcurrency'] ?? 5,
-      timeoutSeconds: json['timeoutSeconds'] ?? 10,
-      minScore: json['minScore'] ?? 70,
+      theme: json['theme'] as String? ?? 'dark',
+      useColors: json['useColors'] as bool? ?? true,
+      useEmojis: json['useEmojis'] as bool? ?? true,
+      cacheMaxAgeHours: json['cacheMaxAgeHours'] as int? ?? 24,
+      enableCache: json['enableCache'] as bool? ?? true,
+      maxConcurrency: json['maxConcurrency'] as int? ?? 5,
+      timeoutSeconds: json['timeoutSeconds'] as int? ?? 10,
+      maxRetries: json['maxRetries'] as int? ?? 3,
+      autoUpdate: json['autoUpdate'] as bool? ?? false,
+      minScore: json['minScore'] as int? ?? 70,
       scoreWeights: json['scoreWeights'] != null
-          ? ScoreWeights.fromJson(json['scoreWeights'])
+          ? ScoreWeights.fromJson(
+              json['scoreWeights'] as Map<String, dynamic>,
+            )
           : const ScoreWeights(),
-      showSuggestions: json['showSuggestions'] ?? true,
-      maxSuggestionsPerPackage: json['maxSuggestionsPerPackage'] ?? 3,
-      failOnVulnerable: json['failOnVulnerable'] ?? true,
-      failOnDiscontinued: json['failOnDiscontinued'] ?? true,
+      showSuggestions: json['showSuggestions'] as bool? ?? true,
+      maxSuggestionsPerPackage: json['maxSuggestionsPerPackage'] as int? ?? 3,
+      failOnVulnerable: json['failOnVulnerable'] as bool? ?? true,
+      failOnDiscontinued: json['failOnDiscontinued'] as bool? ?? true,
       ignoredPackages: (json['ignoredPackages'] as List?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -127,9 +208,9 @@ class CuraConfig {
               ?.map((e) => e.toString())
               .toList() ??
           const [],
-      verboseLogging: json['verboseLogging'] ?? false,
-      quiet: json['quiet'] ?? false,
-      githubToken: json['githubToken'],
+      verboseLogging: json['verboseLogging'] as bool? ?? false,
+      quiet: json['quiet'] as bool? ?? false,
+      githubToken: json['githubToken'] as String?,
     );
   }
 
@@ -142,6 +223,8 @@ class CuraConfig {
       'enableCache': enableCache,
       'maxConcurrency': maxConcurrency,
       'timeoutSeconds': timeoutSeconds,
+      'maxRetries': maxRetries,
+      'autoUpdate': autoUpdate,
       'minScore': minScore,
       'scoreWeights': scoreWeights.toJson(),
       'showSuggestions': showSuggestions,
@@ -155,286 +238,185 @@ class CuraConfig {
       'githubToken': githubToken,
     };
   }
-}
 
-class CuraConfig2 {
-  // Apparence
-  final String? theme;
-  final bool? useEmojis;
-  final bool? useColors;
+  // ── YAML (human-editable config files) ───────────────────────────────────────
 
-  // Comportement
-  final int? cacheMaxAge; // en heures
-  final bool? autoUpdate;
-  final int? minScore;
+  /// Parses a [CuraConfig] from a YAML mapping.
+  ///
+  /// YAML keys use `snake_case` (conventional for YAML files).
+  /// Unknown keys are silently ignored, and missing keys fall back to defaults,
+  /// so config files only need to declare the values they want to override.
+  factory CuraConfig.fromYaml(Map yaml) {
+    Map<String, dynamic>? weightsMap;
+    if (yaml['score_weights'] is Map) {
+      weightsMap = (yaml['score_weights'] as Map).map(
+        (k, v) => MapEntry(k.toString(), v),
+      );
+    }
 
-  // API
-  final String? githubToken;
-  final int? timeoutSeconds;
-  final int? maxRetries;
+    List<String> _list(dynamic raw) =>
+        (raw is YamlList) ? raw.map((e) => e.toString()).toList() : const [];
 
-  // Suggestions
-  final bool? showSuggestions;
-  final int? maxSuggestionsPerPackage;
-
-  // Scoring (poids personnalisables)
-  final ScoreWeights? scoreWeights;
-
-  // Exclusions
-  final List<String>? ignorePackages;
-  final List<String>? trustedPublishers;
-
-  const CuraConfig2({
-    this.theme,
-    this.useEmojis,
-    this.useColors,
-    this.cacheMaxAge,
-    this.autoUpdate,
-    this.minScore,
-    this.githubToken,
-    this.timeoutSeconds,
-    this.maxRetries,
-    this.showSuggestions,
-    this.maxSuggestionsPerPackage,
-    this.scoreWeights,
-    this.ignorePackages,
-    this.trustedPublishers,
-  });
-
-  /// Factory depuis YAML
-  factory CuraConfig2.fromYaml(YamlMap yaml) {
-    return CuraConfig2(
-      theme: yaml['theme'] as String?,
-      useEmojis: yaml['use_emojis'] as bool?,
-      useColors: yaml['use_colors'] as bool?,
-      cacheMaxAge: yaml['cache_max_age'] as int?,
-      autoUpdate: yaml['auto_update'] as bool?,
+    return CuraConfig(
+      theme: yaml['theme'] as String? ?? 'dark',
+      useColors: yaml['use_colors'] as bool? ?? true,
+      useEmojis: yaml['use_emojis'] as bool? ?? true,
+      cacheMaxAgeHours:
+          (yaml['cache_max_age_hours'] ?? yaml['cache_max_age']) as int? ?? 24,
+      enableCache: yaml['enable_cache'] as bool? ?? true,
+      maxConcurrency: yaml['max_concurrency'] as int? ?? 5,
+      timeoutSeconds: yaml['timeout_seconds'] as int? ?? 10,
+      maxRetries: yaml['max_retries'] as int? ?? 3,
+      autoUpdate: yaml['auto_update'] as bool? ?? false,
       minScore: yaml['min_score'] as int? ?? 70,
+      scoreWeights: weightsMap != null
+          ? ScoreWeights(
+              vitality: weightsMap['vitality'] as int? ?? 40,
+              technicalHealth: (weightsMap['technical_health'] ??
+                      weightsMap['technicalHealth']) as int? ??
+                  30,
+              trust: weightsMap['trust'] as int? ?? 20,
+              maintenance: weightsMap['maintenance'] as int? ?? 10,
+            )
+          : const ScoreWeights(),
+      showSuggestions: yaml['show_suggestions'] as bool? ?? true,
+      maxSuggestionsPerPackage:
+          yaml['max_suggestions_per_package'] as int? ?? 3,
+      failOnVulnerable: yaml['fail_on_vulnerable'] as bool? ?? true,
+      failOnDiscontinued: yaml['fail_on_discontinued'] as bool? ?? true,
+      ignoredPackages: _list(yaml['ignore_packages']),
+      trustedPublishers: _list(yaml['trusted_publishers']),
+      verboseLogging: yaml['verbose_logging'] as bool? ?? false,
+      quiet: yaml['quiet'] as bool? ?? false,
       githubToken: yaml['github_token'] as String?,
-      timeoutSeconds: yaml['timeout_seconds'] as int?,
-      maxRetries: yaml['max_retries'] as int?,
-      showSuggestions: yaml['show_suggestions'] as bool?,
-      maxSuggestionsPerPackage: yaml['max_suggestions_per_package'] as int?,
-      // scoreWeights: yaml.containsKey('score_weights')
-      //     ? ScoreWeights.fromYaml(yaml['score_weights'] as YamlMap)
-      //     : null,
-      ignorePackages: (yaml['ignore_packages'] as YamlList?)?.cast<String>(),
-      trustedPublishers:
-          (yaml['trusted_publishers'] as YamlList?)?.cast<String>(),
     );
   }
 
-  /// Convertit en YAML avec option projet
+  /// Serialises the config to a commented YAML string suitable for writing
+  /// to a config file.
+  ///
+  /// Pass `isProject: true` to emit only the fields commonly overridden at
+  /// the project level (producing a leaner `.cura/config.yaml`).
   String toYamlString({bool isProject = false}) {
-    if (isProject) {
-      return toProjectYamlString();
-    }
-    // Retourner le YAML complet (original)
+    return isProject ? _toProjectYaml() : _toGlobalYaml();
+  }
+
+  String _toGlobalYaml() {
+    final ignorePkgLines = ignoredPackages.isEmpty
+        ? '  # - example_package'
+        : ignoredPackages.map((p) => '  - $p').join('\n');
+
+    final trustedPubLines = trustedPublishers.isEmpty
+        ? '  # - dart.dev\n  # - flutter.dev'
+        : trustedPublishers.map((p) => '  - $p').join('\n');
+
+    final tokenLine = githubToken != null
+        ? 'github_token: $githubToken'
+        : '# github_token: ghp_your_token_here';
+
     return '''
 # Cura Configuration File
 # Global config at: ~/.cura/config.yaml
 
-# ============================================================================
+# =============================================================================
 # APPEARANCE
-# ============================================================================
-theme: $theme                    # dark, light, minimal, dracula
-use_emojis: $useEmojis           # Show emojis in output
-use_colors: $useColors           # Enable colored output
+# =============================================================================
+theme: $theme                         # dark | light | minimal
+use_emojis: $useEmojis                # Show emojis in output
+use_colors: $useColors                # Enable coloured output
 
-# ============================================================================
+# =============================================================================
 # CACHE
-# ============================================================================
-cache_max_age: $cacheMaxAge      # Cache expiration in hours
-auto_update: $autoUpdate         # Auto-update cache in background
+# =============================================================================
+cache_max_age_hours: $cacheMaxAgeHours  # Cache TTL in hours
+enable_cache: $enableCache
+auto_update: $autoUpdate              # Refresh cache in background
 
-# ============================================================================
+# =============================================================================
 # SCORING
-# ============================================================================
-min_score: $minScore             # Minimum acceptable score for CI/CD
+# =============================================================================
+min_score: $minScore                  # Minimum acceptable score (CI/CD gate)
 
-# Custom score weights (total must equal 100)
+# Custom dimension weights — must sum to 100
 score_weights:
-  vitality: ${scoreWeights?.vitality}              # Freshness of updates (0-40)
-  technical_health: ${scoreWeights?.technicalHealth}   # Pana score, null safety (0-30)
-  trust: ${scoreWeights?.trust}                # Popularity, likes (0-20)
-  maintenance: ${scoreWeights?.maintenance}          # Publisher, Flutter Favorite (0-10)
+  vitality: ${scoreWeights.vitality}              # Release recency (0–40)
+  technical_health: ${scoreWeights.technicalHealth}    # Pana/null-safety/Dart3 (0–30)
+  trust: ${scoreWeights.trust}                 # Popularity, likes (0–20)
+  maintenance: ${scoreWeights.maintenance}           # Publisher, Flutter Fav (0–10)
 
-# ============================================================================
-# API CONFIGURATION
-# ============================================================================
-timeout_seconds: $timeoutSeconds # HTTP request timeout
-max_retries: $maxRetries         # Max retry attempts for failed requests
+# =============================================================================
+# PERFORMANCE
+# =============================================================================
+max_concurrency: $maxConcurrency      # Parallel API requests
+timeout_seconds: $timeoutSeconds      # HTTP timeout per request
+max_retries: $maxRetries              # Retry attempts on failure
 
-# GitHub Personal Access Token (for higher rate limits)
-# Get one at: https://github.com/settings/tokens
-${githubToken != null ? 'github_token: $githubToken' : '# github_token: ghp_your_token_here'}
+# =============================================================================
+# BEHAVIOUR
+# =============================================================================
+fail_on_vulnerable: $failOnVulnerable
+fail_on_discontinued: $failOnDiscontinued
+show_suggestions: $showSuggestions
+max_suggestions_per_package: $maxSuggestionsPerPackage
 
-# ============================================================================
-# SUGGESTIONS
-# ============================================================================
-show_suggestions: $showSuggestions           # Show alternative packages
-max_suggestions_per_package: $maxSuggestionsPerPackage  # Max alternatives to show
+# =============================================================================
+# API
+# =============================================================================
+# GitHub Personal Access Token (raises rate limit from 60 → 5 000 req/hr)
+# Create one at: https://github.com/settings/tokens
+$tokenLine
 
-# ============================================================================
+# =============================================================================
 # EXCLUSIONS
-# ============================================================================
-# Packages to ignore during analysis
+# =============================================================================
 ignore_packages:
-${ignorePackages!.isEmpty ? '  # - example_package' : ignorePackages?.map((p) => '  - $p').join('\n')}
+$ignorePkgLines
 
-# Trusted publishers (auto-approve their packages)
 trusted_publishers:
-${trustedPublishers!.isEmpty ? '  # - dart.dev\n  # - flutter.dev' : trustedPublishers?.map((p) => '  - $p').join('\n')}
+$trustedPubLines
 ''';
   }
 
-  String toProjectYamlString() {
-    final buffer = StringBuffer();
+  String _toProjectYaml() {
+    final buf = StringBuffer();
 
-    buffer.writeln('# Cura Project Configuration');
-    buffer.writeln('# This config overrides global settings for this project');
-    buffer.writeln('# Global config: ~/.cura/config.yaml');
-    buffer.writeln('');
-    buffer.writeln(
-        '# ============================================================================');
-    buffer.writeln('# PROJECT-SPECIFIC SETTINGS');
-    buffer.writeln(
-        '# ============================================================================');
-    buffer.writeln('');
+    buf.writeln('# Cura Project Configuration');
+    buf.writeln('# Overrides ~/.cura/config.yaml for this project only.');
+    buf.writeln('');
+    buf.writeln(
+      '# =============================================================================',
+    );
+    buf.writeln('# PROJECT OVERRIDES');
+    buf.writeln(
+      '# =============================================================================',
+    );
+    buf.writeln('');
+    buf.writeln('min_score: $minScore');
+    buf.writeln('');
 
-    // N'écrire que les valeurs non-null (overrides)
-    if (minScore != null) {
-      buffer.writeln('# Override minimum score for this project');
-      buffer.writeln('min_score: $minScore');
-      buffer.writeln('');
-    }
-
-    if (ignorePackages != null && ignorePackages!.isNotEmpty) {
-      buffer.writeln('# Packages to ignore in this project');
-      buffer.writeln('ignore_packages:');
-      for (final pkg in ignorePackages!) {
-        buffer.writeln('  - $pkg');
+    if (ignoredPackages.isNotEmpty) {
+      buf.writeln('ignore_packages:');
+      for (final pkg in ignoredPackages) {
+        buf.writeln('  - $pkg');
       }
-      buffer.writeln('');
+      buf.writeln('');
     }
 
-    if (trustedPublishers != null && trustedPublishers!.isNotEmpty) {
-      buffer.writeln('# Additional trusted publishers for this project');
-      buffer.writeln('trusted_publishers:');
-      for (final pub in trustedPublishers!) {
-        buffer.writeln('  - $pub');
+    if (trustedPublishers.isNotEmpty) {
+      buf.writeln('trusted_publishers:');
+      for (final pub in trustedPublishers) {
+        buf.writeln('  - $pub');
       }
-      buffer.writeln('');
+      buf.writeln('');
     }
 
-    buffer.writeln(
-        '# ============================================================================');
-    buffer.writeln('# OPTIONAL OVERRIDES');
-    buffer.writeln('# Uncomment to override global settings');
-    buffer.writeln(
-        '# ============================================================================');
-    buffer.writeln('');
-    buffer.writeln('# theme: dark');
-    buffer.writeln('# show_suggestions: true');
-    buffer.writeln('# cache_max_age: 24');
+    buf.writeln('# Uncomment to override global settings:');
+    buf.writeln('# theme: dark');
+    buf.writeln('# show_suggestions: true');
+    buf.writeln('# cache_max_age_hours: 24');
+    buf.writeln('# fail_on_vulnerable: true');
+    buf.writeln('# fail_on_discontinued: true');
 
-    return buffer.toString();
+    return buf.toString();
   }
-
-  // /// Config vide (pour projet sans config)
-  // factory CuraConfig.empty() {
-  //   return const CuraConfig(
-  //     theme: null,
-  //     useEmojis: null,
-  //     useColors: null,
-  //     cacheMaxAge: null,
-  //     autoUpdate: null,
-  //     minScore: null,
-  //     githubToken: null,
-  //     timeoutSeconds: null,
-  //     maxRetries: null,
-  //     showSuggestions: null,
-  //     maxSuggestionsPerPackage: null,
-  //     scoreWeights: null,
-  //     ignorePackages: null,
-  //     trustedPublishers: null,
-  //   );
-  // }
-
-  /// Template pour config projet (uniquement les overrides courants)
-  // factory CuraConfig.projectTemplate() {
-  //   return const CuraConfig(
-  //     // Laisser null pour hériter de global
-  //     theme: null,
-  //     useEmojis: null,
-  //     useColors: null,
-  //     cacheMaxAge: null,
-  //     autoUpdate: null,
-
-  //     // Overrides typiques de projet
-  //     minScore: 75, // Peut être plus strict par projet
-  //     githubToken: null,
-  //     timeoutSeconds: null,
-  //     maxRetries: null,
-  //     showSuggestions: true,
-  //     maxSuggestionsPerPackage: null,
-  //     scoreWeights: null,
-
-  //     // Exclusions spécifiques au projet
-  //     ignorePackages: [],
-  //     trustedPublishers: [],
-  //   );
-  // }
-
-  /// Merge avec overrides
-  // CuraConfig merge({
-  //   String? theme,
-  //   bool? useEmojis,
-  //   bool? useColors,
-  //   int? cacheMaxAge,
-  //   bool? autoUpdate,
-  //   int? minScore,
-  //   String? githubToken,
-  //   int? timeoutSeconds,
-  //   int? maxRetries,
-  //   bool? showSuggestions,
-  //   int? maxSuggestionsPerPackage,
-  // }) {
-  //   return CuraConfig(
-  //     theme: theme ?? this.theme,
-  //     useEmojis: useEmojis ?? this.useEmojis,
-  //     useColors: useColors ?? this.useColors,
-  //     cacheMaxAge: cacheMaxAge ?? this.cacheMaxAge,
-  //     autoUpdate: autoUpdate ?? this.autoUpdate,
-  //     minScore: minScore ?? this.minScore,
-  //     githubToken: githubToken ?? this.githubToken,
-  //     timeoutSeconds: timeoutSeconds ?? this.timeoutSeconds,
-  //     maxRetries: maxRetries ?? this.maxRetries,
-  //     showSuggestions: showSuggestions ?? this.showSuggestions,
-  //     maxSuggestionsPerPackage: maxSuggestionsPerPackage ?? this.maxSuggestionsPerPackage,
-  //     scoreWeights: scoreWeights,
-  //     ignorePackages: ignorePackages,
-  //     trustedPublishers: trustedPublishers,
-  //   );
-  // }
-
-  // /// Fusionne avec une autre config (autre > this)
-  // CuraConfig mergeWith(CuraConfig other) {
-  //   return CuraConfig(
-  //     theme: other.theme ?? theme,
-  //     useEmojis: other.useEmojis ?? useEmojis,
-  //     useColors: other.useColors ?? useColors,
-  //     cacheMaxAge: other.cacheMaxAge ?? cacheMaxAge,
-  //     autoUpdate: other.autoUpdate ?? autoUpdate,
-  //     minScore: other.minScore ?? minScore,
-  //     githubToken: other.githubToken ?? githubToken,
-  //     timeoutSeconds: other.timeoutSeconds ?? timeoutSeconds,
-  //     maxRetries: other.maxRetries ?? maxRetries,
-  //     showSuggestions: other.showSuggestions ?? showSuggestions,
-  //     maxSuggestionsPerPackage: other.maxSuggestionsPerPackage ?? maxSuggestionsPerPackage,
-  //     scoreWeights: other.scoreWeights ?? scoreWeights,
-  //     ignorePackages: other.ignorePackages ?? ignorePackages,
-  //     trustedPublishers: other.trustedPublishers ?? trustedPublishers,
-  //   );
-  // }
 }

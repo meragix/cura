@@ -19,6 +19,8 @@ class ConfigDefaults {
     // Performance (conservative)
     maxConcurrency: 5,
     timeoutSeconds: 10,
+    maxRetries: 3,
+    autoUpdate: false,
 
     // Scoring
     minScore: 70,

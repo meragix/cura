@@ -1,116 +1,171 @@
-import 'package:cura/src/domain/models/package_health.dart';
-import 'package:cura/src/presentation/loggers/cura_logger.dart';
+import 'package:cli_table/cli_table.dart';
+import 'package:cura/src/domain/entities/package_audit_result.dart';
+import 'package:cura/src/presentation/formatters/date_formatter.dart';
 import 'package:mason_logger/mason_logger.dart';
 
-/// Renderer pour les tableaux ASCII
 class TableRenderer {
-  final CuraLogger logger;
+  final bool _useColors;
 
-  TableRenderer({required this.logger});
+  const TableRenderer({bool useColors = true}) : _useColors = useColors;
 
-  void render(List<PackageHealth> data) {
-    // Trier : critiques en bas pour visibilité
-    final sorted = data.toList()
+  /// Render audit results as table
+  String renderAuditTable(List<PackageAuditResult> results) {
+    // Sort: reviews at the bottom for visibility
+    final sorted = results.toList()
       ..sort((a, b) => b.score.total.compareTo(a.score.total));
 
-    _printHeader();
+    final table = Table(
+      header: [
+        'Package',
+        'Score',
+        'Status',
+        'Last Update',
+      ],
+      columnWidths: [25, 7, 8, 15],
+      // style: TableStyle(
+      //   border: _useColors ? _coloredBorder() : _plainBorder(),
+      // ),
+    );
 
-    // Rows (afficher les 10 premiers et derniers)
-    final toShow = sorted.length <= 15
-        ? sorted
-        : [
-            ...sorted.take(7),
-            ...sorted.skip(sorted.length - 3),
-          ];
+    // Rows (display the first and last 15)
+    final showAll = sorted.length <= 15;
 
-    var previousIndex = -1;
-    for (var i = 0; i < toShow.length; i++) {
-      final result = toShow[i];
-      final currentIndex = sorted.indexOf(result);
+    final top = showAll ? sorted : sorted.take(7).toList();
+    final bottom = showAll
+        ? <PackageAuditResult>[]
+        : sorted.skip(sorted.length - 3).toList();
 
-      // Afficher "..." si on a sauté des lignes
-      if (previousIndex != -1 && currentIndex - previousIndex > 1) {
-        _printEllipsisRow();
+    void _addRows(Table table, List<PackageAuditResult> list) {
+      for (final result in list) {
+        table.add([
+          _formatPackageName(result),
+          _formatScore(result.score.total),
+          {
+            'content':
+                _formatStatus(result.status, result.packageInfo.isStable),
+            'vAlign': HorizontalAlign.center
+          },
+          _formatLastUpdate(result.packageInfo.daysSinceLastUpdate),
+        ]);
       }
-
-      _printRow(result);
-      previousIndex = currentIndex;
     }
 
-    _printFooter();
+    _addRows(table, top);
+
+    if (!showAll) {
+      table.add(['...', '...', '...', '...']);
+      _addRows(table, bottom);
+    }
+
+    return table.toString();
   }
 
-  void _printHeader() {
-    final divider = '┌${'─' * 24}┬${'─' * 7}┬${'─' * 8}┬${'─' * 14}┐';
-    logger.info(divider);
+  /// Render summary table
+  String renderSummaryTable({
+    required int healthy,
+    required int warning,
+    required int critical,
+    required int total,
+    required int overallScore,
+  }) {
+    final healthyPct = (healthy / total * 100).round();
+    final warningPct = (warning / total * 100).round();
+    final criticalPct = (critical / total * 100).round();
 
-    //final header = '│ Package                │ Score │ Status │ Last Update  │';
-    final header =
-        '│ ${'Package'.padRight(22)} │ Score │ Status │ Last Update  │';
-    logger.info(styleBold.wrap(header)!);
+    final table = Table(
+      header: ['Category', 'Count', 'Percentage'],
+      columnWidths: [15, 8, 12],
+      //style: TableStyle(border: _plainBorder()),
+    );
 
-    final headerDivider = '├${'─' * 24}┼${'─' * 7}┼${'─' * 8}┼${'─' * 14}┤';
-    logger.info(headerDivider);
+    table.add([
+      _colorStatus('✅ Healthy', green),
+      '$healthy packages',
+      '$healthyPct%',
+    ]);
+
+    if (warning > 0) {
+      table.add([
+        _colorStatus('⚠️  Warning', yellow),
+        '$warning packages',
+        '$warningPct%',
+      ]);
+    }
+
+    if (critical > 0) {
+      table.add([
+        _colorStatus('❌ Critical', red),
+        '$critical packages',
+        '$criticalPct%',
+      ]);
+    }
+
+    return table.toString();
   }
 
-  void _printRow(PackageHealth item) {
-    // final name = _truncate(item.info.name, 22).padRight(22);
-    // final score = item.score.total.toString().padLeft(3);
-    // final statusEmoji = _getStatusEmoji(item.score.status).padRight(6);
-    // //final lastUpdate = DateFormatter.formatDaysAgo(item.info.published).padRight(12);
-    // final stableEmoji =
-    //     item.info.isFlutterFavorite ? ' ⭐' : ''; // todo: change to isStable
+  // ==========================================================================
+  // FORMATTERS
+  // ==========================================================================
 
-    //final row = '│ $name │  $score  │ $statusEmoji │ $lastUpdate$stableEmoji │';
+  String _formatPackageName(PackageAuditResult result) {
+    var name = result.name;
 
-    // Colorer la ligne selon le status
-    //final coloredRow = _colorizeRow(row, item.score.status);
-    //logger.info(coloredRow);
+    // Truncate if too long
+    if (name.length > 22) {
+      name = '${name.substring(0, 19)}...';
+    }
+
+    return _useColors ? cyan.wrap(name)! : name;
   }
 
-  void _printEllipsisRow() {
-    logger.info('│ ...                    │  ...  │  ...   │ ...          │');
+  String _formatScore(int score) {
+    final scoreStr = score.toString().padLeft(3);
+
+    if (!_useColors) return scoreStr;
+
+    // Color based on score
+    if (score >= 90) return green.wrap(scoreStr)!;
+    if (score >= 70) return lightGreen.wrap(scoreStr)!;
+    if (score >= 50) return yellow.wrap(scoreStr)!;
+    return red.wrap(scoreStr)!;
   }
 
-  void _printFooter() {
-    final divider = '└${'─' * 24}┴${'─' * 7}┴${'─' * 8}┴${'─' * 14}┘';
-    logger.info(divider);
+  String _formatStatus(AuditStatus status, bool isStable) {
+    final icon = switch (status) {
+      AuditStatus.excellent => '✓',
+      AuditStatus.good => '✓',
+      AuditStatus.warning => '!',
+      AuditStatus.critical => '✗',
+      AuditStatus.discontinued => '✗',
+    };
 
-    // Légende
-    final legend =
-        '${styleItalic.wrap('Legend')}: ${yellow.wrap('⭐ Stable package')}  '
-        '${yellow.wrap('! Needs review')}  '
-        '${red.wrap('✗ Critical')}';
-    logger.info(legend);
+    // Add star for stable packages
+    // final suffix = isStable ? ' ⭐' : '';
+
+    if (!_useColors) return '$icon';
+
+    final colored = switch (status) {
+      AuditStatus.excellent || AuditStatus.good => green.wrap(icon),
+      AuditStatus.warning => yellow.wrap(icon),
+      AuditStatus.critical || AuditStatus.discontinued => red.wrap(icon),
+    };
+
+    return '$colored';
   }
 
-  // String _truncate(String text, int max) {
-  //   return text.length > max ? '${text.substring(0, max - 3)}...' : text;
-  // }
-  // String _truncate(String text, int maxLength) {
-  //   if (text.length <= maxLength) return text;
-  //   return '${text.substring(0, maxLength - 3)}...';
-  // }
+  String _formatLastUpdate(int days) {
+    final formatted = DateFormatter.formatDaysAgo(days);
 
-  // String _colorizeRow(String row, HealthStatus status) {
-  //   switch (status) {
-  //     case HealthStatus.healthy:
-  //       return row; // Pas de couleur pour healthy
-  //     case HealthStatus.warning:
-  //       return yellow.wrap(row)!;
-  //     case HealthStatus.critical:
-  //       return red.wrap(row)!;
-  //   }
-  // }
+    if (!_useColors) return formatted;
 
-  // String _getStatusEmoji(HealthStatus status) {
-  //   switch (status) {
-  //     case HealthStatus.healthy:
-  //       return '✓';
-  //     case HealthStatus.warning:
-  //       return '!';
-  //     case HealthStatus.critical:
-  //       return '✗';
-  //   }
-  // }
+    // Color based on age
+    if (days <= 90) return green.wrap(formatted)!;
+    if (days <= 365) return lightGreen.wrap(formatted)!;
+    if (days <= 730) return yellow.wrap(formatted)!;
+    return red.wrap(formatted)!;
+  }
+
+  String _colorStatus(String text, AnsiCode color) {
+    return _useColors ? color.wrap(text)! : text;
+  }
 }

@@ -4,9 +4,17 @@ import 'package:cura/src/domain/ports/config_repository.dart';
 import 'package:cura/src/infrastructure/config/models/config_defaults.dart';
 import 'package:cura/src/infrastructure/config/models/cura_config.dart';
 import 'package:yaml/yaml.dart';
-import 'package:yaml_writer/yaml_writer.dart';
 
-/// YAML configuration repository (hierarchical: global + project)
+/// YAML-backed [ConfigRepository] that loads configuration hierarchically.
+///
+/// Resolution order (highest priority → lowest):
+/// 1. Project config (`./.cura/config.yaml`)
+/// 2. Global config (`~/.cura/config.yaml`)
+/// 3. [ConfigDefaults.defaultConfig]
+///
+/// Writing ([save]) always targets the **project** config file so that changes
+/// made at runtime are scoped to the current repository and do not affect the
+/// user's global settings.
 class YamlConfigRepository implements ConfigRepository {
   final String _globalConfigPath;
   final String _projectConfigPath;
@@ -17,150 +25,112 @@ class YamlConfigRepository implements ConfigRepository {
   })  : _globalConfigPath = globalConfigPath,
         _projectConfigPath = projectConfigPath;
 
+  // ===========================================================================
+  // ConfigRepository interface
+  // ===========================================================================
+
   @override
   Future<CuraConfig> load() async {
-    // 1. Load global config
-    final globalConfig = await _loadConfig(_globalConfigPath);
+    final globalConfig = await _loadFile(_globalConfigPath);
+    final projectConfig = await _loadFile(_projectConfigPath);
 
-    // 2. Load project config
-    final projectConfig = await _loadConfig(_projectConfigPath);
-
-    // 3. Merge (project overrides global)
-    return _mergeConfigs(globalConfig, projectConfig);
+    // Fallback → global → merge with project.
+    final base = globalConfig ?? ConfigDefaults.defaultConfig;
+    return base.mergeWith(projectConfig);
   }
 
+  /// Saves [config] to the **project** config file as a human-readable YAML
+  /// document with inline comments.
   @override
   Future<void> save(CuraConfig config) async {
-    // Save to project config (user choice)
-    await _saveConfig(_projectConfigPath, config);
+    final file = File(_projectConfigPath);
+    await file.parent.create(recursive: true);
+    await file.writeAsString(config.toYamlString(isProject: true));
   }
 
   @override
   Future<bool> exists() async {
-    return await File(_globalConfigPath).exists() ||
-        await File(_projectConfigPath).exists();
+    if (await File(_globalConfigPath).exists()) return true;
+    return File(_projectConfigPath).exists();
   }
 
+  /// Creates the global config file with default values if it does not already
+  /// exist.
   @override
   Future<void> createDefault() async {
-    // Create global config with defaults
-    final dir = File(_globalConfigPath).parent;
-    await dir.create(recursive: true);
-
-    await _saveConfig(_globalConfigPath, ConfigDefaults.defaultConfig);
+    final file = File(_globalConfigPath);
+    await file.parent.create(recursive: true);
+    if (!await file.exists()) {
+      await file.writeAsString(ConfigDefaults.defaultConfig.toYamlString());
+    }
   }
 
   @override
   Future<T?> getValue<T>(String key) async {
     final config = await load();
-    // Simple key access (extend avec path navigation si besoin)
-    return _getValueFromConfig(config, key) as T?;
+    return _readValue(config, key) as T?;
   }
 
   @override
   Future<void> setValue(String key, dynamic value) async {
     final config = await load();
-    final updated = _updateConfigValue(config, key, value);
-    await save(updated);
+    await save(_writeValue(config, key, value));
   }
 
   // ===========================================================================
-  // PRIVATE METHODS
+  // Private helpers
   // ===========================================================================
 
-  Future<CuraConfig?> _loadConfig(String path) async {
+  /// Parses a YAML config file.  Returns `null` when the file does not exist
+  /// or its content is empty / unparseable.
+  Future<CuraConfig?> _loadFile(String path) async {
     final file = File(path);
     if (!await file.exists()) return null;
 
-    final content = await file.readAsString();
-    final yaml = loadYaml(content) as Map<dynamic, dynamic>?;
-
-    if (yaml == null) return null;
-
-    // Convert YamlMap to Map<String, dynamic>
-    final map = _yamlToMap(yaml);
-
     try {
-      return CuraConfig.fromJson(map);
-    } catch (e) {
-      // Invalid config → fallback to default
+      final content = await file.readAsString();
+      final yaml = loadYaml(content);
+      if (yaml is! Map) return null;
+      return CuraConfig.fromYaml(yaml);
+    } catch (_) {
+      // Corrupt or unreadable file → treat as absent.
       return null;
     }
   }
 
-  Future<void> _saveConfig(String path, CuraConfig config) async {
-    final file = File(path);
-    await file.parent.create(recursive: true);
-
-    final writer = YamlWriter();
-    final yaml = writer.write(config.toJson());
-
-    await file.writeAsString(yaml);
-  }
-
-  CuraConfig _mergeConfigs(CuraConfig? global, CuraConfig? project) {
-    if (global == null && project == null) {
-      return ConfigDefaults.defaultConfig;
-    }
-
-    if (project == null) return global!;
-    if (global == null) return project;
-
-    // Project overrides global (field by field)
-    return global.copyWith(
-      theme: project.theme,
-      useColors: project.useColors,
-      useEmojis: project.useEmojis,
-      cacheMaxAgeHours: project.cacheMaxAgeHours,
-      enableCache: project.enableCache,
-      maxConcurrency: project.maxConcurrency,
-      timeoutSeconds: project.timeoutSeconds,
-      minScore: project.minScore,
-      scoreWeights: project.scoreWeights,
-      showSuggestions: project.showSuggestions,
-      maxSuggestionsPerPackage: project.maxSuggestionsPerPackage,
-      failOnVulnerable: project.failOnVulnerable,
-      failOnDiscontinued: project.failOnDiscontinued,
-      ignoredPackages: project.ignoredPackages,
-      trustedPublishers: project.trustedPublishers,
-      verboseLogging: project.verboseLogging,
-      quiet: project.quiet,
-      githubToken: project.githubToken ?? global.githubToken,
-    );
-  }
-
-  Map<String, dynamic> _yamlToMap(Map<dynamic, dynamic> yaml) {
-    final result = <String, dynamic>{};
-
-    yaml.forEach((key, value) {
-      if (value is YamlMap) {
-        result[key.toString()] = _yamlToMap(value);
-      } else if (value is YamlList) {
-        result[key.toString()] = value.map((e) => e.toString()).toList();
-      } else {
-        result[key.toString()] = value;
-      }
-    });
-
-    return result;
-  }
-
-  dynamic _getValueFromConfig(CuraConfig config, String key) {
+  dynamic _readValue(CuraConfig config, String key) {
     return switch (key) {
       'theme' => config.theme,
-      'useColors' => config.useColors,
-      'useEmojis' => config.useEmojis,
-      'minScore' => config.minScore,
+      'use_colors' || 'useColors' => config.useColors,
+      'use_emojis' || 'useEmojis' => config.useEmojis,
+      'min_score' || 'minScore' => config.minScore,
+      'max_concurrency' || 'maxConcurrency' => config.maxConcurrency,
+      'timeout_seconds' || 'timeoutSeconds' => config.timeoutSeconds,
+      'max_retries' || 'maxRetries' => config.maxRetries,
+      'auto_update' || 'autoUpdate' => config.autoUpdate,
+      'github_token' || 'githubToken' => config.githubToken,
       _ => null,
     };
   }
 
-  CuraConfig _updateConfigValue(CuraConfig config, String key, dynamic value) {
+  CuraConfig _writeValue(CuraConfig config, String key, dynamic value) {
     return switch (key) {
       'theme' => config.copyWith(theme: value as String),
-      'useColors' => config.copyWith(useColors: value as bool),
-      'useEmojis' => config.copyWith(useEmojis: value as bool),
-      'minScore' => config.copyWith(minScore: value as int),
+      'use_colors' || 'useColors' => config.copyWith(useColors: value as bool),
+      'use_emojis' || 'useEmojis' => config.copyWith(useEmojis: value as bool),
+      'min_score' || 'minScore' => config.copyWith(minScore: value as int),
+      'max_concurrency' ||
+      'maxConcurrency' =>
+        config.copyWith(maxConcurrency: value as int),
+      'timeout_seconds' ||
+      'timeoutSeconds' =>
+        config.copyWith(timeoutSeconds: value as int),
+      'max_retries' ||
+      'maxRetries' =>
+        config.copyWith(maxRetries: value as int),
+      'auto_update' ||
+      'autoUpdate' =>
+        config.copyWith(autoUpdate: value as bool),
       _ => config,
     };
   }

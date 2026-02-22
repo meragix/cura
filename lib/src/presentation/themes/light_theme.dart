@@ -1,14 +1,20 @@
 import 'package:cura/src/presentation/themes/theme.dart';
 import 'package:mason_logger/mason_logger.dart';
 
-class LightTheme implements CuraTheme {
+/// Light terminal theme.
+///
+/// Darker ANSI colours are chosen because they need more contrast against a
+/// light background to remain legible.  Progress-bar characters use filled
+/// circles instead of block elements to feel softer on light backgrounds.
+class LightTheme extends BaseCuraTheme {
   @override
   final String name = 'light';
 
   @override
   final bool isDark = false;
 
-  // Couleurs primaires (plus sombres pour lisibilité sur fond clair)
+  // ── Brand ─────────────────────────────────────────────────────────────────
+
   @override
   AnsiCode get primary => blue;
 
@@ -18,7 +24,8 @@ class LightTheme implements CuraTheme {
   @override
   AnsiCode get accent => yellow;
 
-  // Couleurs sémantiques (versions plus sombres)
+  // ── Semantic ──────────────────────────────────────────────────────────────
+
   @override
   AnsiCode get success => green;
 
@@ -31,24 +38,27 @@ class LightTheme implements CuraTheme {
   @override
   AnsiCode get info => blue;
 
-  // Couleurs de texte (sombres pour fond clair)
+  // ── Text ──────────────────────────────────────────────────────────────────
+
   @override
-  AnsiCode get textPrimary => resetAll; // Noir du terminal
+  AnsiCode get textPrimary => resetAll; // terminal default (dark on light)
 
   @override
   AnsiCode get textSecondary => darkGray;
 
   @override
-  AnsiCode get textMuted => lightGray;
+  AnsiCode get muted => lightGray;
 
-  // Couleurs de fond
+  // ── Background ────────────────────────────────────────────────────────────
+
   @override
   AnsiCode get backgroundPrimary => resetAll;
 
   @override
   AnsiCode get backgroundSecondary => lightGray;
 
-  // Couleurs de score (saturées pour fond clair)
+  // ── Score tier colours ────────────────────────────────────────────────────
+
   @override
   AnsiCode get scoreExcellent => green;
 
@@ -61,12 +71,13 @@ class LightTheme implements CuraTheme {
   @override
   AnsiCode get scorePoor => red;
 
-  // Symboles (identiques au dark)
+  // ── Symbols ───────────────────────────────────────────────────────────────
+
   @override
   String get symbolSuccess => '✓';
 
   @override
-  String get symbolWarning => '⚠';
+  String get symbolWarning => '!';
 
   @override
   String get symbolError => '✗';
@@ -74,7 +85,8 @@ class LightTheme implements CuraTheme {
   @override
   String get symbolInfo => 'ℹ';
 
-  // Barres de progression (caractères moins agressifs)
+  // ── Progress bar ──────────────────────────────────────────────────────────
+
   @override
   String get barFilled => '●';
 

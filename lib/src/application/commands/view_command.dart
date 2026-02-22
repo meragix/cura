@@ -1,7 +1,7 @@
 import 'package:args/command_runner.dart';
 import 'package:cura/src/domain/usecases/view_package_details.dart';
 
-import 'package:cura/src/presentation/cli/presenters/view_presenter.dart';
+import 'package:cura/src/presentation/presenters/view_presenter.dart';
 
 /// CLI command that displays a rich health report for a single pub.dev package.
 ///

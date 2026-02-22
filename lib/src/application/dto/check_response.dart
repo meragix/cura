@@ -26,7 +26,10 @@ class CheckResponse {
         .length;
     final critical = results.where((r) => r.score.total < 50).length;
 
-    final avgScore = results.isEmpty ? 0 : results.map((r) => r.score.total).reduce((a, b) => a + b) ~/ results.length;
+    final avgScore = results.isEmpty
+        ? 0
+        : results.map((r) => r.score.total).reduce((a, b) => a + b) ~/
+            results.length;
 
     return CheckResponse(
       results: results,

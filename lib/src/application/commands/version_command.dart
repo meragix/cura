@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
-import 'package:cura/src/presentation/cli/loggers/console_logger.dart';
+import 'package:cura/src/presentation/loggers/console_logger.dart';
 import 'package:cura/src/shared/app_info.dart';
 import 'package:mason_logger/mason_logger.dart';
 

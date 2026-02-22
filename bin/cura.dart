@@ -20,9 +20,10 @@ import 'package:cura/src/infrastructure/api/interceptors/logging_interceptor.dar
 import 'package:cura/src/infrastructure/api/interceptors/retry_interceptor.dart';
 import 'package:cura/src/infrastructure/respositories/sqlite_cache_repository.dart';
 import 'package:cura/src/infrastructure/respositories/yaml_config_repository.dart';
-import 'package:cura/src/presentation/cli/loggers/logger_factory.dart';
-import 'package:cura/src/presentation/cli/presenters/check_presenter.dart';
-import 'package:cura/src/presentation/cli/presenters/view_presenter.dart';
+import 'package:cura/src/presentation/error_handler.dart';
+import 'package:cura/src/presentation/loggers/logger_factory.dart';
+import 'package:cura/src/presentation/presenters/check_presenter.dart';
+import 'package:cura/src/presentation/presenters/view_presenter.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:cura/src/shared/app_info.dart';
 import 'package:cura/src/shared/constants/app_constants.dart';
@@ -115,6 +116,22 @@ Future<void> main(List<String> arguments) async {
 
   final logger = LoggerFactory.fromConfig(config);
 
+  // ErrorHandler wraps the runner so every unhandled exception is formatted
+  // with context-aware suggestions before the process exits.
+  final errorHandler = ErrorHandler(logger);
+
+  // Warn about missing GitHub token only for commands that call the GitHub API
+  // and only when output is not suppressed.
+  final _apiCommands = const {'check', 'view'};
+  if (config.githubToken == null &&
+      !logger.isQuiet &&
+      arguments.isNotEmpty &&
+      _apiCommands.contains(arguments.first)) {
+    logger.warn('GitHub token not set — rate limited to 60 req/h');
+    logger.muted('  Add one: cura config set github_token YOUR_TOKEN');
+    logger.spacer();
+  }
+
   final checkPresenter = CheckPresenter(
     logger: logger,
     showSuggestions: config.showSuggestions,
@@ -161,11 +178,10 @@ Future<void> main(List<String> arguments) async {
   // ===========================================================================
 
   try {
-    final exitCode = await runner.run(arguments) ?? 0;
+    final exitCode = await errorHandler.handle(
+      () async => await runner.run(arguments) ?? 0,
+    );
     exit(exitCode);
-  } catch (e) {
-    logger.error('Unhandled error: $e');
-    exit(1);
   } finally {
     await _cleanup(
       httpClient: httpClient,

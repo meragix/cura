@@ -1,14 +1,20 @@
 import 'package:cura/src/presentation/themes/theme.dart';
 import 'package:mason_logger/mason_logger.dart';
 
-class DarkTheme implements CuraTheme {
+/// Default dark terminal theme.
+///
+/// Vibrant ANSI colours chosen for legibility on dark backgrounds.
+/// Score tier colours graduate from green (excellent) → red (poor) to
+/// give an at-a-glance health signal.
+class DarkTheme extends BaseCuraTheme {
   @override
   final String name = 'dark';
 
   @override
   final bool isDark = true;
 
-  // Couleurs primaires
+  // ── Brand ─────────────────────────────────────────────────────────────────
+
   @override
   AnsiCode get primary => cyan;
 
@@ -18,7 +24,8 @@ class DarkTheme implements CuraTheme {
   @override
   AnsiCode get accent => yellow;
 
-  // Couleurs sémantiques
+  // ── Semantic ──────────────────────────────────────────────────────────────
+
   @override
   AnsiCode get success => green;
 
@@ -31,7 +38,8 @@ class DarkTheme implements CuraTheme {
   @override
   AnsiCode get info => cyan;
 
-  // Couleurs de texte (adaptées au fond sombre)
+  // ── Text ──────────────────────────────────────────────────────────────────
+
   @override
   AnsiCode get textPrimary => white;
 
@@ -39,16 +47,18 @@ class DarkTheme implements CuraTheme {
   AnsiCode get textSecondary => lightGray;
 
   @override
-  AnsiCode get textMuted => darkGray;
+  AnsiCode get muted => darkGray;
 
-  // Couleurs de fond
+  // ── Background ────────────────────────────────────────────────────────────
+
   @override
-  AnsiCode get backgroundPrimary => resetAll; // Terminal default
+  AnsiCode get backgroundPrimary => resetAll; // terminal default
 
   @override
   AnsiCode get backgroundSecondary => darkGray;
 
-  // Couleurs de score (vives pour fond sombre)
+  // ── Score tier colours ────────────────────────────────────────────────────
+
   @override
   AnsiCode get scoreExcellent => green;
 
@@ -61,12 +71,13 @@ class DarkTheme implements CuraTheme {
   @override
   AnsiCode get scorePoor => red;
 
-  // Symboles
+  // ── Symbols ───────────────────────────────────────────────────────────────
+
   @override
   String get symbolSuccess => '✓';
 
   @override
-  String get symbolWarning => '⚠';
+  String get symbolWarning => '!';
 
   @override
   String get symbolError => '✗';
@@ -74,7 +85,8 @@ class DarkTheme implements CuraTheme {
   @override
   String get symbolInfo => 'ℹ';
 
-  // Barres de progression (caractères pleins pour visibilité)
+  // ── Progress bar ──────────────────────────────────────────────────────────
+
   @override
   String get barFilled => '█';
 
