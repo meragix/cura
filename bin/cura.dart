@@ -122,11 +122,11 @@ Future<void> main(List<String> arguments) async {
 
   // Warn about missing GitHub token only for commands that call the GitHub API
   // and only when output is not suppressed.
-  final _apiCommands = const {'check', 'view'};
+  const apiCommands = {'check', 'view'};
   if (config.githubToken == null &&
       !logger.isQuiet &&
       arguments.isNotEmpty &&
-      _apiCommands.contains(arguments.first)) {
+      apiCommands.contains(arguments.first)) {
     logger.warn('GitHub token not set — rate limited to 60 req/h');
     logger.muted('  Add one: cura config set github_token YOUR_TOKEN');
     logger.spacer();
@@ -269,11 +269,7 @@ Future<void> _cleanup({
   required PackageDataAggregator aggregator,
 }) async {
   httpClient.close();
-
-  if (cacheRepo is SqliteCacheRepository) {
-    await cacheRepo.close();
-  }
-
+  await cacheRepo.close();
   await aggregator.dispose();
 }
 
@@ -281,27 +277,19 @@ Future<void> _cleanup({
 // PATH RESOLUTION (Platform-agnostic)
 // =============================================================================
 
-String _resolveGlobalConfigPath() {
+String _homeDir() {
   final home =
       Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-  if (home == null) {
-    throw StateError('Cannot resolve HOME directory');
-  }
-  return '$home/.cura/config.yaml';
+  if (home == null) throw StateError('Cannot resolve HOME directory');
+  return home;
 }
 
-String _resolveProjectConfigPath() {
-  return '${Directory.current.path}/.cura/config.yaml';
-}
+String _resolveGlobalConfigPath() => '${_homeDir()}/.cura/config.yaml';
 
-String _resolveCacheDirectory() {
-  final home =
-      Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-  if (home == null) {
-    throw StateError('Cannot resolve HOME directory');
-  }
-  return '$home/.cura/cache';
-}
+String _resolveProjectConfigPath() =>
+    '${Directory.current.path}/.cura/config.yaml';
+
+String _resolveCacheDirectory() => '${_homeDir()}/.cura/cache';
 
 /// Print custom help message
 Future<void> _printHelp() async {
