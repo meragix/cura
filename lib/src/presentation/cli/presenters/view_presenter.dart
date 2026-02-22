@@ -7,115 +7,113 @@ import 'package:cura/src/presentation/cli/loggers/console_logger.dart';
 import 'package:cura/src/presentation/cli/renderers/bar_renderer.dart';
 import 'package:mason_logger/mason_logger.dart';
 
-/// Presenter : View command output
+/// Presentation layer orchestrator for the `cura view` command.
+///
+/// [ViewPresenter] translates a [PackageAuditResult] into a structured,
+/// colour-coded terminal report. It is intentionally free of business logic —
+/// all scoring and issue detection happens in the domain layer before results
+/// reach this class.
+///
+/// The report is divided into the following sections, rendered in order:
+///
+/// 1. **Header** — package name, version, overall score, and letter grade.
+/// 2. **Score breakdown** — visual bar chart for each scoring dimension.
+/// 3. **Issues** — warnings and critical findings (rendered only when present).
+/// 4. **Key metrics** — publisher, pub score, popularity, likes, last update,
+///    repository, and supported platforms.
+/// 5. **GitHub metrics** — stars, forks, open issues, commit activity, and
+///    last commit date (rendered only when GitHub data is available).
+/// 6. **Vulnerabilities** — CVE list with severity badges and fix versions
+///    (rendered only when vulnerabilities are present).
+/// 7. **Recommendation** — a single-line verdict based on the overall score.
 class ViewPresenter {
   final ConsoleLogger _logger;
   final BarRenderer _barRenderer;
 
+  /// Creates a [ViewPresenter].
+  ///
+  /// [logger] is the active output logger (normal, verbose, quiet, or JSON).
   ViewPresenter({required ConsoleLogger logger})
       : _logger = logger,
         _barRenderer = BarRenderer();
 
+  // --------------------------------------------------------------------------
+  // Public API
+  // --------------------------------------------------------------------------
+
+  /// Starts and returns an animated [Progress] indicator while the package
+  /// data is being fetched.
+  ///
+  /// The caller is responsible for calling [Progress.complete] or
+  /// [Progress.cancel] once the fetch completes or fails.
   Progress showProgressHeader(String packageName) {
-    final progress = _logger.progress('Analyzing: $packageName');
-    return progress;
+    return _logger.progress('Analyzing: $packageName');
   }
 
+  /// Renders the full health report for [audit].
+  ///
+  /// When [verbose] is `true`, the score breakdown section includes extended
+  /// detail for each scoring dimension.
+  ///
+  /// Sections are rendered conditionally: issues, GitHub metrics, and
+  /// vulnerabilities are only shown when the corresponding data is present.
   void showPackageDetails(PackageAuditResult audit, {bool verbose = false}) {
-   // _logger.spacer();
-
-    // ========================================================================
-    // HEADER (with visual separator)
-    // ========================================================================
-
-  //  _logger.info('═' * 65);
     _logger.spacer();
 
+    // Section 1: Header
     _showHeader(audit);
-
     _logger.spacer();
 
-    // ========================================================================
-    // SCORE BREAKDOWN (Visual bars)
-    // ========================================================================
-
+    // Section 2: Score breakdown
     _showScoreBreakdown(audit.score);
-
     _logger.spacer();
 
-    // ========================================================================
-    // ISSUES (if any)
-    // ========================================================================
-
+    // Section 3: Issues (conditional)
     if (audit.issues.isNotEmpty) {
       _showIssues(audit.issues);
       _logger.spacer();
     }
 
-    // ========================================================================
-    // KEY METRICS
-    // ========================================================================
-
+    // Section 4: Key metrics
     _showKeyMetrics(audit);
-
     _logger.spacer();
 
-    // ========================================================================
-    // GITHUB METRICS (if available)
-    // ========================================================================
-
+    // Section 5: GitHub metrics (conditional)
     if (audit.githubMetrics != null) {
       _showGitHubMetrics(audit.githubMetrics!);
       _logger.spacer();
     }
 
-    // ========================================================================
-    // VULNERABILITIES (if any)
-    // ========================================================================
-
+    // Section 6: Vulnerabilities (conditional)
     if (audit.vulnerabilities.isNotEmpty) {
       _showVulnerabilities(audit.vulnerabilities);
       _logger.spacer();
     }
 
-    // ========================================================================
-    // SUGGESTIONS (if available)
-    // ========================================================================
-
-    // if (suggestions != null && suggestions.isNotEmpty) {
-    //   _showSuggestions(suggestions);
-    //   _logger.spacer();
-    // }
-
-    // ========================================================================
-    // RECOMMENDATION
-    // ========================================================================
-
+    // Section 7: Recommendation
     _showRecommendation(audit);
-
     _logger.spacer();
-    // _logger.info('═' * 65);
-    // _logger.spacer();
   }
 
-  /// Show error
+  /// Displays a top-level error message (e.g. package not found).
   void showError(String message) {
     _logger.spacer();
     _logger.error(message);
     _logger.spacer();
   }
 
-  /// Show usage
+  /// Displays the correct command invocation when a required argument is
+  /// missing.
   void showUsage(String invocation) {
     _logger.info('');
     _logger.info('Usage: $invocation');
   }
 
-  // ==========================================================================
-  // PRIVATE RENDERERS
-  // ==========================================================================
+  // --------------------------------------------------------------------------
+  // Private section renderers
+  // --------------------------------------------------------------------------
 
-  /// Render header
+  /// Renders the package name, version, overall score, and letter grade.
   void _showHeader(PackageAuditResult audit) {
     final statusIcon = _getStatusIcon(audit.score.total);
     final packageName = cyan.wrap(audit.name)!;
@@ -124,20 +122,19 @@ class ViewPresenter {
     _logger.info(' $statusIcon $packageName $version');
     _logger.spacer();
 
-    // Score with grade
     final scoreStr = _formatScore(audit.score.total);
     final grade = _formatGrade(audit.score.grade);
 
     _logger.info(' ● Score: $scoreStr $grade');
   }
 
-  /// Render score breakdown (visual bars)
+  /// Renders a visual bar chart for each dimension of [score].
   void _showScoreBreakdown(Score score) {
     final breakdown = _barRenderer.renderScoreBreakdown(score);
     _logger.info(' $breakdown');
   }
 
-  /// Render issues
+  /// Renders the list of audit [issues] with their messages.
   void _showIssues(List<dynamic> issues) {
     _logger.warn('Issues Detected');
 
@@ -146,42 +143,36 @@ class ViewPresenter {
     }
   }
 
-  /// Render key metrics
+  /// Renders publisher info, pub score, popularity, likes, last update,
+  /// repository URL, supported platforms, and Flutter Favorite status.
   void _showKeyMetrics(PackageAuditResult audit) {
     final info = audit.packageInfo;
 
     _logger.info('Key Metrics');
 
-    // Publisher
     final publisherIcon = info.isTrustedPublisher ? '✓' : '';
     final publisherText = info.publisherId ?? 'None (unverified)';
-    final publisherColored = info.isTrustedPublisher ? green.wrap(publisherText) : lightGray.wrap(publisherText);
+    final publisherColored = info.isTrustedPublisher
+        ? green.wrap(publisherText)
+        : lightGray.wrap(publisherText);
 
     _logger.info('  Publisher:   $publisherColored $publisherIcon');
 
-    // Pub Score
-    final pubScoreIndicator = _barRenderer.renderPubScoreIndicator(
-      info.panaScore,
-    );
-    _logger.info('  Pub Score:   ${info.panaScore}/${info.maxPoints} $pubScoreIndicator');
+    final pubScoreIndicator =
+        _barRenderer.renderPubScoreIndicator(info.panaScore);
+    _logger.info(
+        '  Pub Score:   ${info.panaScore}/${info.maxPoints} $pubScoreIndicator');
 
-    // Popularity
-    final popularityDots = _barRenderer.renderPopularityDots(
-      info.popularity,
-    );
+    final popularityDots = _barRenderer.renderPopularityDots(info.popularity);
     _logger.info('  Popularity:  ${info.popularity}% $popularityDots');
 
-    // Likes
     _logger.info('  Likes:       ${info.likes}');
 
-    // Last Update
-    final updateStatus = _barRenderer.renderUpdateStatus(
-      info.daysSinceLastUpdate,
-    );
+    final updateStatus =
+        _barRenderer.renderUpdateStatus(info.daysSinceLastUpdate);
     final updateText = DateFormatter.format(info.lastPublished);
     _logger.info('  Last Update: $updateText $updateStatus');
 
-    // Repository
     if (info.repositoryUrl != null) {
       final repoUrl = info.repositoryUrl!.replaceFirst('https://', '');
       _logger.info('  Repository:  ${cyan.wrap(repoUrl)}');
@@ -189,49 +180,46 @@ class ViewPresenter {
       _logger.warn('  Repository:  None');
     }
 
-    // Platforms
     if (info.supportedPlatforms.isNotEmpty) {
       final platforms = info.supportedPlatforms.join(', ');
       _logger.info('  Platforms:   $platforms');
     }
 
-    // Flutter Favorite
     if (info.isFlutterFavorite) {
       _logger.success('  Flutter Favorite ✨', showSymbol: false);
     }
   }
 
-  /// Render GitHub metrics
+  /// Renders stars, forks, open issue count, recent commit activity, and
+  /// last commit date from [githubMetrics].
   void _showGitHubMetrics(GitHubMetrics githubMetrics) {
     _logger.info('GitHub');
 
-    // Stars
     final starsFormatted = NumberFormatter.formatCompact(githubMetrics.stars);
     _logger.info('  Stars:       ⭐ $starsFormatted');
 
-    // Forks
-    _logger.info('  Forks:       ${NumberFormatter.formatGrouped(githubMetrics.forks)}');
+    _logger.info(
+        '  Forks:       ${NumberFormatter.formatGrouped(githubMetrics.forks)}');
 
-    // Open Issues
     final issuesColor = githubMetrics.openIssues > 100 ? yellow : green;
-    final issuesFormatted = NumberFormatter.formatGrouped(githubMetrics.openIssues);
-    final issuesColored = issuesColor.wrap(issuesFormatted.toString())!;
-    _logger.info('  Open Issues: $issuesColored');
+    final issuesFormatted =
+        NumberFormatter.formatGrouped(githubMetrics.openIssues);
+    _logger.info(
+        '  Open Issues: ${issuesColor.wrap(issuesFormatted.toString())!}');
 
-    // Recent Activity
     if (githubMetrics.commitCountLast90Days > 0) {
-      final commits = githubMetrics.commitCountLast90Days;
-      _logger.info('  Activity:    $commits commits (90d)');
+      _logger.info(
+          '  Activity:    ${githubMetrics.commitCountLast90Days} commits (90d)');
     }
 
-    // Last Commit
     if (githubMetrics.lastCommitDate != null) {
       final lastCommit = DateFormatter.format(githubMetrics.lastCommitDate!);
       _logger.info('  Last Commit: $lastCommit');
     }
   }
 
-  /// Render vulnerabilities
+  /// Renders each CVE in [vulnerabilities] with a coloured severity badge and
+  /// a fix-version hint when available.
   void _showVulnerabilities(List<dynamic> vulnerabilities) {
     _logger.alert('Vulnerabilities', level: AlertLevel.error);
 
@@ -245,45 +233,42 @@ class ViewPresenter {
     }
   }
 
-  /// Render suggestions
-  // void _showSuggestions(List<DynamicSuggestion> suggestions) {
-  //   _logger.info('Better Alternatives');
-
-  //   for (final suggestion in suggestions.take(3)) {
-  //     final arrow = cyan.wrap('→')!;
-  //     final packageName = suggestion.suggestedPackage;
-  //     final score = '(${suggestion.suggestedScore}/100)';
-
-  //     _logger.info('  $arrow $packageName $score');
-
-  //     // Show reason (first line only)
-  //     final reasonLines = suggestion.reason.split('\n');
-  //     if (reasonLines.isNotEmpty) {
-  //       _logger.muted('    ${reasonLines.first}');
-  //     }
-  //   }
-  // }
-
-  /// Render recommendation
+  /// Renders a single-line verdict: Recommended, Use with caution, or
+  /// Not Recommended — determined by the overall score.
+  ///
+  /// | Score range | Verdict                 |
+  /// |-------------|-------------------------|
+  /// | ≥ 80        | Recommended             |
+  /// | 60 – 79     | Use with caution        |
+  /// | < 60        | Not Recommended         |
   void _showRecommendation(PackageAuditResult audit) {
     final score = audit.score.total;
 
     if (score >= 80) {
-      // final checkmark = green.wrap('✓')!;
       _logger.success('Recommended - High-quality, actively maintained package');
     } else if (score >= 60) {
       final warning = yellow.wrap('!')!;
-      _logger.warn('$warning Use with caution - Some concerns, review before using');
+      _logger
+          .warn('$warning Use with caution - Some concerns, review before using');
     } else {
       final cross = red.wrap('✗')!;
-      _logger.error('$cross Not Recommended - Appears abandoned, high risk for production use');
+      _logger.error(
+          '$cross Not Recommended - Appears abandoned, high risk for production use');
     }
   }
 
-  // ==========================================================================
-  // FORMATTERS
-  // ==========================================================================
+  // --------------------------------------------------------------------------
+  // Private formatters
+  // --------------------------------------------------------------------------
 
+  /// Returns a status icon character based on [score].
+  ///
+  /// | Range  | Icon |
+  /// |--------|------|
+  /// | ≥ 90   | ✨   |
+  /// | 70–89  | ✓    |
+  /// | 50–69  | ⚠    |
+  /// | < 50   | ✗    |
   String _getStatusIcon(int score) {
     if (score >= 90) return '✨';
     if (score >= 70) return '✓';
@@ -291,6 +276,7 @@ class ViewPresenter {
     return '✗';
   }
 
+  /// Returns [score] formatted as `"n/100"` with ANSI colour applied.
   String _formatScore(int score) {
     final scoreStr = '$score/100';
 
@@ -300,6 +286,7 @@ class ViewPresenter {
     return red.wrap(scoreStr)!;
   }
 
+  /// Returns [grade] wrapped in parentheses with ANSI colour applied.
   String _formatGrade(String grade) {
     final gradeText = '($grade)';
 
@@ -309,8 +296,11 @@ class ViewPresenter {
     return red.wrap(gradeText)!;
   }
 
+  /// Returns a colour-coded severity badge for the given [severity] enum value.
+  ///
+  /// Accepts any type whose `toString()` ends with the severity name (e.g.
+  /// `VulnerabilitySeverity.critical`).
   String _formatSeverity(dynamic severity) {
-    // Assuming VulnerabilitySeverity enum
     final severityStr = severity.toString().split('.').last.toUpperCase();
 
     return switch (severityStr) {
