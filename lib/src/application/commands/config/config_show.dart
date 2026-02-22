@@ -1,7 +1,7 @@
 import 'package:args/command_runner.dart';
 import 'package:cura/src/domain/ports/config_repository.dart';
 
-/// Subcommand : cura config show
+
 class ConfigShowCommand extends Command<int> {
   final ConfigRepository _configRepository;
 
