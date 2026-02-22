@@ -140,8 +140,7 @@ class ConsoleLogger {
     final filled = (percentage * width).round();
     final empty = width - filled;
 
-    final bar =
-        '${theme.success.wrap(theme.barFilled * filled) ?? (theme.barFilled * filled)}'
+    final bar = '${theme.success.wrap(theme.barFilled * filled) ?? (theme.barFilled * filled)}'
         '${theme.muted.wrap(theme.barEmpty * empty) ?? (theme.barEmpty * empty)}';
 
     _logger.info(bar);
@@ -226,7 +225,7 @@ class ConsoleLogger {
   void muted(String message) {
     if (_quiet) return;
     final styled = _useColors ? theme.muted.wrap(message) : message;
-    _logger.detail(styled ?? message);
+    _logger.info(styled ?? message);
   }
 
   /// Log a coloured alert message.

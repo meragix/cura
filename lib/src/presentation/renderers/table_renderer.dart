@@ -154,7 +154,7 @@ class TableRenderer {
   }
 
   String _formatLastUpdate(int days) {
-    final formatted = DateFormatter.formatDaysAgo(days);
+    final formatted = DateFormatter.formatCompactDays(days);
 
     if (!_useColors) return formatted;
 

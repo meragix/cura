@@ -152,25 +152,20 @@ class ViewPresenter {
 
     final publisherIcon = info.isTrustedPublisher ? '✓' : '';
     final publisherText = info.publisherId ?? 'None (unverified)';
-    final publisherColored = info.isTrustedPublisher
-        ? green.wrap(publisherText)
-        : lightGray.wrap(publisherText);
+    final publisherColored = info.isTrustedPublisher ? green.wrap(publisherText) : lightGray.wrap(publisherText);
 
     _logger.info('  Publisher:   $publisherColored $publisherIcon');
 
-    final pubScoreIndicator =
-        _barRenderer.renderPubScoreIndicator(info.panaScore);
-    _logger.info(
-        '  Pub Score:   ${info.panaScore}/${info.maxPoints} $pubScoreIndicator');
+    final pubScoreIndicator = _barRenderer.renderPubScoreIndicator(info.panaScore);
+    _logger.info('  Pub Score:   ${info.panaScore}/${info.maxPoints} $pubScoreIndicator');
 
     final popularityDots = _barRenderer.renderPopularityDots(info.popularity);
     _logger.info('  Popularity:  ${info.popularity}% $popularityDots');
 
-    _logger.info('  Likes:       ${info.likes}');
+    _logger.info('  Likes:       ${NumberFormatter.formatGrouped(info.likes)}');
 
-    final updateStatus =
-        _barRenderer.renderUpdateStatus(info.daysSinceLastUpdate);
-    final updateText = DateFormatter.format(info.lastPublished);
+    final updateStatus = _barRenderer.renderUpdateStatus(info.daysSinceLastUpdate);
+    final updateText = DateFormatter.formatWithRelative(info.lastPublished);
     _logger.info('  Last Update: $updateText $updateStatus');
 
     if (info.repositoryUrl != null) {
@@ -198,22 +193,19 @@ class ViewPresenter {
     final starsFormatted = NumberFormatter.formatCompact(githubMetrics.stars);
     _logger.info('  Stars:       ⭐ $starsFormatted');
 
-    _logger.info(
-        '  Forks:       ${NumberFormatter.formatGrouped(githubMetrics.forks)}');
+    _logger.info('  Forks:       ${NumberFormatter.formatGrouped(githubMetrics.forks)}');
 
     final issuesColor = githubMetrics.openIssues > 100 ? yellow : green;
-    final issuesFormatted =
-        NumberFormatter.formatGrouped(githubMetrics.openIssues);
-    _logger.info(
-        '  Open Issues: ${issuesColor.wrap(issuesFormatted.toString())!}');
+    final issuesFormatted = NumberFormatter.formatGrouped(githubMetrics.openIssues);
+    _logger.info('  Open Issues: ${issuesColor.wrap(issuesFormatted.toString())!}');
 
     if (githubMetrics.commitCountLast90Days > 0) {
-      _logger.info(
-          '  Activity:    ${githubMetrics.commitCountLast90Days} commits (90d)');
+      final commitsFormatted = NumberFormatter.formatGrouped(githubMetrics.commitCountLast90Days);
+      _logger.info('  Activity:    $commitsFormatted commits (90d)');
     }
 
     if (githubMetrics.lastCommitDate != null) {
-      final lastCommit = DateFormatter.format(githubMetrics.lastCommitDate!);
+      final lastCommit = DateFormatter.formatWithRelative(githubMetrics.lastCommitDate!);
       _logger.info('  Last Commit: $lastCommit');
     }
   }
@@ -245,16 +237,13 @@ class ViewPresenter {
     final score = audit.score.total;
 
     if (score >= 80) {
-      _logger
-          .success('Recommended - High-quality, actively maintained package');
+      _logger.success('Recommended - High-quality, actively maintained package');
     } else if (score >= 60) {
       final warning = yellow.wrap('!')!;
-      _logger.warn(
-          '$warning Use with caution - Some concerns, review before using');
+      _logger.warn('$warning Use with caution - Some concerns, review before using', showSymbol: false);
     } else {
       final cross = red.wrap('✗')!;
-      _logger.error(
-          '$cross Not Recommended - Appears abandoned, high risk for production use');
+      _logger.error('$cross Not Recommended - Appears abandoned, high risk for production use');
     }
   }
 
