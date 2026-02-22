@@ -3,7 +3,8 @@ description: "CLI tool to audit Flutter/Dart package health, dependency scores, 
 version: 0.5.0
 homepage: https://github.com/meragix/cura
 repository: https://github.com/meragix/cura/tree/main
-documentation: https://github.com/meragix/cura/tree/main/docs
+issue_tracker: https://github.com/meragix/cura/issues
+documentation: https://github.com/meragix/cura/tree/main/doc
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
