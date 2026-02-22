@@ -9,11 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
--
+- **`config init --force`**: New `-f` / `--force` flag on `cura config init` to overwrite an existing config file with built-in defaults.
+- **Complete `config show`**: Now displays all configuration fields grouped by category (Appearance, Cache, Scoring, Performance, Behaviour, Logging, API, Exclusions) with score-weights validation warning.
+
+### Fixed
+
+- **`config set` incomplete key support**: `_writeValue` was missing `github_token`, `cache_max_age_hours`, `enable_cache`, `auto_update`, `fail_on_vulnerable`, `fail_on_discontinued`, `show_suggestions`, `max_suggestions_per_package`, `verbose_logging`, and `quiet` — those keys were readable but silently ignored on write.
+- **`config get` null display**: Unknown / unset values now print `(not set)` instead of the string `"null"`.
+- **`ScoreWeights.fromJson` type safety**: JSON fields are now cast with `as int?` before applying the default fallback.
+- **`ConfigDefaults.defaultConfig` mutability**: Field changed from `static` to `static final` to prevent accidental reassignment at runtime.
 
 ### Changed
 
--
+- **Dartdoc**: Added comprehensive API documentation to `ScoreWeights`, `ConfigDefaults`, `ConfigRepository`, `YamlConfigRepository`, and all `config` sub-commands.
 
 ## [0.5.0] - 2026-02-22
 

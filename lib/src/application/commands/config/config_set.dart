@@ -1,10 +1,29 @@
 import 'package:args/command_runner.dart';
 import 'package:cura/src/domain/ports/config_repository.dart';
 
-
+/// Sub-command: `cura config set <key> <value>`
+///
+/// Updates a single configuration value in the **project** config file
+/// (`./.cura/config.yaml`), creating it if it does not already exist.
+///
+/// Both `snake_case` and `camelCase` key variants are accepted:
+/// ```sh
+/// cura config set min_score 80
+/// cura config set minScore 80          # equivalent
+/// cura config set github_token ghp_…
+/// cura config set theme light
+/// cura config set fail_on_vulnerable false
+/// ```
+///
+/// The string [value] is coerced to the correct Dart type before being
+/// written: `"true"` / `"false"` → [bool], an integer string → [int],
+/// everything else → [String].
+///
+/// Exits with code `0` on success, `1` on error.
 class ConfigSetCommand extends Command<int> {
   final ConfigRepository _configRepository;
 
+  /// Creates the sub-command backed by [configRepository].
   ConfigSetCommand({required ConfigRepository configRepository})
       : _configRepository = configRepository;
 
@@ -12,7 +31,7 @@ class ConfigSetCommand extends Command<int> {
   String get name => 'set';
 
   @override
-  String get description => 'Set a configuration value';
+  String get description => 'Set a configuration value.';
 
   @override
   String get invocation => 'cura config set <key> <value>';
@@ -20,7 +39,7 @@ class ConfigSetCommand extends Command<int> {
   @override
   Future<int> run() async {
     if (argResults!.rest.length < 2) {
-      print('Error: Missing key or value');
+      print('Error: missing key or value.');
       print('Usage: $invocation');
       return 1;
     }
@@ -30,7 +49,7 @@ class ConfigSetCommand extends Command<int> {
 
     try {
       await _configRepository.setValue(key, _parseValue(value));
-      print('✓ Set $key = $value');
+      print('✓ $key = $value');
       return 0;
     } catch (e) {
       print('Error: $e');
@@ -38,16 +57,19 @@ class ConfigSetCommand extends Command<int> {
     }
   }
 
+  /// Coerces [value] from a CLI string to the most appropriate Dart type.
+  ///
+  /// Conversion priority:
+  /// 1. `"true"` / `"false"` (case-insensitive) → [bool]
+  /// 2. Integer string → [int]
+  /// 3. Anything else → [String]
   dynamic _parseValue(String value) {
-    // Try to parse as bool
     if (value.toLowerCase() == 'true') return true;
     if (value.toLowerCase() == 'false') return false;
 
-    // Try to parse as int
     final intValue = int.tryParse(value);
     if (intValue != null) return intValue;
 
-    // Default to string
     return value;
   }
 }
