@@ -161,14 +161,6 @@ Future<void> main(List<String> arguments) async {
   // ===========================================================================
 
   try {
-    // Le code gère déjà gracefully (token optionnel)
-    // Mais avertir l'utilisateur si absent :
-    // if (config.githubToken == null) {
-    //   logger.warn('! GitHub token not set. Rate limit: 60 req/h');
-    //   logger.info('  Set token: cura config set github_token YOUR_TOKEN');
-    //   logger.info('');
-    // }
-
     final exitCode = await runner.run(arguments) ?? 0;
     exit(exitCode);
   } catch (e) {
@@ -305,24 +297,22 @@ ${AppInfo.name} v$version - ${AppInfo.description}
 Usage: cura <command> [arguments]
 
 Available commands:
-  check       Check and audit all packages in pubspec.yaml
-  view       View detailed information about a package
-  suggest    Suggest better alternatives for packages
-  update     Update alternatives database from remote
-  config     Manage configuration
-  cache      Show cache information
+  check       Audit all pub.dev packages listed in pubspec.yaml
+  view        Show detailed health information for a single package
+  config      Read and write cura configuration
+  version     Print version information
 
 Global options:
   -h, --help       Show this help message
   -v, --version    Print version information
-  --verbose        Enable verbose logging
 
 Examples:
-  cura check                   # Scan current project
-  cura view dio                # View dio package details
-  cura check --min-score 80    # CI/CD health check
-  cura suggest http            # Suggest alternatives for http
-  cura update                  # Update alternatives database
+  cura check                          # Audit the current project
+  cura check --dev-dependencies       # Include dev_dependencies
+  cura check --min-score 80           # Fail below score 80 (CI/CD)
+  cura view dio                       # Inspect the dio package
+  cura config show                    # Display active configuration
+  cura config set github_token TOKEN  # Set a GitHub API token
 
 For more information, visit: ${AppInfo.homepage}
 ''');
