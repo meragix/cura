@@ -2,7 +2,7 @@
 ///
 /// All fields reflect the state of the repository at the time of the last
 /// successful API call. Instances are constructed by `GitHubApiClient` and
-/// cached as part of [AggregatedPackageData] in the SQLite store.
+/// cached as part of [AggregatedPackageData] in the JSON file cache.
 ///
 /// [lastCommitDate] is `null` when the repository has no commits or when the
 /// GitHub API does not return commit data.
@@ -39,7 +39,7 @@ class GitHubMetrics {
     required this.commitCountLast90Days,
   });
 
-  /// Serialises this snapshot to a JSON-compatible map for SQLite caching.
+  /// Serialises this snapshot to a JSON-compatible map for caching.
   Map<String, dynamic> toJson() {
     return {
       'repository_url': repositoryUrl,

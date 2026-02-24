@@ -8,7 +8,7 @@ import 'package:cura/src/application/commands/version_command.dart';
 import 'package:cura/src/application/commands/view_command.dart';
 import 'package:cura/src/domain/ports/config_repository.dart';
 import 'package:cura/src/domain/ports/package_data_aggregator.dart';
-import 'package:cura/src/infrastructure/cache/database/cache_database.dart';
+import 'package:cura/src/infrastructure/cache/json_file_system_cache.dart';
 import 'package:cura/src/domain/usecases/calculate_score.dart';
 import 'package:cura/src/domain/usecases/check_packages_usecase.dart';
 import 'package:cura/src/domain/usecases/view_package_details.dart';
@@ -72,8 +72,12 @@ Future<void> main(List<String> arguments) async {
   final githubClient = GitHubApiClient(httpClient, token: config.githubToken);
   final osvClient = OsvApiClient(httpClient);
 
-  // Cache Database
-  await _initializeCacheDatabase();
+  // JSON File Cache — initialize on first run, then sweep expired entries.
+  final cache = JsonFileSystemCache(
+    cacheDir: '${_homeDir()}/.cura/cache',
+  );
+  await cache.initialize();
+  await cache.cleanupExpired();
 
   // ⭐ AGGREGATOR (remplace les 3 providers séparés)
   final aggregator = CachedAggregator(
@@ -83,6 +87,7 @@ Future<void> main(List<String> arguments) async {
       osvClient: osvClient,
       maxConcurrency: config.maxConcurrency,
     ),
+    cache: cache,
   );
 
   // ===========================================================================
@@ -153,7 +158,7 @@ Future<void> main(List<String> arguments) async {
 
   final versionCommand = VersionCommand(logger: logger);
 
-  final cacheCommand = CacheCommand(logger: logger);
+  final cacheCommand = CacheCommand(logger: logger, cache: cache);
 
   // ===========================================================================
   // PHASE 6 : CLI RUNNER
@@ -205,27 +210,18 @@ Future<ConfigRepository> _initializeConfiguration() async {
   return configRepo;
 }
 
-/// Opens the SQLite cache database and runs any pending expiry cleanup.
-///
-/// Warms up the [CacheDatabase] singleton eagerly so the first package fetch
-/// never pays the one-time initialisation cost. Expired rows are swept at
-/// startup to keep disk usage bounded.
-Future<void> _initializeCacheDatabase() async {
-  await CacheDatabase.instance;
-  await CacheDatabase.cleanupExpired();
-}
-
 /// Releases all resources acquired during startup.
 ///
 /// Called unconditionally from the `finally` block so cleanup always runs
 /// even when the command throws or calls [exit].
+/// [JsonFileSystemCache] holds no persistent connection, so no explicit
+/// cache disposal is needed.
 Future<void> _cleanup({
   required Dio httpClient,
   required PackageDataAggregator aggregator,
 }) async {
   httpClient.close();
   await aggregator.dispose();
-  await CacheDatabase.close();
 }
 
 // =============================================================================
@@ -256,7 +252,7 @@ Available commands:
   check       Audit all pub.dev packages listed in pubspec.yaml
   view        Show detailed health information for a single package
   config      Read and write cura configuration
-  cache       Manage the local SQLite cache (clear, stats, cleanup)
+  cache       Manage the local JSON file cache (clear, stats, cleanup)
   version     Print version information
 
 Global options:

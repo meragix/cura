@@ -29,7 +29,7 @@ class PackageAuditResult {
   /// Composite health score computed by the scoring algorithm.
   final Score score;
 
-  /// Whether this result was served from the local SQLite cache.
+  /// Whether this result was served from the local JSON file cache.
   final bool fromCache;
 
   /// Known CVEs / OSV advisories affecting this package version.

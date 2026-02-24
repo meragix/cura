@@ -9,7 +9,7 @@ adapters.
 
 ## Layer Diagram
 
-```
+```text
 ┌────────────────────────────────────────────────────────────┐
 │  Entry Point  bin/cura.dart                                │
 │  Manual constructor-injection DI -- wires all layers       │
@@ -32,7 +32,7 @@ adapters.
          |                       v
 ┌────────────────────────────────────────────────────────────┐
 │  Infrastructure Layer   lib/src/infrastructure/            │
-│  API clients, SQLite cache, YAML config repository         │
+│  API clients, JSON file cache, YAML config repository      │
 └────────────────────────────────────────────────────────────┘
                             |
                             v
@@ -46,7 +46,7 @@ adapters.
 
 ## Directory Map
 
-```
+```text
 bin/
   cura.dart                       <- composition root (DI in 7 phases)
 
@@ -73,7 +73,7 @@ lib/src/
       multi_api_aggregator.dart    <- Facade: coordinates all three API clients
       cached_aggregator.dart       <- Decorator: adds caching transparently
     cache/
-      database/cache_database.dart <- SQLite singleton
+      json_file_system_cache.dart  <- JSON file cache
       strategies/ttl_strategy.dart <- popularity-based TTL
       models/cached_entry.dart
     repositories/
@@ -105,7 +105,7 @@ There is no service locator, `GetIt`, or any DI framework. `bin/cura.dart`
 constructs every object explicitly in seven phases:
 
 1. **Config** — load YAML configuration hierarchy
-2. **Infrastructure** — build HTTP client, API clients, open SQLite
+2. **Infrastructure** — build HTTP client, API clients, initialise JSON cache
 3. **Domain** — wire use cases with aggregator and score calculator
 4. **Presentation** — create logger, error handler, presenters
 5. **Application** — create command objects
@@ -113,7 +113,7 @@ constructs every object explicitly in seven phases:
 7. **Execute** — run the command, then clean up in `finally`
 
 This makes the full dependency graph visible at a glance and guarantees that
-every resource (HTTP client, database connection) is closed in `_cleanup`
+every resource (HTTP client, concurrency pool) is closed in `_cleanup`
 regardless of success or failure.
 
 ---
@@ -137,13 +137,13 @@ The infrastructure layer provides concrete **adapters**:
 - `MultiApiAggregator` — Facade that calls pub.dev, GitHub, and OSV.dev in
   parallel, bounded by `PoolManager`
 - `CachedAggregator` — Decorator that wraps `MultiApiAggregator` and consults
-  the SQLite cache before making any network call
+  the JSON file cache before making any network call
 
 ---
 
 ### Decorator — CachedAggregator
 
-```
+```text
 CachedAggregator            <- outer decorator (cache layer)
   └─ MultiApiAggregator     <- inner facade   (API layer)
        ├─ PubDevApiClient
@@ -153,7 +153,7 @@ CachedAggregator            <- outer decorator (cache layer)
 
 `CachedAggregator` intercepts every `fetchAll` / `fetchMany` call:
 
-1. Checks `CacheDatabase` for a non-expired entry
+1. Checks `JsonFileSystemCache` for a non-expired `.json` file
 2. Cache hit: returns deserialized data immediately
 3. Cache miss: delegates to `MultiApiAggregator`, caches the result, returns it
 
@@ -189,21 +189,15 @@ sealed class PackageResult {
 
 ---
 
-### CacheDatabase singleton
+### JsonFileSystemCache
 
-`CacheDatabase` is a lazy singleton backed by `sqflite_common_ffi`. A
-`Future<Database>? _initFuture` guard prevents the double-init race condition
-that would occur if two concurrent callers both read `_initFuture == null`:
+`JsonFileSystemCache` is a stateless, dependency-free cache store backed by
+plain files under `~/.cura/cache/`. It requires no native libraries and holds
+no persistent connection, so no explicit disposal is needed.
 
-```dart
-static Future<Database> get instance {
-  _initFuture ??= _initDatabase();
-  return _initFuture!;
-}
-```
-
-`close()` resets `_initFuture` to `null` so the next `get instance` call
-re-opens the database cleanly.
+Every write uses the **write-then-rename** pattern for atomicity, and every
+read/write method is fail-safe: any `FileSystemException` is silently swallowed
+and treated as a cache miss, so the CLI never crashes due to a degraded cache.
 
 ---
 
@@ -211,7 +205,7 @@ re-opens the database cleanly.
 
 Errors are rooted at `CuraException` and propagate upward:
 
-```
+```text
 Infrastructure  ->  NetworkException / PackageNotFoundException / RateLimitException
 Domain          ->  propagated or wrapped in Result<T> / PackageResult
 Application     ->  command returns exit code 1
@@ -222,7 +216,7 @@ Presentation    ->  ErrorHandler formats the message for the user
 
 ## Testing
 
-```
+```text
 test/
   unit/          <- 70 % -- business logic, scoring, value objects
   integration/   <- 20 % -- API client contracts
@@ -237,4 +231,4 @@ Target coverage: >= 80 %.
 
 - [Development guide](development.md) — local setup and test commands
 - [API integration](api-integration.md) — how external APIs are called
-- [Caching](caching.md) — SQLite cache internals
+- [Caching](caching.md) — JSON file cache internals

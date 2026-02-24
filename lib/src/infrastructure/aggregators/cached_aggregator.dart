@@ -1,17 +1,13 @@
-import 'dart:convert';
-
 import 'package:cura/src/domain/entities/aggregated_package_data.dart';
 import 'package:cura/src/domain/entities/github_metrics.dart';
 import 'package:cura/src/domain/entities/package_info.dart';
 import 'package:cura/src/domain/entities/vulnerability.dart';
 import 'package:cura/src/domain/ports/package_data_aggregator.dart';
 import 'package:cura/src/domain/value_objects/package_result.dart';
-import 'package:cura/src/infrastructure/cache/database/cache_database.dart';
-import 'package:cura/src/infrastructure/cache/models/cached_entry.dart';
+import 'package:cura/src/infrastructure/cache/json_file_system_cache.dart';
 import 'package:cura/src/infrastructure/cache/strategies/ttl_strategy.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-/// Decorator that adds a SQLite-backed cache layer to any
+/// Decorator that adds a JSON-file-backed cache layer to any
 /// [PackageDataAggregator].
 ///
 /// Implements the **Decorator** pattern: every call is intercepted, the cache
@@ -20,31 +16,36 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 /// responses are persisted so subsequent calls can be served without hitting
 /// the network.
 ///
-/// ### Cache key
-/// The cache key is the lowercase package name as returned by pub.dev.
+/// ### Cache namespace
+/// All entries are stored under [JsonFileSystemCache.aggregatedNamespace]
+/// (`aggregated/`). The file name is the lowercase package name as returned
+/// by pub.dev (e.g. `~/.cura/cache/aggregated/dio.json`).
 ///
 /// ### TTL policy
-/// TTLs are determined by [TtlStrategy.getAggregatedTtl] based on the
-/// package's pub.dev popularity score (0–100). More popular packages are
-/// cached longer because their metadata changes less frequently.
+/// TTLs are computed by [TtlStrategy.getAggregatedTtl] based on the package's
+/// pub.dev popularity score (0–100). More popular packages are cached longer
+/// because their metadata changes less frequently.
 ///
 /// ### Failure isolation
 /// Cache read and write errors are silently swallowed: a read failure falls
 /// through to the delegate, and a write failure does not surface to callers.
-/// This ensures the cache is always a performance optimisation and never a
-/// correctness dependency.
+/// The cache is always a performance optimisation and never a correctness
+/// dependency.
 ///
 /// ### Concurrency
 /// [fetchMany] processes packages **sequentially** by design. Cache hits are
-/// sub-millisecond operations, so the sequential overhead is negligible. On
-/// cache misses the delegate's own concurrency pool (e.g. [PoolManager]) still
-/// caps upstream API load.
+/// sub-millisecond file reads, so the sequential overhead is negligible. On
+/// cache misses the delegate's own concurrency pool still caps upstream load.
 class CachedAggregator implements PackageDataAggregator {
   final PackageDataAggregator _delegate;
+  final JsonFileSystemCache _cache;
 
-  /// Creates a [CachedAggregator] that wraps [delegate].
-  CachedAggregator({required PackageDataAggregator delegate})
-      : _delegate = delegate;
+  /// Creates a [CachedAggregator] that wraps [delegate] with [cache].
+  CachedAggregator({
+    required PackageDataAggregator delegate,
+    required JsonFileSystemCache cache,
+  })  : _delegate = delegate,
+        _cache = cache;
 
   // ---------------------------------------------------------------------------
   // PackageDataAggregator interface
@@ -55,13 +56,13 @@ class CachedAggregator implements PackageDataAggregator {
   /// successful response.
   ///
   /// The returned [PackageSuccess.fromCache] flag is `true` when the result
-  /// was served from the local SQLite store.
+  /// was served from the local JSON file store.
   @override
   Future<PackageResult> fetchAll(String packageName) async {
     // 1. Check cache first.
     final cached = await _getFromCache(packageName);
-    if (cached != null && !cached.isExpired) {
-      return PackageSuccess(data: cached.data, fromCache: true);
+    if (cached != null) {
+      return PackageSuccess(data: cached, fromCache: true);
     }
 
     // 2. Cache miss — delegate to the underlying aggregator.
@@ -95,86 +96,60 @@ class CachedAggregator implements PackageDataAggregator {
   // Cache operations
   // ---------------------------------------------------------------------------
 
-  /// Reads a [CachedAggregatedData] entry for [packageName] from SQLite.
+  /// Reads [AggregatedPackageData] for [packageName] from the JSON cache.
   ///
-  /// Returns `null` on a cache miss or if any read error occurs.
-  Future<CachedAggregatedData?> _getFromCache(String packageName) async {
+  /// Returns `null` on a cache miss, expired entry, or any IO/parse failure.
+  Future<AggregatedPackageData?> _getFromCache(String packageName) async {
+    final raw = await _cache.get(
+      JsonFileSystemCache.aggregatedNamespace,
+      packageName,
+    );
+    if (raw == null) return null;
     try {
-      final db = await CacheDatabase.instance;
-
-      final rows = await db.query(
-        'aggregated_cache',
-        where: 'key = ?',
-        whereArgs: [packageName],
-        limit: 1,
-      );
-
-      if (rows.isEmpty) return null;
-
-      final row = rows.first;
-
-      return CachedAggregatedData(
-        key: row['key'] as String,
-        data: _deserialize(row['data'] as String),
-        cachedAt:
-            DateTime.fromMillisecondsSinceEpoch(row['cached_at'] as int),
-        ttlHours: row['ttl_hours'] as int,
-      );
+      return _deserialize(raw);
     } catch (_) {
-      // Degrade gracefully — a read failure is treated as a cache miss.
       return null;
     }
   }
 
-  /// Persists [data] for [packageName] in SQLite with a TTL derived from
+  /// Persists [data] for [packageName] with a TTL derived from
   /// [TtlStrategy.getAggregatedTtl].
-  ///
-  /// Uses `REPLACE` conflict resolution so a stale row is atomically
-  /// overwritten. Write errors are silently ignored.
   Future<void> _saveToCache(
     String packageName,
     AggregatedPackageData data,
   ) async {
-    try {
-      final db = await CacheDatabase.instance;
-      final ttl = TtlStrategy.getAggregatedTtl(
-        popularity: data.packageInfo.popularity,
-      );
+    final ttl = TtlStrategy.getAggregatedTtl(
+      popularity: data.packageInfo.popularity,
+    );
+    final expiresAt = DateTime.now().add(Duration(hours: ttl));
 
-      await db.insert(
-        'aggregated_cache',
-        {
-          'key': packageName,
-          'data': _serialize(data),
-          'cached_at': DateTime.now().millisecondsSinceEpoch,
-          'ttl_hours': ttl,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    } catch (_) {
-      // Silent fail — the cache is never a correctness requirement.
-    }
+    await _cache.put(
+      JsonFileSystemCache.aggregatedNamespace,
+      packageName,
+      _serialize(data),
+      expiresAt,
+    );
   }
 
   // ---------------------------------------------------------------------------
   // Serialization
   // ---------------------------------------------------------------------------
 
-  /// Encodes [data] to a JSON string for SQLite storage.
-  String _serialize(AggregatedPackageData data) {
-    return jsonEncode({
+  /// Encodes [data] to a JSON-compatible [Map] for storage.
+  Map<String, dynamic> _serialize(AggregatedPackageData data) {
+    return {
       'package_info': data.packageInfo.toJson(),
       'github_metrics': data.githubMetrics?.toJson(),
-      'vulnerabilities':
-          data.vulnerabilities.map((v) => v.toJson()).toList(),
-    });
+      'vulnerabilities': data.vulnerabilities.map((v) => v.toJson()).toList(),
+    };
   }
 
-  /// Decodes a JSON string produced by [_serialize] back into
-  /// [AggregatedPackageData].
-  AggregatedPackageData _deserialize(String jsonString) {
-    final map = jsonDecode(jsonString) as Map<String, dynamic>;
-
+  /// Decodes a [Map] produced by [_serialize] back into [AggregatedPackageData].
+  ///
+  /// The [map] argument is the `data` field already extracted from the JSON
+  /// file envelope by [JsonFileSystemCache.get] — no additional JSON decoding
+  /// is needed here.
+  AggregatedPackageData _deserialize(Map<String, dynamic> map) {
     return AggregatedPackageData(
       packageInfo: PackageInfo.fromJson(
         map['package_info'] as Map<String, dynamic>,
@@ -190,6 +165,3 @@ class CachedAggregator implements PackageDataAggregator {
     );
   }
 }
-
-/// Typed alias for a [CachedEntry] holding [AggregatedPackageData].
-typedef CachedAggregatedData = CachedEntry<AggregatedPackageData>;

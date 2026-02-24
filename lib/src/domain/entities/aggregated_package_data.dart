@@ -6,7 +6,7 @@ import 'package:cura/src/domain/entities/vulnerability.dart';
 /// three independent sources: pub.dev, GitHub, and OSV.dev.
 ///
 /// This entity is the input to the scoring algorithm ([CalculateScore]) and
-/// is cached as a single JSON blob in the `aggregated_cache` SQLite table.
+/// is cached as a JSON file under `~/.cura/cache/aggregated/`.
 ///
 /// ### Source availability
 /// - [packageInfo] is **mandatory**: its absence propagates as a

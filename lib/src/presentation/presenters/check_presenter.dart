@@ -29,7 +29,7 @@ class CheckPresenter {
   /// consumed when [showSummary] is called.
   final List<PackageAuditResult> _results = [];
 
-  /// Number of packages whose data was served from the local SQLite cache.
+  /// Number of packages whose data was served from the local JSON file cache.
   int _cacheHits = 0;
 
   /// Number of packages whose data required a live API round-trip.

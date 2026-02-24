@@ -37,7 +37,7 @@ final class PackageSuccess extends PackageResult {
   /// The aggregated pub.dev + GitHub + OSV data for the package.
   final AggregatedPackageData data;
 
-  /// Whether this result was served from the local SQLite cache.
+  /// Whether this result was served from the local JSON file cache.
   ///
   /// `true` means no upstream API was called during this request.
   /// Passed through to [PackageAuditResult.fromCache] so the UI can display

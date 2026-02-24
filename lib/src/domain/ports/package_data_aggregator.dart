@@ -13,10 +13,10 @@ import 'package:cura/src/domain/value_objects/package_result.dart';
 ///
 /// ### Known implementations
 /// - `MultiApiAggregator` — live HTTP fetches with concurrency pooling.
-/// - `CachedAggregator` — SQLite-backed decorator that wraps any aggregator.
+/// - `CachedAggregator` — JSON-file-backed decorator that wraps any aggregator.
 ///
 /// ### Lifecycle
-/// Implementations may hold resources (database connections, HTTP clients,
+/// Implementations may hold resources (HTTP clients,
 /// concurrency pools). Call [dispose] when the aggregator is no longer needed
 /// to release those resources deterministically.
 abstract class PackageDataAggregator {

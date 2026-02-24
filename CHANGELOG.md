@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-02-24
+
+### Added
+
+- **`JsonFileSystemCache`**: New cache backend that persists entries as individual JSON files under `~/.cura/cache/aggregated/`. Each file follows a versioned envelope (`schemaVersion`, `cachedAt`, `expiresAt`, `data`). No native dependencies required — pure `dart:io` + `dart:convert`.
+
+### Changed
+
+- **Cache backend replaced**: `CacheDatabase` (SQLite via `sqflite_common_ffi`) is replaced by `JsonFileSystemCache`. The `aggregated/` namespace maps to the former `aggregated_cache` table. TTL tiers are preserved and now stored as a pre-computed `expiresAt` ISO-8601 timestamp.
+- **`CachedAggregator` refactored**: `JsonFileSystemCache` is injected via constructor instead of accessed through the `CacheDatabase` singleton. The `CachedAggregatedData` typedef and `sqflite_common_ffi` import are removed.
+- **Atomicity**: All cache writes use the write-then-rename pattern (`<key>.json.tmp` → `<key>.json`). On POSIX this is atomic via `rename(2)`; on Windows the target is deleted before rename (best-effort, acceptable for a cache).
+- **`cleanupExpired`** now also purges orphaned `.json.tmp` files older than 1 hour in addition to expired entries.
+- **Cache commands** (`clear`, `stats`, `cleanup`) receive `JsonFileSystemCache` via constructor injection instead of calling `CacheDatabase` static methods. `stats` now shows valid entry counts per namespace instead of SQL `COUNT(*)` results.
+- **`CacheConstants`**: `databaseName` and `databaseVersion` removed; replaced with `cacheSubDir` and `aggregatedNamespace`.
+- **Documentation**: `doc/caching.md` rewritten for the JSON file model (schema, TTL tiers, CI examples). `doc/architecture.md`, `README.md`, `CLAUDE.md`, and all affected dartdoc comments updated.
+
+### Removed
+
+- **`CacheDatabase`** (`lib/src/infrastructure/cache/database/cache_database.dart`) — deleted.
+- **`CachedEntry<T>`** (`lib/src/infrastructure/cache/models/cached_entry.dart`) — deleted; expiry is now evaluated inside `JsonFileSystemCache.get`.
+- **`sqflite_common_ffi: ^2.3.0`** and **`sqflite_common: ^2.5.6`** removed from `pubspec.yaml`. The compiled binary no longer requires a native SQLite library on the host machine.
+
 ## [0.6.1] - 2026-02-24
 
 ### Fixed
@@ -102,7 +124,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operational local cache.
 - ScoreCalculator unit tests (>80% coverage)
 
-[unreleased]: https://github.com/meragix/cura/compare/cura-0.6.0...HEAD
+[unreleased]: https://github.com/meragix/cura/compare/cura-0.7.0...HEAD
+[0.7.0]: https://github.com/meragix/cura/releases/tag/cura-0.7.0
+[0.6.1]: https://github.com/meragix/cura/releases/tag/cura-0.6.1
 [0.6.0]: https://github.com/meragix/cura/releases/tag/cura-0.6.0
 [0.5.0]: https://github.com/meragix/cura/releases/tag/cura-0.5.0
 [0.4.0]: https://github.com/meragix/cura/releases/tag/cura-0.4.0

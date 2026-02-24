@@ -13,7 +13,7 @@ import 'package:yaml/yaml.dart';
 ///
 /// ## Parsing
 ///
-/// - JSON round-trip (SQLite cache, inter-process): [fromJson] / [toJson]
+/// - JSON round-trip (serialisation / inter-process): [fromJson] / [toJson]
 /// - YAML files (human-editable configs):          [fromYaml] / [toYamlString]
 ///
 /// ## Merging

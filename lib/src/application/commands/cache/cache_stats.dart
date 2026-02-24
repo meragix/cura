@@ -1,34 +1,38 @@
 import 'package:args/command_runner.dart';
-import 'package:cura/src/infrastructure/cache/database/cache_database.dart';
+import 'package:cura/src/infrastructure/cache/json_file_system_cache.dart';
 import 'package:cura/src/presentation/loggers/console_logger.dart';
-import 'package:sqflite_common/utils/utils.dart' as sqflite_utils;
 
 /// Sub-command: `cura cache stats`
 ///
-/// Queries the SQLite cache database and prints entry counts for each table.
+/// Queries the JSON file cache and prints valid (non-expired) entry counts
+/// per namespace.
 ///
 /// ### Output example
 /// ```
 /// Cache Statistics:
 ///
-///   Package cache    : 12 entries
 ///   Aggregated cache : 10 entries
 ///   ──────────────────────────────
-///   Total            : 22 entries
+///   Total            : 10 entries
 /// ```
 ///
-/// Exits with code `1` when the database cannot be opened or queried.
+/// Exits with code `1` when the cache directory cannot be read.
 class CacheStatsCommand extends Command<int> {
   final ConsoleLogger _logger;
+  final JsonFileSystemCache _cache;
 
   /// Creates a [CacheStatsCommand].
-  CacheStatsCommand({required ConsoleLogger logger}) : _logger = logger;
+  CacheStatsCommand({
+    required ConsoleLogger logger,
+    required JsonFileSystemCache cache,
+  })  : _logger = logger,
+        _cache = cache;
 
   @override
   String get name => 'stats';
 
   @override
-  String get description => 'Show cache entry counts per table';
+  String get description => 'Show cache entry counts per namespace';
 
   @override
   Future<int> run() async {
@@ -37,22 +41,15 @@ class CacheStatsCommand extends Command<int> {
     _logger.spacer();
 
     try {
-      final db = await CacheDatabase.instance;
+      final counts = await _cache.stats();
 
-      final packageCount = sqflite_utils.firstIntValue(
-            await db.rawQuery('SELECT COUNT(*) FROM package_cache'),
-          ) ??
-          0;
+      final aggregatedCount =
+          counts[JsonFileSystemCache.aggregatedNamespace] ?? 0;
+      final total = counts.values.fold(0, (sum, v) => sum + v);
 
-      final aggregatedCount = sqflite_utils.firstIntValue(
-            await db.rawQuery('SELECT COUNT(*) FROM aggregated_cache'),
-          ) ??
-          0;
-
-      _logger.info('  Package cache    : $packageCount entries');
       _logger.info('  Aggregated cache : $aggregatedCount entries');
       _logger.divider();
-      _logger.info('  Total            : ${packageCount + aggregatedCount} entries');
+      _logger.info('  Total            : $total entries');
       _logger.spacer();
 
       return 0;

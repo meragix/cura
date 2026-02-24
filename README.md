@@ -59,7 +59,7 @@ cura check
 - **Objective scoring** — 0–100 with a transparent, weighted algorithm
 - **Security checks** — CVE detection via OSV.dev; critical vulnerabilities force score to 0
 - **Smart suggestions** — recommends higher-scoring alternatives for low-scoring packages
-- **Local SQLite cache** — repeat runs are instant; TTL scales with package popularity
+- **Local JSON cache** — repeat runs are instant; TTL scales with package popularity; zero native dependencies
 
 ### Developer Experience
 
@@ -285,7 +285,7 @@ cura config set theme dracula
 
 ### Cache Command
 
-Manage the local SQLite cache without touching package analysis.
+Manage the local JSON file cache without touching package analysis.
 
 ```bash
 cura cache <subcommand>
@@ -507,13 +507,14 @@ Available: `dark` (default), `light`, `minimal`.
 
 ### Caching
 
-Cura caches results in `~/.cura/cache/cura_cache.db`. TTL scales with package popularity:
+Cura caches results as JSON files under `~/.cura/cache/`. TTL scales with package popularity:
 
-| Popularity      | TTL      |
-|-----------------|----------|
-| > 1 000 likes   | 1 hour   |
-| Normal          | 6 hours  |
-| Unpopular       | 24 hours |
+| Popularity tier | TTL  |
+|-----------------|------|
+| `score >= 90`   | 24 h |
+| `score >= 70`   | 12 h |
+| `score >= 40`   | 6 h  |
+| `score < 40`    | 3 h  |
 
 ```bash
 cura cache stats    # how full is the cache?
@@ -521,7 +522,7 @@ cura cache cleanup  # sweep expired entries
 cura cache clear    # wipe everything
 ```
 
-> DB schema, TTL tiers, and CI cache setup: [doc/caching.md](doc/caching.md)
+> File schema, TTL tiers, and CI cache setup: [doc/caching.md](doc/caching.md)
 
 ### GitHub Token
 

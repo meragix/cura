@@ -178,7 +178,7 @@ class ValidationException extends CuraException {
         );
 }
 
-/// Thrown when a SQLite cache operation fails (read, write, or schema issue).
+/// Thrown when a cache operation fails (read, write, or IO error).
 ///
 /// Cache failures are typically non-fatal: the caller should degrade
 /// gracefully by fetching fresh data from the upstream API.

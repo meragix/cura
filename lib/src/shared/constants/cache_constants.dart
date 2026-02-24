@@ -10,7 +10,7 @@ class CacheConstants {
   static const int maxCacheSize = 1000; // Max entries
   static const int maxCacheSizeMb = 100; // Max size in MB
 
-  // Database
-  static const String databaseName = 'cura_cache.db';
-  static const int databaseVersion = 1;
+  // Cache storage
+  static const String cacheSubDir = '.cura/cache';
+  static const String aggregatedNamespace = 'aggregated';
 }
