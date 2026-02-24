@@ -45,20 +45,37 @@ class PackageAuditResult {
     return AuditStatus.critical;
   }
 
+  /// Serialize to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'version': version,
+      'score': {
+        'total': score.total,
+        'grade': score.grade,
+        'vitality': score.vitality,
+        'technical_health': score.technicalHealth,
+        'trust': score.trust,
+        'maintenance': score.maintenance,
+      },
+      'status': status.toString().split('.').last,
+      'issues': issues.map((i) => i.toJson()).toList(),
+      'vulnerabilities': vulnerabilities.map((v) => v.toJson()).toList(),
+      'suggestions': suggestions,
+      'from_cache': fromCache,
+    };
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is PackageAuditResult &&
-          runtimeType == other.runtimeType &&
-          name == other.name &&
-          version == other.version;
+      other is PackageAuditResult && runtimeType == other.runtimeType && name == other.name && version == other.version;
 
   @override
   int get hashCode => name.hashCode ^ version.hashCode;
 
   @override
-  String toString() =>
-      'PackageAuditResult($name@$version, score: ${score.total})';
+  String toString() => 'PackageAuditResult($name@$version, score: ${score.total})';
 }
 
 /// Status d'audit (enum simple)
@@ -119,6 +136,11 @@ class AuditIssue {
       message: 'No updates for $daysSinceUpdate days',
       severity: AuditIssueSeverity.warning,
     );
+  }
+
+  /// Serialize to JSON
+  Map<String, dynamic> toJson() {
+    return {'type': type, 'message': message, 'severity': severity};
   }
 }
 

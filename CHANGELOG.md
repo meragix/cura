@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`CacheDatabase` double-initialisation race**: Two concurrent `await CacheDatabase.instance` calls arriving before the database was ready both invoked `_initDatabase()`, creating the SQLite connection twice. Fixed by memoising the initialisation `Future` (`_initFuture ??= _initDatabase()`), ensuring all concurrent callers share a single in-flight operation. `close()` now also resets `_initFuture` so re-opening is safe.
+- **`CachedAggregator.fetchMany` silent error swallow**: Errors thrown by pool tasks were not forwarded to the stream, leaving error cases silently dropped. Added `onError` forwarding so stream consumers receive errors correctly.
+- **`CachedAggregator` dead import**: Unused `import 'package:cura/src/domain/ports/cache_repository.dart'` removed.
+
+### Changed
+
+- **`MultiApiAggregator` uses `PoolManager`**: Replaced the inline `Pool` construction with the shared `PoolManager` utility. The aggregator no longer owns a raw `pool` import; concurrency configuration flows through `PoolManager(maxConcurrency: ...)`.
+- **Dartdoc — infrastructure cache layer**: Added comprehensive API documentation to `CachedEntry`, `CacheDatabase`, `TtlStrategy` (including popularity range 0–100 and per-tier TTL tables), `CachedAggregator`, and `MultiApiAggregator`.
+
 ## [0.6.0] - 2026-02-24
 
 ### Added
@@ -89,7 +100,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operational local cache.
 - ScoreCalculator unit tests (>80% coverage)
 
-[unreleased]: https://github.com/meragix/cura/compare/cura-0.5.0...HEAD
+[unreleased]: https://github.com/meragix/cura/compare/cura-0.6.0...HEAD
+[0.6.0]: https://github.com/meragix/cura/releases/tag/cura-0.6.0
 [0.5.0]: https://github.com/meragix/cura/releases/tag/cura-0.5.0
 [0.4.0]: https://github.com/meragix/cura/releases/tag/cura-0.4.0
 [0.3.0]: https://github.com/meragix/cura/releases/tag/cura-0.3.0

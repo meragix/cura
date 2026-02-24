@@ -5,9 +5,9 @@ import 'package:cura/src/application/commands/check_command.dart';
 import 'package:cura/src/application/commands/config/config_command.dart';
 import 'package:cura/src/application/commands/version_command.dart';
 import 'package:cura/src/application/commands/view_command.dart';
-import 'package:cura/src/domain/ports/cache_repository.dart';
 import 'package:cura/src/domain/ports/config_repository.dart';
 import 'package:cura/src/domain/ports/package_data_aggregator.dart';
+import 'package:cura/src/infrastructure/cache/database/cache_database.dart';
 import 'package:cura/src/domain/usecases/calculate_score.dart';
 import 'package:cura/src/domain/usecases/check_packages_usecase.dart';
 import 'package:cura/src/domain/usecases/view_package_details.dart';
@@ -16,9 +16,6 @@ import 'package:cura/src/infrastructure/aggregators/multi_api_aggregator.dart';
 import 'package:cura/src/infrastructure/api/clients/github_client.dart';
 import 'package:cura/src/infrastructure/api/clients/osv_client.dart';
 import 'package:cura/src/infrastructure/api/clients/pub_dev_client.dart';
-import 'package:cura/src/infrastructure/api/interceptors/logging_interceptor.dart';
-import 'package:cura/src/infrastructure/api/interceptors/retry_interceptor.dart';
-import 'package:cura/src/infrastructure/respositories/sqlite_cache_repository.dart';
 import 'package:cura/src/infrastructure/respositories/yaml_config_repository.dart';
 import 'package:cura/src/presentation/error_handler.dart';
 import 'package:cura/src/presentation/loggers/logger_factory.dart';
@@ -74,10 +71,8 @@ Future<void> main(List<String> arguments) async {
   final githubClient = GitHubApiClient(httpClient, token: config.githubToken);
   final osvClient = OsvApiClient(httpClient);
 
-  // Cache Repository
-  final cacheRepo = await _initializeCache(
-    maxAgeHours: config.cacheMaxAgeHours,
-  );
+  // Cache Database
+  await _initializeCacheDatabase();
 
   // ⭐ AGGREGATOR (remplace les 3 providers séparés)
   final aggregator = CachedAggregator(
@@ -87,7 +82,6 @@ Future<void> main(List<String> arguments) async {
       osvClient: osvClient,
       maxConcurrency: config.maxConcurrency,
     ),
-    cache: cacheRepo,
   );
 
   // ===========================================================================
@@ -183,7 +177,6 @@ Future<void> main(List<String> arguments) async {
   } finally {
     await _cleanup(
       httpClient: httpClient,
-      cacheRepo: cacheRepo,
       aggregator: aggregator,
     );
   }
@@ -192,41 +185,6 @@ Future<void> main(List<String> arguments) async {
 // =============================================================================
 // FACTORY METHODS (Composition logic)
 // =============================================================================
-
-/// Build HTTP client avec interceptors configurés
-Dio _buildHttpClient({
-  required Duration timeout,
-  required bool verbose,
-}) {
-  final dio = Dio(
-    BaseOptions(
-      connectTimeout: timeout,
-      receiveTimeout: timeout,
-      sendTimeout: timeout,
-      validateStatus: (status) => status != null && status < 500,
-    ),
-  );
-
-  // Interceptor : Retry automatique (3 tentatives)
-  dio.interceptors.add(
-    RetryInterceptor(
-      dio: dio,
-      maxRetries: 3,
-      retryDelays: [
-        Duration(milliseconds: 500),
-        Duration(seconds: 1),
-        Duration(seconds: 2),
-      ],
-    ),
-  );
-
-  // Interceptor : Logging (si verbose)
-  if (verbose) {
-    dio.interceptors.add(LoggingInterceptor());
-  }
-
-  return dio;
-}
 
 /// Initialize configuration repository
 Future<ConfigRepository> _initializeConfiguration() async {
@@ -243,32 +201,27 @@ Future<ConfigRepository> _initializeConfiguration() async {
   return configRepo;
 }
 
-/// Initialize cache repository
-Future<CacheRepository> _initializeCache({
-  required int maxAgeHours,
-}) async {
-  final cacheDir = _resolveCacheDirectory();
-  await Directory(cacheDir).create(recursive: true);
-
-  final cacheRepo = SqliteCacheRepository(
-    databasePath: '$cacheDir/cura_cache.db',
-    maxAgeHours: maxAgeHours,
-  );
-
-  await cacheRepo.initialize();
-
-  return cacheRepo;
+/// Opens the SQLite cache database and runs any pending expiry cleanup.
+///
+/// Warms up the [CacheDatabase] singleton eagerly so the first package fetch
+/// never pays the one-time initialisation cost. Expired rows are swept at
+/// startup to keep disk usage bounded.
+Future<void> _initializeCacheDatabase() async {
+  await CacheDatabase.instance;
+  await CacheDatabase.cleanupExpired();
 }
 
-/// Cleanup des ressources
+/// Releases all resources acquired during startup.
+///
+/// Called unconditionally from the `finally` block so cleanup always runs
+/// even when the command throws or calls [exit].
 Future<void> _cleanup({
   required Dio httpClient,
-  required CacheRepository cacheRepo,
   required PackageDataAggregator aggregator,
 }) async {
   httpClient.close();
-  await cacheRepo.close();
   await aggregator.dispose();
+  await CacheDatabase.close();
 }
 
 // =============================================================================
@@ -285,7 +238,6 @@ String _resolveGlobalConfigPath() => '${_homeDir()}/.cura/config.yaml';
 
 String _resolveProjectConfigPath() => '${Directory.current.path}/.cura/config.yaml';
 
-String _resolveCacheDirectory() => '${_homeDir()}/.cura/cache';
 
 /// Print custom help message
 Future<void> _printHelp() async {

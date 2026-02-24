@@ -58,8 +58,7 @@ class PackageInfo {
   });
 
   /// Helpers
-  bool get hasVerifiedPublisher =>
-      publisherId != null && publisherId!.isNotEmpty;
+  bool get hasVerifiedPublisher => publisherId != null && publisherId!.isNotEmpty;
   bool get hasRepository => repositoryUrl != null && repositoryUrl!.isNotEmpty;
 
   bool get isTrustedPublisher {
@@ -67,14 +66,11 @@ class PackageInfo {
     return ConfigDefaults.defaultTrustedPublishers.contains(publisherId);
   }
 
-  int get daysSinceLastUpdate =>
-      DateTime.now().difference(lastPublished).inDays;
-  double get scorePercentage =>
-      maxPoints > 0 ? (grantedPoints / maxPoints * 100) : 0;
+  int get daysSinceLastUpdate => DateTime.now().difference(lastPublished).inDays;
+  double get scorePercentage => maxPoints > 0 ? (grantedPoints / maxPoints * 100) : 0;
 
   bool get isPopular => likes > 1000 || popularity > 90;
-  bool get isWeb =>
-      supportedPlatforms.contains('platform:web'); // show WasmMessage later
+  bool get isWeb => supportedPlatforms.contains('platform:web'); // show WasmMessage later
 
   bool get isStable {
     try {
@@ -130,10 +126,8 @@ class PackageInfo {
 
   /// Extrait les plateformes depuis les tags
   static List<String> _extractPlatformsFromTags(List<String> tags) {
-    final platforms = tags
-        .where((tag) => tag.startsWith('platform:'))
-        .map((tag) => tag.replaceFirst('platform:', ''))
-        .toList();
+    final platforms =
+        tags.where((tag) => tag.startsWith('platform:')).map((tag) => tag.replaceFirst('platform:', '')).toList();
 
     // Si aucune plateforme et pas Flutter, c'est un package Dart pur
     if (platforms.isEmpty && !tags.contains('sdk:flutter')) {
@@ -165,29 +159,73 @@ class PackageInfo {
       orElse: () => '',
     );
 
-    return publisherTag.isEmpty
-        ? null
-        : publisherTag.replaceFirst('publisher:', '');
+    return publisherTag.isEmpty ? null : publisherTag.replaceFirst('publisher:', '');
   }
 
   static String? _extractLicense(List<String> tags) {
     final licenseTag = tags.firstWhere(
-      (tag) =>
-          tag.startsWith('license:') &&
-          !tag.contains('fsf') &&
-          !tag.contains('osi'),
+      (tag) => tag.startsWith('license:') && !tag.contains('fsf') && !tag.contains('osi'),
       orElse: () => '',
     );
     return licenseTag.isEmpty ? null : licenseTag.replaceFirst('license:', '');
   }
 
+  /// Deserialize from JSON
+  factory PackageInfo.fromJson(Map<String, dynamic> json) {
+    return PackageInfo(
+      name: json['name'] as String,
+      version: json['version'] as String,
+      description: json['description'] as String,
+      lastPublished: DateTime.parse(json['lastPublished'] as String),
+      panaScore: json['panaScore'] as int,
+      likes: json['likes'] as int,
+      popularity: json['popularity'] as int,
+      grantedPoints: json['grantedPoints'] as int,
+      maxPoints: json['maxPoints'] as int,
+      isNullSafe: json['isNullSafe'] as bool,
+      isDart3Compatible: json['isDart3Compatible'] as bool,
+      isDiscontinued: json['isDiscontinued'] as bool,
+      isFlutterFavorite: json['isFlutterFavorite'] as bool,
+      isNew: json['isNew'] as bool,
+      isWasmReady: json['isWasmReady'] as bool,
+      publisherId: json['publisherId'] as String?,
+      supportedPlatforms: (json['supportedPlatforms'] as List<dynamic>).map((e) => e as String).toList(),
+      repositoryUrl: json['repositoryUrl'] as String?,
+      homepageUrl: json['homepageUrl'] as String?,
+      license: json['license'] as String?,
+    );
+  }
+
+  /// Serialize to JSON (for cache)
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'version': version,
+      'description': description,
+      'lastPublished': lastPublished.toIso8601String(),
+      'panaScore': panaScore,
+      'likes': likes,
+      'popularity': popularity,
+      'grantedPoints': grantedPoints,
+      'maxPoints': maxPoints,
+      'isNullSafe': isNullSafe,
+      'isDart3Compatible': isDart3Compatible,
+      'isDiscontinued': isDiscontinued,
+      'isFlutterFavorite': isFlutterFavorite,
+      'isNew': isNew,
+      'isWasmReady': isWasmReady,
+      'publisherId': publisherId,
+      'supportedPlatforms': supportedPlatforms,
+      'repositoryUrl': repositoryUrl,
+      'homepageUrl': homepageUrl,
+      'license': license,
+    };
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is PackageInfo &&
-          runtimeType == other.runtimeType &&
-          name == other.name &&
-          version == other.version;
+      other is PackageInfo && runtimeType == other.runtimeType && name == other.name && version == other.version;
 
   @override
   int get hashCode => name.hashCode ^ version.hashCode;
