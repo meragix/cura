@@ -1,65 +1,52 @@
+import 'package:cura/src/application/dto/update_info.dart';
 import 'package:cura/src/shared/app_info.dart';
 import 'package:cura/src/shared/constants/api_constants.dart';
 import 'package:cura/src/shared/utils/version_utils.dart';
 import 'package:dio/dio.dart';
 
+/// Checks pub.dev for a newer release of Cura.
+///
+/// All failures (network errors, non-200 responses, parse errors) are silently
+/// swallowed and surface as `null` so the caller is never interrupted by an
+/// update check that can't complete.
 class UpdateCheckerService {
   final Dio _httpClient;
 
   UpdateCheckerService({required Dio httpClient}) : _httpClient = httpClient;
 
-  /// Check if update available
-  Future<UpdateInfo?> checkForUpdate() async {
+  /// Compares [currentVersion] against the latest release on pub.dev.
+  ///
+  /// Returns an [UpdateInfo] describing both versions and whether an upgrade
+  /// is available. Returns `null` if the check fails for any reason.
+  Future<UpdateInfo?> checkForUpdate(String currentVersion) async {
     try {
-      final currentVersion = await AppInfo.getVersion();
       final latestVersion = await _fetchLatestVersion();
-
-      if (VersionUtils.isNewer(latestVersion, currentVersion)) {
-        return UpdateInfo(
-          currentVersion: currentVersion,
-          latestVersion: latestVersion,
-          updateAvailable: true,
-        );
-      }
 
       return UpdateInfo(
         currentVersion: currentVersion,
         latestVersion: latestVersion,
-        updateAvailable: false,
+        updateAvailable: VersionUtils.isNewer(latestVersion, currentVersion),
       );
-    } catch (e) {
-      // Silent fail (no internet, API error)
+    } catch (_) {
       return null;
     }
   }
 
-  /// Fetch latest version from pub.dev
+  /// Fetches the latest published version from the pub.dev API.
+  ///
+  /// Uses [AppInfo.name] so the package name is never duplicated in source.
   Future<String> _fetchLatestVersion() async {
+    final packageName = AppInfo.name.toLowerCase();
     final response = await _httpClient.get(
-      '${ApiConstants.pubDevApiUrl}/packages/cura',
-      options: Options(receiveTimeout: Duration(seconds: 5)),
+      '${ApiConstants.pubDevApiUrl}/packages/$packageName',
+      options: Options(receiveTimeout: const Duration(seconds: 5)),
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to fetch latest version');
+      throw Exception('pub.dev returned ${response.statusCode}');
     }
 
     final data = response.data as Map<String, dynamic>;
-    final latest = data['latest'] as Map<String, dynamic>;
-    final version = latest['version'] as String;
-
-    return version;
+    return (data['latest'] as Map<String, dynamic>)['version'] as String;
   }
-}
-
-class UpdateInfo {
-  final String currentVersion;
-  final String latestVersion;
-  final bool updateAvailable;
-
-  const UpdateInfo({
-    required this.currentVersion,
-    required this.latestVersion,
-    required this.updateAvailable,
-  });
 }

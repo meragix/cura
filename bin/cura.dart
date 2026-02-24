@@ -9,6 +9,7 @@ import 'package:cura/src/application/commands/view_command.dart';
 import 'package:cura/src/domain/ports/config_repository.dart';
 import 'package:cura/src/domain/ports/package_data_aggregator.dart';
 import 'package:cura/src/infrastructure/cache/json_file_system_cache.dart';
+import 'package:cura/src/infrastructure/services/update_checker_service.dart';
 import 'package:cura/src/domain/usecases/calculate_score.dart';
 import 'package:cura/src/domain/usecases/check_packages_usecase.dart';
 import 'package:cura/src/domain/usecases/view_package_details.dart';
@@ -36,7 +37,7 @@ import 'package:dio/dio.dart';
 /// - Lifecycle management (Resource cleanup).
 /// - Centralized configuration.
 Future<void> main(List<String> arguments) async {
-  if (arguments.contains('--version') || arguments.contains('-v')) {
+  if (arguments.contains('--version')) {
     final version = await AppInfo.getFullVersion();
     print(version);
     exit(0);
@@ -78,6 +79,9 @@ Future<void> main(List<String> arguments) async {
   );
   await cache.initialize();
   await cache.cleanupExpired();
+
+  // Update checker — reuses the same HTTP client; stays silent on any failure.
+  final updateChecker = UpdateCheckerService(httpClient: httpClient);
 
   // Decorator: CachedAggregator wraps MultiApiAggregator to add transparent caching.
   final aggregator = CachedAggregator(
@@ -156,7 +160,10 @@ Future<void> main(List<String> arguments) async {
     configRepository: configRepo,
   );
 
-  final versionCommand = VersionCommand(logger: logger);
+  final versionCommand = VersionCommand(
+    logger: logger,
+    updateChecker: updateChecker,
+  );
 
   final cacheCommand = CacheCommand(logger: logger, cache: cache);
 

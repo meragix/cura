@@ -1,21 +1,30 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:cura/src/infrastructure/services/update_checker_service.dart';
 import 'package:cura/src/presentation/loggers/console_logger.dart';
 import 'package:cura/src/shared/app_info.dart';
 import 'package:mason_logger/mason_logger.dart';
 
-/// Command : cura version
+/// Displays version, environment info, and checks pub.dev for updates.
 ///
-/// Display version information with details
+/// Usage:
+///   cura version           — full output (environment + update check)
+///   cura version --short   — bare version number only (machine-readable)
+///   cura v                 — alias for `cura version`
 class VersionCommand extends Command<int> {
   final ConsoleLogger _logger;
+  final UpdateCheckerService _updateChecker;
 
-  VersionCommand({required ConsoleLogger logger}) : _logger = logger {
+  VersionCommand({
+    required ConsoleLogger logger,
+    required UpdateCheckerService updateChecker,
+  })  : _logger = logger,
+        _updateChecker = updateChecker {
     argParser.addFlag(
       'short',
       abbr: 's',
-      help: 'Show short version only',
+      help: 'Show short version only (bare semver string)',
       defaultsTo: false,
     );
   }
@@ -23,8 +32,11 @@ class VersionCommand extends Command<int> {
   @override
   String get name => 'version';
 
+  /// `'v'` lets users type `cura v` as a convenient alias.
+  /// `'--version'` and `'-v'` are NOT listed here — they are global flags
+  /// intercepted by the pre-parse in `main()` before the command runner runs.
   @override
-  List<String> get aliases => ['v', '--version', '-v'];
+  List<String> get aliases => ['v'];
 
   @override
   String get description => 'Show version information';
@@ -32,28 +44,22 @@ class VersionCommand extends Command<int> {
   @override
   Future<int> run() async {
     final short = argResults!['short'] as bool;
+    final version = await AppInfo.getVersion();
 
     if (short) {
-      // Short version: just the number
-      final version = await AppInfo.getVersion();
       _logger.info(version);
       return 0;
     }
 
-    // Detailed version info
-    await _showDetailedVersion();
-
+    await _showDetailedVersion(version);
     return 0;
   }
 
-  Future<void> _showDetailedVersion() async {
-    final version = await AppInfo.getVersion();
-
+  Future<void> _showDetailedVersion(String version) async {
     _logger.spacer();
     _logger.info('═' * 65);
     _logger.spacer();
 
-    // Header with logo
     _logger.primary('${AppInfo.name} v$version');
     _logger.muted(AppInfo.description);
 
@@ -61,7 +67,6 @@ class VersionCommand extends Command<int> {
     _logger.divider(length: 65);
     _logger.spacer();
 
-    // Info
     _logger.info('Information:');
     _logger.info('  Author:      ${AppInfo.author}');
     _logger.info('  Homepage:    ${cyan.wrap(AppInfo.homepage)}');
@@ -69,7 +74,6 @@ class VersionCommand extends Command<int> {
 
     _logger.spacer();
 
-    // Environment info
     _logger.info('Environment:');
     _logger.info('  Dart SDK:    ${_getDartVersion()}');
     _logger.info('  Platform:    ${_getPlatform()}');
@@ -78,42 +82,43 @@ class VersionCommand extends Command<int> {
     _logger.info('═' * 65);
     _logger.spacer();
 
-    // Check for updates
     await _checkForUpdates(version);
   }
 
-  String _getDartVersion() {
-    // Get Dart SDK version
-    return Platform.version.split(' ').first;
-  }
+  /// Returns the Dart SDK semver string (e.g. `'3.3.0'`).
+  String _getDartVersion() => Platform.version.split(' ').first;
 
+  /// Returns a human-readable OS + architecture string.
+  ///
+  /// Architecture is inferred from [Platform.version] because `dart:io` does
+  /// not expose a dedicated API for it without `dart:ffi`.
   String _getPlatform() {
     final os = Platform.operatingSystem;
-    final arch = Platform.version.contains('x64')
-        ? 'x64'
-        : Platform.version.contains('arm64')
-            ? 'arm64'
-            : 'unknown';
-
+    final v = Platform.version;
+    final arch = v.contains('arm64')
+        ? 'arm64'
+        : v.contains('x64')
+            ? 'x64'
+            : v.contains('ia32')
+                ? 'ia32'
+                : 'unknown';
     return '$os ($arch)';
   }
 
+  /// Queries pub.dev and prints an upgrade notice when a newer version exists.
+  ///
+  /// Never throws — a failed update check must not interrupt normal output.
   Future<void> _checkForUpdates(String currentVersion) async {
-    try {
-      // todo: Fetch latest version from pub.dev API
-      // final latestVersion = await _fetchLatestVersion();
+    final info = await _updateChecker.checkForUpdate(currentVersion);
+    if (info == null || !info.updateAvailable) return;
 
-      // if (_isNewerVersion(latestVersion, currentVersion)) {
-      //   _logger.spacer();
-      //   _logger.alert(
-      //     '📢 New version available: $latestVersion',
-      //     level: AlertLevel.info,
-      //   );
-      //   _logger.info('   Run: dart pub global activate cura');
-      //   _logger.spacer();
-      // }
-    } catch (e) {
-      // Silent fail (no internet, API error, etc.)
-    }
+    _logger.spacer();
+    _logger.alert(
+      'New version available: ${info.latestVersion}  '
+      '(current: ${info.currentVersion})',
+      level: AlertLevel.info,
+    );
+    _logger.muted('  Run: dart pub global activate cura');
+    _logger.spacer();
   }
 }
