@@ -27,6 +27,7 @@ import 'package:cura/src/presentation/presenters/view_presenter.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:cura/src/shared/app_info.dart';
 import 'package:cura/src/shared/constants/app_constants.dart';
+import 'package:cura/src/shared/utils/http_helper.dart';
 import 'package:dio/dio.dart';
 
 /// Composition Root: Single entry point for dependency graph construction.
@@ -63,9 +64,9 @@ Future<void> main(List<String> arguments) async {
   // ===========================================================================
 
   // HTTP Client avec interceptors
-  final httpClient = _buildHttpClient(
-    timeout: Duration(seconds: config.timeoutSeconds),
-    verbose: config.verboseLogging,
+  final httpClient = HttpHelper.buildClient(
+    connectTimeout: Duration(seconds: config.timeoutSeconds),
+    enableLogging: config.verboseLogging,
   );
 
   // API Clients
@@ -123,10 +124,7 @@ Future<void> main(List<String> arguments) async {
   // Warn about missing GitHub token only for commands that call the GitHub API
   // and only when output is not suppressed.
   const apiCommands = {'check', 'view'};
-  if (config.githubToken == null &&
-      !logger.isQuiet &&
-      arguments.isNotEmpty &&
-      apiCommands.contains(arguments.first)) {
+  if (config.githubToken == null && !logger.isQuiet && arguments.isNotEmpty && apiCommands.contains(arguments.first)) {
     logger.warn('GitHub token not set — rate limited to 60 req/h');
     logger.muted('  Add one: cura config set github_token YOUR_TOKEN');
     logger.spacer();
@@ -278,16 +276,14 @@ Future<void> _cleanup({
 // =============================================================================
 
 String _homeDir() {
-  final home =
-      Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+  final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
   if (home == null) throw StateError('Cannot resolve HOME directory');
   return home;
 }
 
 String _resolveGlobalConfigPath() => '${_homeDir()}/.cura/config.yaml';
 
-String _resolveProjectConfigPath() =>
-    '${Directory.current.path}/.cura/config.yaml';
+String _resolveProjectConfigPath() => '${Directory.current.path}/.cura/config.yaml';
 
 String _resolveCacheDirectory() => '${_homeDir()}/.cura/cache';
 
