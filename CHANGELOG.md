@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Centralized concurrency manager built on top of the `pool` package.
 - **Dartdoc**: Added comprehensive API documentation to `ScoreWeights`, `ConfigDefaults`, `ConfigRepository`, `YamlConfigRepository`, and all `config` sub-commands.
 
 ## [0.5.0] - 2026-02-22
