@@ -5,7 +5,7 @@
 </p> -->
 
 <p align="center">
-  <strong>Replace "Vibe Code" with data-driven decisions</strong>
+  <strong>Stop guessing. Start scoring. Ship with confidence.</strong>
 </p>
 
 <p align="center">
@@ -17,16 +17,31 @@
 
 ---
 
+## Why Cura?
+
+Every Flutter project accumulates dependencies. Most teams pick packages by instinct — a quick pub.dev glance, a few GitHub stars, a "looks maintained" gut feeling. Then, months later, a package stops receiving updates, a CVE lands, or an abandoned dependency blocks your SDK upgrade.
+
+**Cura turns that guesswork into a data-driven score.**
+
+One command audits your entire dependency tree against pub.dev, GitHub, and OSV.dev, produces an objective 0–100 health score for each package, and fails your CI pipeline before a problem reaches production.
+
+```bash
+dart pub global activate cura
+cura check
+```
+
+---
+
 ## 📖 Table of Contents
 
-- [What is Cura?](#-what-is-cura)
 - [Features](#-features)
 - [Quick Start](#-quick-start)
 - [Installation](#-installation)
 - [Usage](#-usage)
-  - [Check Command](#check-command)
-  - [View Command](#view-command)
-  - [Config Command](#config-command)
+  - [check](#check-command)
+  - [view](#view-command)
+  - [config](#config-command)
+  - [cache](#cache-command)
 - [Scoring Algorithm](#-scoring-algorithm)
 - [Configuration](#️-configuration)
 - [CI/CD Integration](#-cicd-integration)
@@ -36,133 +51,104 @@
 
 ---
 
-## 🎯 What is Cura?
-
-**Cura** is a CLI tool that provides **objective health scores** (0-100) for Flutter and Dart packages, helping you make informed decisions about your dependencies instead of relying on intuition ("Vibe Code").
-
-### The Problem
-
-When choosing packages, developers often rely on:
-
-- ❌ **Gut feeling** - "This looks good"
-- ❌ **Popularity alone** - High downloads ≠ quality
-- ❌ **Outdated information** - Last checked 6 months ago
-
-### The Solution
-
-Cura analyzes packages across **4 key dimensions**:
-
-| Dimension | Weight | What it measures |
-|-----------|--------|------------------|
-| **Vitality** | 40pts |Release frequency, commit recency, active maintenance. |
-| **Technical Health** | 30pts | Pana score, null safety, platform support |
-| **Trust** | 20pts | Popularity, community engagement |
-| **Maintenance** | 10pts | Verified publisher, Flutter Favorite |
-
-**Score: 0-100** → **Grade: F to A+**
-
----
-
 ## ✨ Features
 
-### Core Features
+### Core
 
-- 🔍 **Package Analysis** - Deep health check for any pub.dev package
-- 📊 **Project Scanning** - Analyze all dependencies in your `pubspec.yaml`
-- 💯 **Objective Scoring** - Data-driven scores (0-100) with detailed breakdown
-- 💡 **Smart Suggestions** - Recommendations for better alternatives
-- ⚡ **Fast & Cached** - Local SQLite cache for instant results
+- **Full project audit** — scans every dependency in `pubspec.yaml` in seconds
+- **Objective scoring** — 0–100 with a transparent, weighted algorithm
+- **Security checks** — CVE detection via OSV.dev; critical vulnerabilities force score to 0
+- **Smart suggestions** — recommends higher-scoring alternatives for low-scoring packages
+- **Local SQLite cache** — repeat runs are instant; TTL scales with package popularity
 
 ### Developer Experience
 
-- 🎨 **Beautiful CLI** - Color-coded output with progress bars
-- 🌗 **Theme Support** - Dark, Light, Minimal, Dracula themes
-- 🔧 **Highly Configurable** - Global + project-level configs
-- 🚀 **CI/CD Ready** - Exit codes, JSON output, quiet mode
+- **Beautiful CLI** — color-coded tables, progress bars, score breakdowns
+- **Four themes** — Dark, Light, Minimal, Dracula
+- **Hierarchical config** — project config overrides global config overrides defaults
+- **CI/CD ready** — structured exit codes, `--json` output, `--quiet` mode
 
-### Advanced
+### Data Sources
 
-- 🌐 **Multi-API** - Aggregates data from pub.dev, GitHub, OSV.dev
-- 🔄 **Auto-update** - Background cache refresh every 24h
-- 📈 **GitHub Metrics** - Stars, issues, commit activity (optional)
-- 🔐 **Security Checks** - CVE detection via OSV.dev
+| Source       | Data retrieved                                        |
+|--------------|-------------------------------------------------------|
+| **pub.dev**  | Pana score, likes, popularity, publisher verification |
+| **GitHub**   | Stars, forks, open issues, commit cadence             |
+| **OSV.dev**  | Security advisories (CVEs)                            |
 
 ---
 
 ## ⚡ Quick Start
 
 ```bash
-# Install globally
+# 1. Install
 dart pub global activate cura
 
-# Analyze your Flutter project
+# 2. Audit your project
 cd my_flutter_app
 cura check
 
-# View detailed score for a specific package
+# 3. Inspect a single package
 cura view riverpod
 
-# CI/CD health check
-cura check --min-score 70
+# 4. Enforce a quality gate in CI
+cura check --min-score 75 --fail-on-vulnerable
 ```
 
-**Output:**
+**Sample output:**
 
 ```
-📦 Scanning pubspec.yaml...
+Scanning pubspec.yaml...
 Found 15 dependencies
 
-✓ Analyzing packages... [████████████████████] 15/15 (3.2s)
+Analyzing packages... [████████████████████] 15/15 (3.2s)
 
 ┌────────────────────────┬───────┬────────┬──────────────┐
-│ Package                │ Score │ Status │ Last Update  │
+│ Package                │ Score │ Grade  │ Last Update  │
 ├────────────────────────┼───────┼────────┼──────────────┤
-│ riverpod               │  92   │   ✅   │ 1 month      │
-│ dio                    │  88   │   ✅   │ 15 days      │
-│ provider               │  68   │   ⚠️   │ 8 months     │
-│ old_package            │  25   │   ❌   │ 32 months    │
+│ riverpod               │  92   │  A+    │ 1 month      │
+│ dio                    │  88   │  A     │ 15 days      │
+│ provider               │  68   │  C     │ 8 months     │
+│ old_package            │  25   │  F     │ 32 months    │
 └────────────────────────┴───────┴────────┴──────────────┘
 
-📊 Summary
-   Average Score: 75.3/100
-   ✅ Healthy: 12/15 (80%)
-   💡 Alternatives Available: 2
+Summary
+  Average Score : 75.3 / 100
+  Healthy       : 12 / 15  (80%)
+  Warnings      : 2
+  Critical      : 1
 ```
 
 ---
 
 ## 📥 Installation
 
-### Method 1: Global Installation (Recommended)
+### Recommended: global activation
 
 ```bash
 dart pub global activate cura
-```
-
-**Verify installation:**
-
-```bash
 cura --version
 ```
 
-### Method 2: Local Installation
+Make sure `~/.pub-cache/bin` is in your `PATH`. The Dart installer adds it automatically; if not, add it manually:
 
 ```bash
-# Clone the repository
+export PATH="$PATH:$HOME/.pub-cache/bin"
+```
+
+### From source
+
+```bash
 git clone https://github.com/meragix/cura.git
 cd cura
-
-# Install dependencies
 dart pub get
-
-# Activate locally
 dart pub global activate --source path .
 ```
 
 ### Requirements
 
 - Dart SDK ≥ 3.0.0
-- Internet connection (for initial package analysis)
+- Internet access for the first analysis (subsequent runs use the local cache)
 
 ---
 
@@ -170,380 +156,282 @@ dart pub global activate --source path .
 
 ### Check Command
 
-Analyze all dependencies in your project.
+Audit every dependency declared in `pubspec.yaml`.
 
 ```bash
 cura check [options]
 ```
 
-**Options:**
-
-- `-p, --path <path>` - Project directory (default: current directory)
-- `--min-score <score>` - Fail if average score below threshold
-- `--fail-on-vulnerable` - Exit 1 if vulnerabilities found
-- `--fail-on-discontinued` - Exit 1 if discontinued packages found
-- `--no-github` - Skip GitHub metrics (faster, offline mode)
-- `--json` - Output results as JSON
-- `-q, --quiet` - Minimal output
+| Option                     | Description                                    |
+|----------------------------|------------------------------------------------|
+| `--path <path>`            | Project directory (default: current directory) |
+| `--min-score <n>`          | Exit 1 when average score falls below `n`      |
+| `--fail-on-vulnerable`     | Exit 1 if any CVEs are detected                |
+| `--fail-on-discontinued`   | Exit 1 if any discontinued packages are found  |
+| `--dev-dependencies`       | Include `dev_dependencies` in the audit        |
+| `--no-github`              | Skip GitHub metrics (faster, works offline)    |
+| `--json`                   | Emit results as JSON                           |
+| `-q, --quiet`              | Suppress all output except errors              |
 
 **Examples:**
 
 ```bash
-# Basic check
+# Audit the current project
 cura check
 
-# Scan specific directory
-cura check --path /path/to/project
+# Strict CI gate: score ≥ 80, no CVEs, no discontinued packages
+cura check --min-score 80 --fail-on-vulnerable --fail-on-discontinued
 
-# Strict check for CI/CD
-cura check --min-score 80 --fail-on-vulnerable
+# Export a JSON report
+cura check --json > report.json
 
-# CI/CD mode with threshold
-cura check --min-score 80 --json > report.json
-
-# Offline mode (cached data only)
+# Offline mode (cached data only, no GitHub calls)
 cura check --no-github
 
-# Quiet mode (only errors)
+# Silent mode — check the exit code in scripts
 cura check --quiet
-echo $?  # 0 = pass, 1 = fail
+echo $?   # 0 = all passed, 1 = failures
 ```
-
----
-
-**See also:** [doc/scan.md](doc/check.md) for advanced usage
-
-**GitHub Actions Integration:**
-
-```yaml
-- name: Cura Health Check
-  run: cura check --min-score 75
-```
-
-**See also:** [doc/ci-cd.md](doc/ci-cd.md) for CI/CD best practices
 
 ---
 
 ### View Command
 
-Get detailed analysis for a specific package.
+Deep-dive into a single package.
 
 ```bash
 cura view <package> [options]
 ```
 
-**Options:**
-
-- `-v, --verbose` - Show detailed debug information
-- `--json` - Output as JSON
+| Option       | Description                         |
+|--------------|-------------------------------------|
+| `--verbose`  | Show score breakdown and API timing |
+| `--json`     | Emit result as JSON                 |
 
 **Examples:**
 
 ```bash
-# View package score
 cura view dio
-
-# Verbose mode (cache status, API calls, timing)
 cura view dio --verbose
-
-# JSON output for scripts
 cura view dio --json | jq '.score.total'
 ```
 
-**Output (Normal):**
+**Output:**
 
-```terminal
-$ cura view dio
-
+```
 ═════════════════════════════════════════════════════════════════
 
- ✨ dio v5.4.0
+  dio v5.4.0
 
- ● Score: 92/100 (A+)
- 
- █ Vitality  ▓ Tech  █ Trust  ▒ Maint
+  Score : 92 / 100  (A+)
 
 Key Metrics
-  Publisher:   dart.dev ✓
-  Pub Score:   135/140 ●
-  Popularity:  98% ●●●
-  Likes:       12,450
-  Last Update: 1 month ago 🟢
-  Repository:  github.com/cfug/dio
-  Platforms:   android, ios, web, linux, macos, windows
-  Flutter Favorite ✨
+  Publisher   : dart.dev  (verified)
+  Pub Score   : 135 / 140
+  Popularity  : 98%
+  Likes       : 12,450
+  Last Update : 1 month ago
+  Platforms   : android, ios, web, linux, macos, windows
+  Flutter Favorite
 
 GitHub
-  Stars:       ⭐ 12.0K
-  Forks:       1,234
-  Open Issues: 45
-  Activity:    87 commits (90d)
-  Last Commit: 2 days ago
+  Stars       : 12.0K
+  Forks       : 1,234
+  Open Issues : 45
+  Commits 90d : 87
+  Last Commit : 2 days ago
 
-✓ Recommended - High-quality, actively maintained package
+  Recommended — high-quality, actively maintained package
 ```
-
-```terminal
-$ cura view bad_pkg
-
-═════════════════════════════════════════════════════════════════
-
- ✗ bad_pkg v0.0.1
-
- ● Score: 25/100 (F)
- 
- · Vitality  ░ Tech  ░ Trust  · Maint
-
-Issues Detected
-  ● No updates in 2.6 years
-  ● Unverified publisher
-  ● No repository
-  ● Minimal documentation
-
-Key Metrics
-  Publisher:   None (unverified)
-  Pub Score:   35/140 ○
-  Popularity:  12% ○○○
-  Likes:       8
-  Last Update: 2 yr 7 mo ago ⚠
-  Repository:  None
-
-Better Alternatives
-  → better_package (88/100)
-    Modern alternative with active maintenance
-  
-  → another_option (82/100)
-    Well-documented with good community support
-
-✗ Not Recommended - Appears abandoned, high risk for production use
-```
-
-**Output (Verbose):**
-
-```terminal
-$ cura view dio --verbose
-
-[... same output as above ...]
-
-Detailed Score Breakdown
-  Vitality (38/40):
-    ✓ Last published: 1 month ago (38 pts)
-    ✓ Stable package bonus (v5.x) (+5 pts)
-  
-  Technical Health (28/30):
-    ✓ Pana score: 135/140 (14 pts)
-    ✓ Null safety: Yes (10 pts)
-    ✓ Platform support: 6 platforms (4 pts)
-  
-  Trust (19/20):
-    ✓ Likes: 12,450 (9 pts)
-    ✓ Popularity: 98% (10 pts)
-  
-  Maintenance (7/10):
-    ✓ Verified publisher (5 pts)
-    ✓ Flutter Favorite (2 pts)
-
-Feature Highlights
-  ✓ Request/Response interceptors
-  ✓ FormData support (file uploads)
-  ✓ Request cancellation
-  ✓ Built-in retry logic
-  ✓ Global configuration
-  ✓ Extensive documentation
-
-[...]
-```
-
-**See also:** [doc/view.md](doc/view.md) for output customization
 
 ---
 
 ### Config Command
 
-Manage global and project-level configuration.
+Read and write Cura configuration.
 
 ```bash
 cura config <subcommand> [options]
 ```
 
-**Subcommands:**
-
-- `show` - Display current configuration
-- `init` - Create project config (`./.cura/config.yaml`)
-- `edit` - Open config in editor
-- `set <key> <value>` - Set a configuration value
-- `get <key>` - Get a configuration value
-- `reset` - Reset to defaults
-- `validate` - Validate config file
+| Subcommand            | Description                                       |
+|-----------------------|---------------------------------------------------|
+| `show`                | Print the active configuration (merged hierarchy) |
+| `init`                | Create a project config at `./.cura/config.yaml`  |
+| `set <key> <value>`   | Set a value in the global or project config       |
+| `get <key>`           | Print a single config value                       |
+| `reset`               | Reset to factory defaults                         |
 
 **Examples:**
 
 ```bash
-# Show config hierarchy
+# Inspect the full active config
 cura config show
 
-# Initialize project config
-cura config init
+# Apply a GitHub token globally
+cura config set github_token ghp_xxxxx
 
-# Set global preference
-cura config set theme dracula --global
-
-# Set project-specific min score
+# Set a project-level quality gate
 cura config set min_score 85 --project
 
-# Edit config
-cura config edit --global
+# Choose a theme
+cura config set theme dracula
 ```
 
-**See also:** [doc/configuration.md](doc/configuration.md) for all options
+---
+
+### Cache Command
+
+Manage the local SQLite cache without touching package analysis.
+
+```bash
+cura cache <subcommand>
+```
+
+| Subcommand  | Description                                          |
+|-------------|------------------------------------------------------|
+| `stats`     | Show entry counts per table                          |
+| `clear`     | Delete all cached entries (prompts for confirmation) |
+| `cleanup`   | Remove only expired entries, keep valid ones         |
+
+**Examples:**
+
+```bash
+# How many entries are cached?
+cura cache stats
+
+# Purge everything (useful when testing)
+cura cache clear
+
+# Sweep expired entries at end of sprint
+cura cache cleanup
+```
+
+**Sample `stats` output:**
+
+```
+Cache Statistics:
+
+  Package cache    : 47 entries
+  Aggregated cache : 43 entries
+  ──────────────────────────────
+  Total            : 90 entries
+```
 
 ---
 
 ## 📊 Scoring Algorithm
 
-Cura calculates a score from **0 to 100** based on weighted criteria:
-
-### Score Breakdown
-
 ```
 Total Score = Vitality (40) + Technical Health (30) + Trust (20) + Maintenance (10)
 ```
 
-#### 1. Vitality (40 points)
+### Vitality — 40 pts
 
-Measures how actively maintained the package is.
+How actively is the package maintained?
 
-| Last Update | Score |
-|-------------|-------|
-| < 1 month   | 40    |
-| 1-3 months  | 35    |
-| 3-6 months  | 28    |
-| 6-12 months | 20    |
-| 1-2 years   | 10    |
-| > 2 years   | 0     |
+| Last update  | Points |
+|--------------|--------|
+| < 1 month    |     40 |
+| 1–3 months   |     35 |
+| 3–6 months   |     28 |
+| 6–12 months  |     20 |
+| 1–2 years    |     10 |
+| > 2 years    |      0 |
 
-**Exceptions:** Packages with high Pana scores (>130) and proven stability receive bonus points even if older.
+Stable packages with a Pana score > 130 receive a bonus even when older.
 
-#### 2. Technical Health (30 points)
+### Technical Health — 30 pts
 
-Evaluates code quality and platform support.
+| Criterion                           | Points |
+|-------------------------------------|--------|
+| Pana score (normalized from 0–140)  |     15 |
+| Null safety                         |     10 |
+| Platform support (per platform)     |      5 |
 
-- **Pana Score** (15pts): Normalized from pub.dev's 0-140 scale
-- **Null Safety** (10pts): Supports null safety
-- **Platform Support** (5pts): Number of supported platforms (iOS, Android, Web, etc.)
+### Trust — 20 pts
 
-#### 3. Trust (20 points)
+| Criterion                   | Points |
+|-----------------------------|--------|
+| pub.dev likes (normalized)  |     10 |
+| Download popularity         |     10 |
 
-Measures community confidence.
+### Maintenance — 10 pts
 
-- **Likes** (10pts): Normalized from pub.dev likes
-- **Popularity** (10pts): Based on download metrics
-
-#### 4. Maintenance (10 points)
-
-Indicates official support and reliability.
-
-- **Verified Publisher** (5pts): Has verified publisher
-- **Flutter Favorite** (5pts): Official Flutter Favorite badge
+| Criterion               | Points |
+|-------------------------|--------|
+| Verified publisher      |      5 |
+| Flutter Favorite badge  |      5 |
 
 ### Grade Mapping
 
-| Score | Grade | Meaning |
-|-------|-------|---------|
-| 90-100 | A+ | Excellent - Production ready |
-| 80-89 | A | Very good - Highly recommended |
-| 70-79 | B | Good - Safe to use |
-| 60-69 | C | Fair - Use with caution |
-| 50-59 | D | Poor - Consider alternatives |
-| 0-49 | F | Critical - Avoid |
+| Score   | Grade | Meaning                         |
+|---------|-------|---------------------------------|
+| 90–100  | A+    | Excellent — production ready    |
+| 80–89   | A     | Very good — highly recommended  |
+| 70–79   | B     | Good — safe to use              |
+| 60–69   | C     | Fair — use with caution         |
+| 50–59   | D     | Poor — seek alternatives        |
+| 0–49    | F     | Critical — avoid                |
 
-### Penalties
+### Automatic zero
 
-Automatic score of **0** if:
+A score of **0** is forced when:
 
-- Package is marked as discontinued
-- Critical security vulnerabilities detected (via OSV.dev)
-
-**See also:** [doc/scoring.md](doc/scoring.md) for detailed algorithm explanation
+- The package is **discontinued**
+- A **critical CVE** is detected via OSV.dev
 
 ---
 
 ## ⚙️ Configuration
 
-Cura supports hierarchical configuration: **Project > Global > Defaults**
-
-### Config Locations
+### Hierarchy
 
 ```
-~/.cura/config.yaml          # Global config (user preferences)
-./.cura/config.yaml          # Project config (team standards)
+CLI flags               (highest priority)
+  ↓
+./.cura/config.yaml     (project config — commit to share with your team)
+  ↓
+~/.cura/config.yaml     (global config — your personal preferences)
+  ↓
+Built-in defaults       (lowest priority)
 ```
 
-### Config Hierarchy
+### Reference
 
-```
-CLI Flags (highest priority)
-    ↓
-Project Config (./.cura/config.yaml)
-    ↓
-Global Config (~/.cura/config.yaml)
-    ↓
-Defaults (lowest priority)
-```
+| Key                     | Type   | Default | Description                                          |
+|-------------------------|--------|---------|------------------------------------------------------|
+| `theme`                 | string | `dark`  | `dark` / `light` / `minimal` / `dracula`             |
+| `min_score`             | int    | `70`    | Minimum acceptable score                             |
+| `github_token`          | string | —       | GitHub PAT (raises rate limit from 60 → 5 000 req/h) |
+| `timeout_seconds`       | int    | `10`    | HTTP request timeout                                 |
+| `ignore_packages`       | list   | `[]`    | Packages skipped during analysis                     |
+| `fail_on_vulnerable`    | bool   | `false` | Exit 1 on any CVE                                    |
+| `fail_on_discontinued`  | bool   | `false` | Exit 1 on discontinued packages                      |
+| `show_suggestions`      | bool   | `true`  | Show alternative package suggestions                 |
+| `verbose_logging`       | bool   | `false` | Log every API call and cache hit                     |
 
-### Example Configuration
-
-**Global Config** (`~/.cura/config.yaml`):
+### Example: global config
 
 ```yaml
-# Appearance
+# ~/.cura/config.yaml
 theme: dracula
-use_emojis: true
-use_colors: true
-
-# Cache
-cache_max_age: 24  # hours
-auto_update: true
-
-# Scoring
-min_score: 70
-
-# API
-timeout_seconds: 10
 github_token: ghp_your_token_here
-
-# Suggestions
+min_score: 70
+timeout_seconds: 15
 show_suggestions: true
-max_suggestions_per_package: 3
 ```
 
-**Project Config** (`./.cura/config.yaml`):
+### Example: project config
 
 ```yaml
-# Override for this project
+# ./.cura/config.yaml — commit this to enforce team standards
 min_score: 85
-
-# Ignore internal packages
+fail_on_vulnerable: true
+fail_on_discontinued: true
 ignore_packages:
-  - internal_test_package
-
-# Trust company packages
-trusted_publishers:
-  - my-company.dev
+  - internal_test_helper
 ```
-
-### Common Settings
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `theme` | string | `dark` | UI theme (dark, light, minimal, dracula) |
-| `min_score` | int | `70` | Minimum acceptable score |
-| `cache_max_age` | int | `24` | Cache TTL in hours |
-| `github_token` | string | `null` | GitHub PAT for higher rate limits |
-| `ignore_packages` | list | `[]` | Packages to skip during analysis |
-| `trusted_publishers` | list | `[]` | Auto-approve publishers |
-
-**See also:** [doc/configuration.md](doc/configuration.md) for full reference
 
 ---
 
@@ -552,29 +440,31 @@ trusted_publishers:
 ### GitHub Actions
 
 ```yaml
-name: Cura Health Check
+name: Dependency Health
 
 on: [push, pull_request]
 
 jobs:
-  health:
+  cura:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v4
+
       - uses: dart-lang/setup-dart@v1
-      
+
       - name: Install Cura
         run: dart pub global activate cura
-      
-      - name: Health Check
+
+      - name: Audit dependencies
         run: cura check --min-score 75 --fail-on-vulnerable
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### GitLab CI
 
 ```yaml
-cura_check:
+dependency-health:
   image: dart:stable
   script:
     - dart pub global activate cura
@@ -584,10 +474,10 @@ cura_check:
 
 ### Exit Codes
 
-- `0` - All checks passed
-- `1` - Failed (score below threshold, vulnerabilities, etc.)
-
-**See also:** [doc/ci-cd.md](doc/ci-cd.md) for advanced workflows
+| Code | Meaning                                              |
+|------|------------------------------------------------------|
+| `0`  | All packages passed                                  |
+| `1`  | One or more packages failed the configured threshold |
 
 ---
 
@@ -595,240 +485,117 @@ cura_check:
 
 ### Themes
 
-Switch between 4 built-in themes:
-
 ```bash
-# Via CLI flag
-cura check --theme=dracula
-
-# Via config
-cura config set theme light
-
-# Via environment variable
-export CURA_THEME=minimal
-cura check
+cura config set theme dracula     # persist globally
+cura check --theme minimal        # one-off override
 ```
 
-**Available Themes:**
-
-- `dark` - Default, vibrant colors
-- `light` - For light terminals
-- `minimal` - Monochrome, CI/CD friendly
-<!-- - `dracula` - Popular Dracula color scheme -->
-
-**See also:** [doc/themes.md](doc/themes.md) for theme customization
-
----
+Available: `dark` (default), `light`, `minimal`, `dracula`.
 
 ### Caching
 
-Cura uses local SQLite cache to minimize API calls.
+Cura caches results in `~/.cura/cache/cura_cache.db`. TTL scales with package popularity:
 
-**Cache locations:**
-
-```
-~/.cura/cache/cura_cache.db           # Package scores
-~/.cura/suggestions_cache.yaml        # Alternative suggestions
-```
-
-**Cache management:**
+| Popularity      | TTL      |
+|-----------------|----------|
+| > 1 000 likes   | 1 hour   |
+| Normal          | 6 hours  |
+| Unpopular       | 24 hours |
 
 ```bash
-# Clear cache
-cura clean
-
-# View cache stats
-cura config show
-
-# Disable cache
-cura check --no-cache
+cura cache stats    # how full is the cache?
+cura cache cleanup  # sweep expired entries
+cura cache clear    # wipe everything
 ```
 
-**Cache TTL:**
+### GitHub Token
 
-- Popular packages (>1000 likes): 1 hour
-- Normal packages: 24 hours
-- Failed requests: Not cached
-
-**See also:** [docs/caching.md](docs/caching.md) for cache strategies
-
----
-<!-- 
-### Suggestions Engine
-
-Cura suggests better alternatives for low-scoring packages.
-
-**How it works:**
-
-1. Maintains a community-driven database of alternatives
-2. Validates each suggestion's health score (must be >70)
-3. Auto-updates from GitHub every 24h
-
-**Example:**
-
-```
-⚠️  provider (68/100)
-   💡 Better Alternatives:
-      → riverpod (92/100) - Modern, compile-safe state management
-        Migration: https://riverpod.dev/docs/from_provider
-```
-
-**Contributing suggestions:**
-
-1. Fork [cura-data](https://github.com/meragix/cura-data)
-2. Edit `alternatives.yaml`
-3. Submit PR (auto-validated)
-
-**See also:** [docs/suggestions.md](docs/suggestions.md) for details
-
---- -->
-
-### Multi-API Aggregation
-
-Cura aggregates data from multiple sources:
-
-| Source | Data Retrieved |
-|--------|----------------|
-| **pub.dev** | Pana score, likes, popularity, publisher |
-| **GitHub** | Stars, issues, commits, contributors |
-| **OSV.dev** | Security vulnerabilities (CVEs) |
-
-**GitHub integration:**
+Without a token, GitHub caps anonymous requests at **60/hour**. With a token the limit rises to **5 000/hour**.
 
 ```bash
-# Set GitHub token for higher rate limits
 cura config set github_token ghp_xxxxx
-
-# Disable GitHub (faster, offline)
-cura scan --no-github
 ```
 
-**Rate limits:**
+Generate a token at [github.com/settings/tokens](https://github.com/settings/tokens) — no scopes required for public repositories.
 
-- pub.dev: ~10 req/s (built-in retry)
-- GitHub: 60 req/h (5000/h with token)
-- OSV.dev: No limit
+### Rate Limits Reference
 
-**See also:** [docs/api-integration.md](doc/api-integration.md)
+| API      | Anonymous   | Authenticated |
+|----------|-------------|---------------|
+| pub.dev  | ~10 req/s   | —             |
+| GitHub   | 60 req/h    | 5 000 req/h   |
+| OSV.dev  | unlimited   | —             |
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Here's how you can help:
+Contributions are welcome — bug reports, feature requests, and pull requests alike.
 
 ### Bug Reports & Feature Requests
 
 [Open an issue](https://github.com/meragix/cura/issues/new) with:
 
-- Clear description
+- A clear description of the problem or request
 - Steps to reproduce (for bugs)
-- Expected vs actual behavior
+- Expected vs actual behaviour
 
-### Code Contributions
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feat/amazing-feature`)
-5. Open a Pull Request
-
-**Development setup:**
+### Pull Requests
 
 ```bash
+# 1. Clone and set up
 git clone https://github.com/meragix/cura.git
 cd cura
 dart pub get
+
+# 2. Run the tool locally
 dart run bin/cura.dart --help
-```
 
-**Run tests:**
-
-```bash
+# 3. Run the test suite
 dart test
+
+# 4. Check formatting and analysis
+dart format --set-exit-if-changed .
+dart analyze
 ```
 
-<!-- ### Suggesting Package Alternatives
+Branch naming: `feat/description`, `fix/description`, `chore/description`.
 
-Contribute to [cura-data](https://github.com/meragix/cura-data):
-
-1. Fork the repo
-2. Edit `alternatives.yaml` -->
-1. Submit PR (auto-validated by CI)
-
-**See also:** [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
 ---
 
 ## 📚 Documentation
 
-- [Scoring Algorithm](doc/scoring.md) - Detailed score calculation
-- [Configuration](doc/configuration.md) - All config options
-- [CI/CD Integration](doc/ci-cd.md) - GitHub Actions, GitLab CI examples
-- [Themes](doc/themes.md) - Theme customization
-- [API Integration](doc/api-integration.md) - Multi-API architecture
-- [Caching](doc/caching.md) - Cache strategies
-- [Suggestions](doc/suggestions.md) - Alternatives engine
-
----
-
-<!-- ## 🗺️ Roadmap
-
-### v1.x (Current)
-
-- ✅ Core scoring algorithm
-- ✅ CLI with scan/view/check commands
-- ✅ Multi-API aggregation
-- ✅ Config system (global + project)
-- ✅ Themes
-
-### v2.0 (Planned)
-
-- 🔄 Backend service (optional)
-- 🔄 Web dashboard
-- 🔄 Badge service (shields.io style)
-- 🔄 VS Code extension
-- 🔄 GitHub Action (pre-built)
-
-### Future
-
-- 📅 Trend analysis (score over time)
-- 📅 Dependency tree visualization
-- 📅 Package comparison tool
-- 📅 Custom scoring weights
-
-**Vote on features:** [GitHub Discussions](https://github.com/orgs/meragix/discussions)
-
---- -->
-
-## 💬 Community
-
-- **Discord:** [Join our server](https://discord.gg/meragix)
-- **Twitter:** [@Meragix](https://twitter.com/meragix)
-- **Discussions:** [GitHub Discussions](https://github.com/orgs/meragix/discussions)
+- [Scoring algorithm](doc/scoring.md)
+- [Configuration reference](doc/configuration.md)
+- [CI/CD integration](doc/ci-cd.md)
+- [Themes](doc/themes.md)
+- [API integration](doc/api-integration.md)
+- [Caching](doc/caching.md)
 
 ---
 
 ## 📄 License
 
-Cura is MIT licensed. See [LICENSE](LICENSE) for details.
+Cura is released under the [MIT License](LICENSE).
 
 ---
 
 ## 🙏 Acknowledgments
 
-- Inspired by [Pana](https://pub.dev/packages/pana) and npm's [Snyk](https://snyk.io/)
-- Built with [mason_logger](https://pub.dev/packages/mason_logger) for beautiful CLI output
+- Inspired by [Pana](https://pub.dev/packages/pana) and [Snyk](https://snyk.io/)
+- CLI output powered by [mason_logger](https://pub.dev/packages/mason_logger)
 - Data provided by [pub.dev](https://pub.dev), [GitHub](https://github.com), and [OSV.dev](https://osv.dev)
 
 ---
 
 <p align="center">
-  Made with ❤️ for the Flutter/Dart community
+  Made with care for the Flutter &amp; Dart community
 </p>
 
 <p align="center">
-  <a href="https://github.com/meragix/cura">⭐ Star us on GitHub</a> •
-  <a href="https://github.com/meragix/cura/issues">🐛 Report Bug</a> •
-  <a href="https://github.com/orgs/meragix/discussions">💬 Discussions</a>
+  <a href="https://github.com/meragix/cura">Star on GitHub</a> •
+  <a href="https://github.com/meragix/cura/issues">Report a bug</a> •
+  <a href="https://github.com/orgs/meragix/discussions">Discussions</a>
 </p>
