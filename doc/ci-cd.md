@@ -1,114 +1,117 @@
 # CI/CD Integration
 
-## Overview
+Cura is designed for seamless pipeline integration:
 
-Cura is designed for seamless CI/CD integration with:
+- Structured exit codes (`0` = pass, `1` = fail)
+- `--quiet` mode for clean logs
+- `--json` output for downstream tooling
+- Configurable thresholds via project config or CLI flags
+- Local SQLite cache that can be persisted between runs
 
-- ✅ Exit codes (0 = pass, 1 = fail)
-- ✅ Minimal/JSON output modes
-- ✅ Configurable thresholds
-- ✅ Fast execution (with caching)
+---
+
+## Quick Setup
+
+Add a project config so every developer and pipeline uses the same standards:
+
+```yaml
+# ./.cura/config.yaml — commit this file
+theme: minimal
+use_colors: false
+min_score: 80
+fail_on_vulnerable: true
+```
+
+Then install and run in one step:
+
+```bash
+dart pub global activate cura
+cura check
+```
 
 ---
 
 ## GitHub Actions
 
-### Basic Health Check
+### Minimal workflow
 
 ```yaml
-name: Cura Health Check
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-jobs:
-  health:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
-      
-      - name: Install Cura
-        run: dart pub global activate cura
-      
-      - name: Health Check
-        run: cura check --min-score 70
-```
-
----
-
-### Advanced with Caching
-
-```yaml
-name: Cura Advanced
+name: Dependency Health
 
 on: [push, pull_request]
 
 jobs:
-  health:
+  cura:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v4
+
       - uses: dart-lang/setup-dart@v1
-      
-      - name: Cache Cura
-        uses: actions/cache@v3
+        with:
+          sdk: stable
+
+      - name: Install Cura
+        run: dart pub global activate cura
+
+      - name: Audit dependencies
+        run: cura check --min-score 75 --fail-on-vulnerable
+```
+
+### With cache and GitHub token
+
+```yaml
+name: Dependency Health
+
+on: [push, pull_request]
+
+jobs:
+  cura:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Restore Cura cache
+        uses: actions/cache@v4
         with:
           path: ~/.cura/cache
           key: cura-${{ hashFiles('pubspec.lock') }}
           restore-keys: cura-
-      
+
       - name: Install Cura
         run: dart pub global activate cura
-      
-      - name: Configure Cura
-        run: |
-          cura config set theme minimal --global
-          cura config set use_colors false --global
-      
-      - name: Health Check
-        run: |
-          cura check --min-score 75 --fail-on-vulnerable
-      
-      - name: Upload Report
+
+      - name: Audit dependencies
+        run: cura check --min-score 80 --fail-on-vulnerable
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Export JSON report
         if: always()
-        run: |
-          cura scan --json > cura-report.json
-      
-      - uses: actions/upload-artifact@v3
+        run: cura check --json > cura-report.json
+
+      - name: Upload report artifact
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: cura-report
           path: cura-report.json
 ```
 
----
-
-### With GitHub Token (Higher Rate Limits)
-
-```yaml
-- name: Health Check with GitHub Metrics
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  run: |
-    cura config set github_token $GITHUB_TOKEN --global
-    cura check --min-score 80
-```
+The cache key is tied to `pubspec.lock` so it is invalidated whenever
+dependencies change.
 
 ---
 
 ## GitLab CI
 
-### Basic Pipeline
+### Basic pipeline
 
 ```yaml
-cura_check:
+dependency-health:
   image: dart:stable
   stage: test
   script:
@@ -117,29 +120,19 @@ cura_check:
   allow_failure: false
 ```
 
----
-
-### Advanced with Caching
+### With cache
 
 ```yaml
-cura_check:
+dependency-health:
   image: dart:stable
   stage: test
   cache:
-    key: cura-cache
+    key: cura-$CI_COMMIT_REF_SLUG
     paths:
-      - .cura/cache/
-  before_script:
-    - dart pub global activate cura
-    - cura config set theme minimal --global
+      - ~/.cura/cache/
   script:
+    - dart pub global activate cura
     - cura check --min-score 80 --fail-on-vulnerable
-  artifacts:
-    when: always
-    reports:
-      junit: cura-report.xml
-    paths:
-      - cura-report.json
   allow_failure: false
 ```
 
@@ -151,321 +144,128 @@ cura_check:
 version: 2.1
 
 jobs:
-  cura_check:
+  dependency-health:
     docker:
       - image: google/dart:latest
     steps:
       - checkout
-      
+
       - restore_cache:
           keys:
-            - cura-cache-{{ checksum "pubspec.lock" }}
-            - cura-cache-
-      
+            - cura-{{ checksum "pubspec.lock" }}
+            - cura-
+
       - run:
           name: Install Cura
           command: dart pub global activate cura
-      
+
       - run:
-          name: Health Check
+          name: Audit dependencies
           command: cura check --min-score 75
-      
+
       - save_cache:
-          key: cura-cache-{{ checksum "pubspec.lock" }}
+          key: cura-{{ checksum "pubspec.lock" }}
           paths:
             - ~/.cura/cache
-      
-      - store_artifacts:
-          path: cura-report.json
 
 workflows:
   main:
     jobs:
-      - cura_check
+      - dependency-health
 ```
 
 ---
 
-## Travis CI
+## Exit Codes
 
-```yaml
-language: dart
-dart:
-  - stable
+| Code | Meaning                                                |
+|------|--------------------------------------------------------|
+| `0`  | All packages passed all configured checks              |
+| `1`  | One or more packages failed the threshold or have CVEs |
 
-cache:
-  directories:
-    - $HOME/.cura/cache
-
-before_script:
-  - dart pub global activate cura
-
-script:
-  - cura check --min-score 70 --fail-on-vulnerable
-```
-
----
-
-## Command Options for CI/CD
-
-### Check Command
+Use in shell scripts:
 
 ```bash
-cura check [options]
-```
-
-**Critical Options:**
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--min-score <n>` | Fail if avg score < n | `70` |
-| `--fail-on-vulnerable` | Fail if CVEs found | `true` |
-| `--fail-on-discontinued` | Fail if discontinued packages | `true` |
-| `-q, --quiet` | Minimal output | `false` |
-| `--json` | JSON output | `false` |
-
----
-
-### Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| `0` | All checks passed |
-| `1` | Failed (score/vulnerability/discontinued) |
-
-**Example:**
-
-```bash
-cura check --min-score 80
+cura check --min-score 80 --quiet
 if [ $? -eq 0 ]; then
-  echo "✓ Health check passed"
+  echo "Health check passed"
 else
-  echo "✗ Health check failed"
+  echo "Health check failed"
   exit 1
 fi
 ```
 
 ---
 
-## Configuration for CI/CD
+## Options Reference
 
-### Option 1: Project Config (Recommended)
-
-```yaml
-# ./.cura/config.yaml (committed to repo)
-theme: minimal
-use_colors: false
-min_score: 80
-
-ignore_packages:
-  - test_package
-```
-
-**Advantage:** Same config for all developers + CI
-
----
-
-### Option 2: Environment-Specific
-
-```bash
-# In CI script
-if [ "$CI" = "true" ]; then
-  cura config set theme minimal --global
-  cura config set use_colors false --global
-fi
-
-cura check --min-score 85
-```
-
----
-
-## Caching Strategies
-
-### Cura Cache Location
-
-```bash
-~/.cura/cache/cura_cache.db
-```
-
-### GitHub Actions
-
-```yaml
-- uses: actions/cache@v3
-  with:
-    path: ~/.cura/cache
-    key: cura-${{ hashFiles('pubspec.lock') }}
-    restore-keys: cura-
-```
-
-**Benefits:**
-
-- Faster runs (skip API calls)
-- Avoid rate limits
-- Consistent scores
+| Flag                      | Description                                   |
+|---------------------------|-----------------------------------------------|
+| `--min-score <n>`         | Exit 1 when average score falls below `n`     |
+| `--fail-on-vulnerable`    | Exit 1 if any CVEs are detected               |
+| `--fail-on-discontinued`  | Exit 1 if any discontinued packages are found |
+| `--no-github`             | Skip GitHub metrics (faster, fewer API calls) |
+| `--json`                  | Emit results as JSON to stdout                |
+| `-q, --quiet`             | Suppress all output except errors             |
 
 ---
 
 ## JSON Output
 
-### Generate Report
+Generate a machine-readable report:
 
 ```bash
-cura scan --json > report.json
+cura check --json > cura-report.json
 ```
 
-### Example Output
-
-```json
-{
-  "timestamp": "2024-01-15T10:30:00Z",
-  "summary": {
-    "total_packages": 15,
-    "average_score": 78.5,
-    "healthy": 12,
-    "warnings": 2,
-    "critical": 1
-  },
-  "packages": [
-    {
-      "name": "dio",
-      "version": "5.4.0",
-      "score": {
-        "total": 92,
-        "grade": "A+",
-        "vitality": 38,
-        "technical_health": 28,
-        "trust": 19,
-        "maintenance": 7
-      },
-      "issues": [],
-      "suggestions": []
-    }
-  ]
-}
-```
-
-### Process with jq
+Process with `jq`:
 
 ```bash
-# Get average score
-cura scan --json | jq '.summary.average_score'
+# Average score
+cura check --json | jq '.summary.average_score'
 
-# List packages below 70
-cura scan --json | jq '.packages[] | select(.score.total < 70) | .name'
-
-# Count critical packages
-cura scan --json | jq '.summary.critical'
+# Packages below 70
+cura check --json | jq '.packages[] | select(.score.total < 70) | .name'
 ```
-
----
-
-## Notifications
-
-### Slack Notification (GitHub Actions)
-
-```yaml
-- name: Notify Slack
-  if: failure()
-  uses: slackapi/slack-github-action@v1
-  with:
-    payload: |
-      {
-        "text": "❌ Cura health check failed",
-        "blocks": [
-          {
-            "type": "section",
-            "text": {
-              "type": "mrkdwn",
-              "text": "*Cura Health Check Failed*\nAverage score below threshold"
-            }
-          }
-        ]
-      }
-  env:
-    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-```
-
----
-
-## Best Practices
-
-### ✅ Do
-
-- Commit `.cura/config.yaml` to repo
-- Use caching to speed up builds
-- Set appropriate `min_score` for your project
-- Use `--quiet` in CI for cleaner logs
-- Store reports as artifacts
-
-### ❌ Don't
-
-- Don't commit GitHub tokens to config
-- Don't set `min_score` too high initially (start at 70)
-- Don't skip caching (wastes time and API quota)
 
 ---
 
 ## Troubleshooting
 
-### Rate Limiting
+### GitHub rate-limited
 
-**Problem:** `Rate limit exceeded for pub.dev API`
+**Symptom:** `Rate limit exceeded` error from the GitHub API.
 
-**Solution:**
-
-```yaml
-# Add caching
-- uses: actions/cache@v3
-  with:
-    path: ~/.cura/cache
-    key: cura-${{ hashFiles('pubspec.lock') }}
-```
-
----
-
-### Timeout
-
-**Problem:** CI job times out
-
-**Solution:**
+**Fix:** Persist the `~/.cura/cache/` directory between runs (see examples
+above), or inject a GitHub token:
 
 ```bash
-# Increase timeout
-cura config set timeout_seconds 30 --global
+cura config set github_token "$GITHUB_TOKEN"
+```
 
-# Or disable GitHub metrics (faster)
+### Job times out
+
+**Fix:** Skip GitHub metrics or ensure caching is enabled:
+
+```bash
 cura check --no-github
 ```
 
----
+### Internal packages fail the check
 
-### False Positives
-
-**Problem:** Internal packages fail check
-
-**Solution:**
+**Fix:** Add them to `ignore_packages` in the project config:
 
 ```yaml
 # ./.cura/config.yaml
 ignore_packages:
-  - internal_test_package
-  - mock_data
+  - internal_test_helper
+  - mock_data_server
 ```
-
----
-
-## Examples Repository
-
-See [cura-examples](https://github.com/your-org/cura-examples) for:
-
-- ✅ Complete workflow files
-- ✅ Multi-platform setups
-- ✅ Advanced configurations
 
 ---
 
 ## Related
 
-- [Check Command](check.md) - Command details
-- [Configuration](configuration.md) - Config options
-- [CLI Reference](cli-reference.md) - All flags
+- [Configuration reference](configuration.md) — all config keys
+- [Caching](caching.md) — cache strategy and CI cache setup
+- [API integration](api-integration.md) — rate limits and authentication

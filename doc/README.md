@@ -1,51 +1,41 @@
 # Cura Documentation
 
-Welcome to the Cura documentation! This guide will help you get the most out of Cura.
+---
 
-## 📚 Table of Contents
+## Core Features
 
-### Getting Started
+- [Scoring algorithm](scoring.md) — how 0–100 scores are calculated
+- [Configuration reference](configuration.md) — all config keys and the hierarchy
+- [Caching](caching.md) — SQLite cache internals, TTL strategy, and management commands
 
-- [Installation Guide](installation.md)
-- [Quick Start Tutorial](quick-start.md)
-- [Basic Concepts](concepts.md)
+---
 
-### Commands
+## Commands
 
-- [Scan Command](scan.md)
-- [View Command](view.md)
-- [Check Command](check.md)
-- [Config Command](config.md)
+- [check](../README.md#check-command) — audit all dependencies in `pubspec.yaml`
+- [view](../README.md#view-command) — deep-dive into a single package
+- [config](../README.md#config-command) — read and write configuration
+- [cache](../README.md#cache-command) — manage the local cache
 
-### Core Features
+---
 
-- [Scoring Algorithm](scoring.md)
-- [Configuration System](configuration.md)
-- [Caching Strategy](caching.md)
-- [Suggestions Engine](suggestions.md)
+## Advanced Topics
 
-### Advanced Topics
+- [CI/CD integration](ci-cd.md) — GitHub Actions, GitLab CI, CircleCI examples
+- [Themes](themes.md) — dark, light, and minimal theme details
+- [API integration](api-integration.md) — pub.dev, GitHub, and OSV.dev data sources
 
-- [CI/CD Integration](ci-cd.md)
-- [Theme Customization](themes.md)
-- [API Integration](api-integration.md)
-- [Multi-API Architecture](multi-api.md)
+---
 
-### Reference
+## Contributing
 
-- [CLI Reference](cli-reference.md)
-- [Configuration Reference](config-reference.md)
-- [Troubleshooting](troubleshooting.md)
-- [FAQ](faq.md)
+- [Architecture overview](architecture.md) — hexagonal architecture, layer diagram, key patterns
+- [Development guide](development.md) — local setup, testing, contribution workflow
 
-### Contributing
+---
 
-- [Contributing Guide](../CONTRIBUTING.md)
-- [Architecture Overview](architecture.md)
-- [Development Setup](development.md)
+## External Resources
 
-## 🔗 External Resources
-
-- [GitHub Repository](https://github.com/meragix/cura)
-- [Issue Tracker](https://github.com/meragix/cura/issues)
-- [Discussions](https://github.com/meragix/cura/discussions)
+- [GitHub repository](https://github.com/meragix/cura)
+- [Issue tracker](https://github.com/meragix/cura/issues)
+- [Discussions](https://github.com/orgs/meragix/discussions)

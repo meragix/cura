@@ -1,497 +1,239 @@
-# Configuration System
+# Configuration Reference
 
-## Overview
-
-Cura supports **hierarchical configuration** with three levels:
+Cura uses a **hierarchical configuration** system. Settings are resolved in
+priority order — higher sources override lower ones:
 
 ```
-CLI Flags (highest priority)
-    ↓
-Project Config (./.cura/config.yaml)
-    ↓
-Global Config (~/.cura/config.yaml)
-    ↓
-Defaults (lowest priority)
-```
-
-## Configuration Levels
-
-### 1. Global Config
-
-**Location:** `~/.cura/config.yaml`
-
-**Purpose:** Personal preferences that apply to all projects
-
-**Created:** Automatically on first run
-
-**Example:**
-
-```yaml
-# My personal preferences
-theme: dracula
-use_emojis: true
-github_token: ghp_xxxxx
-
-# Default strictness
-min_score: 70
-```
-
-**Edit:**
-
-```bash
-cura config edit --global
+CLI flags                        (highest priority)
+  ↓
+./.cura/config.yaml              (project config)
+  ↓
+~/.cura/config.yaml              (global config)
+  ↓
+Built-in defaults                (lowest priority)
 ```
 
 ---
 
-### 2. Project Config
+## Config Files
 
-**Location:** `./.cura/config.yaml` (in project root)
+### Global config — `~/.cura/config.yaml`
 
-**Purpose:** Team standards that override global settings
+Created automatically on first run with built-in defaults. Use this for
+personal preferences (theme, GitHub token) that apply to every project.
 
-**Created:** Manually via `cura config init`
+### Project config — `./.cura/config.yaml`
 
-**Example:**
-
-```yaml
-# Team standards for this project
-min_score: 85
-
-# Ignore internal packages
-ignore_packages:
-  - internal_test_package
-
-# Trust company publisher
-trusted_publishers:
-  - my-company.dev
-```
-
-**Edit:**
-
-```bash
-cura config edit --project
-```
-
-**Version Control:**
-
-```bash
-# Commit project config to share with team
-git add .cura/config.yaml
-git commit -m "Add Cura project standards"
-```
+Created manually via `cura config init`. Commit this file to share quality
+standards with your team (minimum score, ignored packages).
 
 ---
 
-### 3. CLI Flags
-
-**Purpose:** One-time overrides for specific commands
-
-**Example:**
-
-```bash
-# Override theme for this run only
-cura scan --theme=light
-
-# Override min score for CI/CD
-cura check --min-score 90
-```
-
----
-
-## Complete Reference
+## Complete Key Reference
 
 ### Appearance
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `theme` | string | `dark` | UI theme (dark, light, minimal, dracula) |
-| `use_emojis` | bool | `true` | Show emojis in output |
-| `use_colors` | bool | `true` | Enable colored output |
-
-**Example:**
+| Key          | Type   | Default | Description                                   |
+|--------------|--------|---------|-----------------------------------------------|
+| `theme`      | string | `dark`  | Terminal theme: `dark`, `light`, or `minimal` |
+| `use_colors` | bool   | `true`  | Enable ANSI color output                      |
+| `use_emojis` | bool   | `true`  | Show emoji symbols in output                  |
 
 ```yaml
-theme: dracula
-use_emojis: false  # ASCII symbols only
-use_colors: true
+theme: minimal
+use_colors: false   # recommended for CI logs
+use_emojis: false
+```
+
+---
+
+### API
+
+| Key               | Type   | Default | Description                            |
+|-------------------|--------|---------|----------------------------------------|
+| `github_token`    | string | —       | GitHub PAT for higher rate limits      |
+| `timeout_seconds` | int    | `10`    | HTTP request timeout in seconds        |
+| `max_retries`     | int    | `3`     | Retry attempts before giving up        |
+| `max_concurrency` | int    | `5`     | Maximum simultaneous outbound requests |
+
+```yaml
+github_token: ghp_xxxxxxxxxxxxx
+timeout_seconds: 15
+max_concurrency: 3
+```
+
+Generate a GitHub token at <https://github.com/settings/tokens>. No scopes
+are required for public repositories. With a token the rate limit rises from
+60 to 5 000 requests per hour.
+
+---
+
+### Scoring
+
+| Key         | Type | Default | Description              |
+|-------------|------|---------|--------------------------|
+| `min_score` | int  | `70`    | Minimum acceptable score |
+
+```yaml
+min_score: 85
+```
+
+---
+
+### Behaviour
+
+| Key                           | Type | Default | Description                                   |
+|-------------------------------|------|---------|-----------------------------------------------|
+| `fail_on_vulnerable`          | bool | `false` | Exit 1 if any CVEs are detected               |
+| `fail_on_discontinued`        | bool | `false` | Exit 1 if any discontinued packages are found |
+| `show_suggestions`            | bool | `true`  | Show alternative package suggestions          |
+| `max_suggestions_per_package` | int  | `3`     | Maximum alternatives shown per package        |
+| `ignore_packages`             | list | `[]`    | Package names to skip during analysis         |
+
+```yaml
+fail_on_vulnerable: true
+fail_on_discontinued: true
+show_suggestions: true
+ignore_packages:
+  - internal_test_helper
+  - mock_server
 ```
 
 ---
 
 ### Cache
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `cache_max_age` | int | `24` | Cache TTL in hours |
-| `auto_update` | bool | `true` | Auto-refresh cache in background |
-
-**Example:**
+| Key                   | Type | Default | Description                               |
+|-----------------------|------|---------|-------------------------------------------|
+| `enable_cache`        | bool | `true`  | Enable the local SQLite cache             |
+| `cache_max_age_hours` | int  | —       | Override the TTL (hours) for all packages |
+| `auto_update`         | bool | `true`  | Sweep expired entries at startup          |
 
 ```yaml
-cache_max_age: 12   # More aggressive caching
-auto_update: false  # Manual refresh only
+enable_cache: true
+cache_max_age_hours: 2   # flat TTL override
 ```
 
 ---
 
-### Scoring
+### Logging
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `min_score` | int | `70` | Minimum acceptable score |
-| `score_weights` | object | See below | Custom scoring weights |
-
-**Default Weights:**
-
-```yaml
-score_weights:
-  vitality: 40
-  technical_health: 30
-  trust: 20
-  maintenance: 10
-```
-
-**Custom Weights Example:**
-
-```yaml
-# Prioritize maintenance over vitality
-score_weights:
-  vitality: 30           # -10
-  technical_health: 30
-  trust: 20
-  maintenance: 20        # +10
-```
-
-**Rules:**
-
-- Total must equal 100
-- Validation error if sum ≠ 100
+| Key               | Type | Default | Description                               |
+|-------------------|------|---------|-------------------------------------------|
+| `verbose_logging` | bool | `false` | Log every API call, cache hit, and timing |
+| `quiet`           | bool | `false` | Suppress all output except errors         |
 
 ---
 
-### API Configuration
+## Commands
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `timeout_seconds` | int | `10` | HTTP request timeout |
-| `max_retries` | int | `3` | Max retry attempts |
-| `github_token` | string | `null` | GitHub Personal Access Token |
+### `cura config show`
 
-**GitHub Token:**
-
-```yaml
-github_token: ghp_xxxxxxxxxxxxx
-```
-
-**Get a token:**
-
-1. Go to <https://github.com/settings/tokens>
-2. Generate new token (classic)
-3. Select scopes: `public_repo` (read-only)
-4. Copy token to config
-
-**Benefits:**
-
-- Rate limit: 60 req/h → 5000 req/h
-- Access to detailed commit data
-
----
-
-### Suggestions
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `show_suggestions` | bool | `true` | Show package alternatives |
-| `max_suggestions_per_package` | int | `3` | Max alternatives to show |
-
-**Example:**
-
-```yaml
-show_suggestions: true
-max_suggestions_per_package: 2  # Show top 2 only
-```
-
----
-
-### Exclusions
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `ignore_packages` | list | `[]` | Packages to skip |
-| `trusted_publishers` | list | `[]` | Auto-approve publishers |
-
-**Example:**
-
-```yaml
-ignore_packages:
-  - internal_test_package
-  - mock_data_generator
-  - example_flutter_app
-
-trusted_publishers:
-  - dart.dev
-  - flutter.dev
-  - my-company.dev
-```
-
-**Behavior:**
-
-- **ignore_packages:** Skipped during `scan`, not analyzed
-- **trusted_publishers:** Auto-assigned high maintenance score
-
----
-
-## Command Reference
-
-### Show Configuration
+Print the merged effective configuration.
 
 ```bash
-# Show merged config (effective settings)
 cura config show
-
-# Show with detailed breakdown
-cura config show --verbose
-
-# Show only global
-cura config show --global
-
-# Show only project
-cura config show --project
-```
-
-**Output:**
-
-```
-Configuration Hierarchy
-
-Global Config:
-  Location: ~/.cura/config.yaml
-  Status: ✓ Found
-  Theme: dracula
-  Min Score: 70
-
-Project Config:
-  Location: ./.cura/config.yaml
-  Status: ✓ Found
-  Min Score: 85  (overrides global)
-
-Effective Config:
-  Theme: dracula        (from global)
-  Min Score: 85         (from project)
-  GitHub Token: ✓ Set   (from global)
 ```
 
 ---
 
-### Initialize Project Config
+### `cura config init`
+
+Create `./.cura/config.yaml` with commented-out defaults as a starting point.
 
 ```bash
-# Create ./.cura/config.yaml
 cura config init
 ```
 
-**Creates:**
+Existing files are never overwritten.
 
-```yaml
-# Cura Project Configuration
-# Overrides global settings for this project
+---
 
-# Override minimum score
-min_score: 75
+### `cura config set <key> <value>`
 
-# Project-specific exclusions
-ignore_packages:
-  # - example_package
+Write a single value to the project config.
 
-trusted_publishers:
-  # - my-company.dev
+```bash
+cura config set min_score 85
+cura config set theme minimal
+cura config set github_token ghp_xxxxx
+cura config set fail_on_vulnerable true
+```
+
+Both `snake_case` and `camelCase` key variants are accepted:
+
+```bash
+cura config set minScore 85   # same as min_score
 ```
 
 ---
 
-### Set Values
+### `cura config get <key>`
+
+Read a single value from the merged config.
 
 ```bash
-# Set global value
-cura config set theme dracula --global
-
-# Set project value
-cura config set min_score 85 --project
-
-# Auto-detect (global if no project exists)
-cura config set use_emojis false
-```
-
----
-
-### Get Values
-
-```bash
-# Get specific value
 cura config get theme
-# Output: dracula
+# dark
 
-# Get from specific scope
-cura config get min_score --project
-# Output: 85
+cura config get min_score
+# 85
 ```
 
 ---
 
-### Edit in Editor
+## Practical Examples
 
-```bash
-# Edit global config
-cura config edit --global
-
-# Edit project config
-cura config edit --project
-```
-
-**Opens in:**
-
-1. `$EDITOR` environment variable
-2. VS Code (`code`)
-3. Nano
-4. Vim
-
----
-
-### Validate Configuration
-
-```bash
-cura config validate
-```
-
-**Checks:**
-
-- ✓ YAML syntax is valid
-- ✓ Score weights sum to 100
-- ✓ Min score is 0-100
-- ✓ Theme is valid
-- ✓ Required fields present
-
-**Output (valid):**
-
-```
-✓ Configuration is valid
-```
-
-**Output (invalid):**
-
-```
-✗ Invalid configuration:
-  - Score weights must sum to 100 (got 95)
-  - Invalid theme: "neon" (valid: dark, light, minimal, dracula)
-```
-
----
-
-### Reset to Defaults
-
-```bash
-# Reset global config
-cura config reset --global
-
-# Remove project config
-cura config remove --project
-```
-
----
-
-## Examples
-
-### Personal Setup
+### Personal global setup
 
 ```yaml
 # ~/.cura/config.yaml
-theme: dracula
-use_emojis: true
-github_token: ghp_xxxxx
-cache_max_age: 48  # I prefer longer cache
+theme: dark
+github_token: ghp_xxxxxxxxxxxxx
+show_suggestions: true
+timeout_seconds: 15
 ```
 
 ---
 
-### Team Project
+### Team project standards
 
 ```yaml
-# ./.cura/config.yaml
-min_score: 80  # Stricter than default
-
+# ./.cura/config.yaml  — commit this file
+min_score: 80
+fail_on_vulnerable: true
+fail_on_discontinued: true
 ignore_packages:
   - internal_analytics
-  - mock_server
-
-trusted_publishers:
-  - my-company.dev
-  - partner-company.dev
-
-# Everyone uses the same standards
+  - mock_data_server
 ```
 
 ---
 
-### CI/CD Environment
+### CI/CD environment
 
 ```yaml
 # ./.cura/config.yaml
-theme: minimal      # No colors in CI logs
-use_emojis: false
+theme: minimal
 use_colors: false
-min_score: 85       # Strict for production
+use_emojis: false
+min_score: 85
 ```
 
 ---
 
 ## Best Practices
 
-### ✅ Do
-
-- Commit project config to version control
-- Use global config for personal preferences
-- Document project config choices in comments
-- Validate config before committing
-
-### ❌ Don't
-
-- Don't commit global config (`~/.cura/config.yaml`)
-- Don't hardcode GitHub tokens in project config
-- Don't override every setting in project config
-
----
-
-## Troubleshooting
-
-### Config not loading
-
-```bash
-# Check if file exists
-ls -la ~/.cura/config.yaml
-ls -la ./.cura/config.yaml
-
-# Validate syntax
-cura config validate
-
-# View effective config
-cura config show --verbose
-```
-
-### Values not applying
-
-**Priority reminder:**
-
-```
-CLI > Project > Global > Defaults
-```
-
-Check if a higher-priority source is overriding your setting.
+- Commit `.cura/config.yaml` to enforce shared standards across the team.
+- Store your GitHub token only in `~/.cura/config.yaml` — never commit tokens.
+- Use `minimal` theme and `use_colors: false` for cleaner CI logs.
+- Start with `min_score: 70` and raise it gradually as the team improves
+  package hygiene.
 
 ---
 
 ## Related
 
-- [CLI Reference](cli-reference.md) - All command options
-- [Themes](themes.md) - Theme customization
-- [CI/CD](ci-cd.md) - CI/CD configuration
+- [CI/CD integration](ci-cd.md) — pipeline configuration examples
+- [Caching](caching.md) — cache-specific keys explained
+- [Themes](themes.md) — theme details

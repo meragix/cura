@@ -193,6 +193,8 @@ cura check --quiet
 echo $?   # 0 = all passed, 1 = failures
 ```
 
+> Full CI/CD integration guide: [doc/ci-cd.md](doc/ci-cd.md)
+
 ---
 
 ### View Command
@@ -260,7 +262,6 @@ cura config <subcommand> [options]
 | `init`                | Create a project config at `./.cura/config.yaml`  |
 | `set <key> <value>`   | Set a value in the global or project config       |
 | `get <key>`           | Print a single config value                       |
-| `reset`               | Reset to factory defaults                         |
 
 **Examples:**
 
@@ -277,6 +278,8 @@ cura config set min_score 85 --project
 # Choose a theme
 cura config set theme dracula
 ```
+
+> Full configuration reference: [doc/configuration.md](doc/configuration.md)
 
 ---
 
@@ -317,6 +320,8 @@ Cache Statistics:
   ──────────────────────────────
   Total            : 90 entries
 ```
+
+> Cache internals, TTL strategy, and CI setup: [doc/caching.md](doc/caching.md)
 
 ---
 
@@ -381,6 +386,8 @@ A score of **0** is forced when:
 - The package is **discontinued**
 - A **critical CVE** is detected via OSV.dev
 
+> Detailed algorithm with code and full examples: [doc/scoring.md](doc/scoring.md)
+
 ---
 
 ## ⚙️ Configuration
@@ -433,6 +440,8 @@ ignore_packages:
   - internal_test_helper
 ```
 
+> Full key reference, best practices, and examples: [doc/configuration.md](doc/configuration.md)
+
 ---
 
 ## 🔄 CI/CD Integration
@@ -479,6 +488,8 @@ dependency-health:
 | `0`  | All packages passed                                  |
 | `1`  | One or more packages failed the configured threshold |
 
+> GitLab CI, CircleCI, JSON output, and troubleshooting: [doc/ci-cd.md](doc/ci-cd.md)
+
 ---
 
 ## 🎨 Advanced Features
@@ -490,7 +501,9 @@ cura config set theme dracula     # persist globally
 cura check --theme minimal        # one-off override
 ```
 
-Available: `dark` (default), `light`, `minimal`, `dracula`.
+Available: `dark` (default), `light`, `minimal`.
+
+> Theme details and CI recommendations: [doc/themes.md](doc/themes.md)
 
 ### Caching
 
@@ -507,6 +520,8 @@ cura cache stats    # how full is the cache?
 cura cache cleanup  # sweep expired entries
 cura cache clear    # wipe everything
 ```
+
+> DB schema, TTL tiers, and CI cache setup: [doc/caching.md](doc/caching.md)
 
 ### GitHub Token
 
@@ -525,6 +540,8 @@ Generate a token at [github.com/settings/tokens](https://github.com/settings/tok
 | pub.dev  | ~10 req/s   | —             |
 | GitHub   | 60 req/h    | 5 000 req/h   |
 | OSV.dev  | unlimited   | —             |
+
+> Endpoints, auth setup, error handling, and concurrency: [doc/api-integration.md](doc/api-integration.md)
 
 ---
 
@@ -562,6 +579,8 @@ dart analyze
 Branch naming: `feat/description`, `fix/description`, `chore/description`.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+
+> Local setup, testing, and architecture: [doc/development.md](doc/development.md) · [doc/architecture.md](doc/architecture.md)
 
 ---
 

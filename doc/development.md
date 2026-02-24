@@ -1,6 +1,6 @@
 # Development Guide
 
-Complete guide for setting up and developing Cura locally.
+Complete guide for setting up Cura locally and contributing code.
 
 ---
 
@@ -8,26 +8,23 @@ Complete guide for setting up and developing Cura locally.
 
 ### Required
 
-- **Dart SDK** ≥ 3.0.0
+- **Dart SDK** >= 3.0.0
 
   ```bash
-  # Install via Homebrew (macOS)
+  # macOS via Homebrew
   brew tap dart-lang/dart
   brew install dart
-  
-  # Or download from https://dart.dev/get-dart
+
+  # or download from https://dart.dev/get-dart
+  dart --version
   ```
 
-- **Git** ≥ 2.0
-
-  ```bash
-  git --version
-  ```
+- **Git** >= 2.0
 
 ### Recommended
 
-- **VS Code** with Dart extension
-- **GitHub CLI** (for PR workflow)
+- **VS Code** with the [Dart extension](https://marketplace.visualstudio.com/items?itemName=Dart-Code.dart-code)
+- **GitHub CLI** for the PR workflow
 
   ```bash
   brew install gh
@@ -38,248 +35,118 @@ Complete guide for setting up and developing Cura locally.
 
 ## Initial Setup
 
-### 1. Fork and Clone
-
 ```bash
-# Fork on GitHub (click Fork button)
-
-# Clone your fork
+# 1. Fork on GitHub, then clone your fork
 git clone https://github.com/YOUR_USERNAME/cura.git
 cd cura
 
-# Add upstream remote
-git remote add upstream https://github.com/your-org/cura.git
-```
+# 2. Add the upstream remote
+git remote add upstream https://github.com/meragix/cura.git
 
-### 2. Install Dependencies
-
-```bash
-# Install Dart dependencies
+# 3. Install dependencies
 dart pub get
 
-# Verify installation
-dart pub deps
-```
-
-### 3. Generate Code (Freezed, JSON Serializable)
-
-```bash
-# Generate model code
-cd packages/cura
-dart run build_runner build --delete-conflicting-outputs
-
-# Watch for changes during development
-dart run build_runner watch
-```
-
-### 4. Verify Setup
-
-```bash
-# Run CLI locally
+# 4. Verify the setup
 dart run bin/cura.dart --help
-
-# Should output:
-# Usage: cura <command> [arguments]
-# ...
 ```
 
 ---
 
-## Project Structure Deep Dive
+## Project Structure
 
-```shell
-cura/
-├── bin/
-│   └── cura.dart                       # CLI entry point
-│
-├── lib/
-│   ├── cura_cli.dart                   # Public exports
-│   │
-│   └── src/
-│       ├── commands/                   # Command implementations
-│       │   ├── base/
-│       │   │   ├── base_command.dart   # Base class for all commands
-│       │   │   └── command_context.dart # DI container
-│       │   │
-│       │   ├── scan_command.dart       # cura scan
-│       │   ├── view_command.dart       # cura view
-│       │   ├── check_command.dart      # cura check
-│       │   └── config_command.dart     # cura config
-│       │
-│       ├── presentation/               # UI/Formatting layer
-│       │   ├── loggers/
-│       │   │   ├── cura_logger.dart    # Base logger interface
-│       │   │   ├── output/
-│       │   │   │   ├── normal_logger.dart
-│       │   │   │   ├── verbose_logger.dart
-│       │   │   │   ├── quiet_logger.dart
-│       │   │   │   └── json_logger.dart
-│       │   │   └── specialized/
-│       │   │       ├── scan_logger.dart
-│       │   │       ├── view_logger.dart
-│       │   │       └── check_logger.dart
-│       │   │
-│       │   ├── renderers/
-│       │   │   ├── table_renderer.dart
-│       │   │   ├── progress_renderer.dart
-│       │   │   └── summary_renderer.dart
-│       │   │
-│       │   ├── formatters/
-│       │   │   ├── score_formatter.dart
-│       │   │   ├── date_formatter.dart
-│       │   │   └── number_formatter.dart
-│       │   │
-│       │   ├── themes/
-│       │   │   ├── theme.dart          # Theme interface
-│       │   │   ├── dark_theme.dart
-│       │   │   ├── light_theme.dart
-│       │   │   ├── minimal_theme.dart
-│       │   │   └── dracula_theme.dart
-│       │   │
-│       │   └── widgets/                # Reusable UI components
-│       │       ├── header.dart
-│       │       ├── table.dart
-│       │       └── progress_bar.dart
-│       │
-│       ├── core/                       # Business logic
-│       │   ├── models/
-│       │   │   ├── cura_package.dart   # Package model (Freezed)
-│       │   │   ├── cura_score.dart     # Score model
-│       │   │   └── health_metrics.dart
-│       │   │
-│       │   ├── calculators/
-│       │   │   └── score_calculator.dart # Scoring algorithm
-│       │   │
-│       │   └── services/
-│       │       ├── suggestion_service.dart
-│       │       └── multi_api_service.dart
-│       │
-│       ├── infrastructure/            # External services
-│       │   ├── api/
-│       │   │   ├── pub_dev_client.dart # pub.dev API
-│       │   │   ├── github_client.dart  # GitHub API
-│       │   │   └── osv_client.dart     # OSV.dev API
-│       │   │
-│       │   └── cache/
-│       │       └── local_cache.dart    # SQLite cache
-│       │
-│       ├── config/
-│       │   ├── config_manager.dart     # Config loading
-│       │   └── constants.dart
-│       │
-│       └── utils/
-│           ├── extensions/
-│           └── helpers/
-│
-├── test/                               # Tests mirror lib/ structure
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-│
-├── docs/                               # Documentation
-├── examples/                           # Usage examples
-└── scripts/                            # Build/deployment scripts
+```text
+bin/
+  cura.dart                    # Entry point -- composition root
+
+lib/src/
+  domain/                      # Pure Dart, no external deps
+    entities/
+    value_objects/
+    ports/                     # Abstract interfaces
+    usecases/
+    exceptions/
+
+  application/
+    commands/                  # CLI command implementations
+    dto/
+
+  infrastructure/              # External adapters
+    api/clients/               # pub.dev, GitHub, OSV.dev HTTP clients
+    aggregators/               # MultiApiAggregator, CachedAggregator
+    cache/                     # SQLite database + TTL strategy
+    repositories/              # YAML config repository
+
+  presentation/
+    loggers/                   # ConsoleLogger
+    presenters/                # CheckPresenter, ViewPresenter
+    renderers/                 # Table, bar, summary rendering
+    themes/                    # dark, light, minimal
+    formatters/
+
+  shared/
+    constants/
+    utils/                     # HttpHelper, PoolManager
+    app_info.dart
+
+test/
+  unit/                        # Business logic tests
+  integration/                 # API client tests
+  e2e/                         # CLI end-to-end tests
 ```
 
 ---
 
-## Development Workflow
-
-### Running Locally
+## Running Locally
 
 ```bash
-# Run CLI with arguments
-dart run bin/cura.dart scan
+# Audit the current project
+dart run bin/cura.dart check
 
-# Run specific command
-dart run bin/cura.dart view riverpod --verbose
+# Inspect a package
+dart run bin/cura.dart view dio --verbose
 
-# Test config
+# Show the active config
 dart run bin/cura.dart config show
-```
 
-### Hot Reload (Development)
-
-```bash
-# Use a file watcher to rebuild on changes
-dart run build_runner watch &
-dart run bin/cura.dart scan
+# Cache stats
+dart run bin/cura.dart cache stats
 ```
 
 ---
 
 ## Testing
 
-### Unit Tests
-
 ```bash
 # Run all tests
 dart test
 
-# Run specific test file
-dart test test/core/calculators/score_calculator_test.dart
+# Run a single file
+dart test test/unit/domain/usecases/calculate_score_test.dart
 
-# Run with filter
+# Run tests matching a name pattern
 dart test --name "calculates vitality"
 
 # Verbose output
 dart test --reporter=expanded
-```
 
-### Integration Tests
-
-```bash
-# Run integration tests (hit real APIs)
-dart test test/integration/
-
-# With retry on failure (flaky API tests)
-dart test --test-randomize-ordering-seed=random test/integration/
-```
-
-### End-to-End Tests
-
-```bash
-# Run CLI tests
-dart test test/e2e/cli_test.dart
-```
-
-### Coverage
-
-```bash
-# Generate coverage
+# Generate coverage data
 dart test --coverage=coverage
-
-# Generate HTML report
-genhtml coverage/lcov.info -o coverage/html
-
-# Open in browser
-open coverage/html/index.html
 ```
 
-### Writing Tests
+**Target:** >= 80 % line coverage across unit and integration tests.
 
-**Example unit test:**
+### Writing a unit test
 
 ```dart
 import 'package:test/test.dart';
-import 'package:cura_cli/src/core/calculators/score_calculator.dart';
+import 'package:cura/src/domain/usecases/calculate_score.dart';
 
 void main() {
-  group('ScoreCalculator', () {
+  group('CalculateScore', () {
     test('returns 0 for discontinued packages', () {
-      // Given
-      final package = CuraPackage(
-        isDiscontinued: true,
-        lastPublished: DateTime.now(),
-        metrics: HealthMetrics(panaScore: 130, likes: 1000, popularity: 90),
-      );
-
-      // When
-      final score = ScoreCalculator.calculate(package);
-
-      // Then
-      expect(score.total, equals(0));
-      expect(score.grade, equals('F'));
+      // arrange
+      final useCase = CalculateScore();
+      // act + assert ...
     });
   });
 }
@@ -289,26 +156,71 @@ void main() {
 
 ## Code Quality
 
-### Formatting
-
 ```bash
 # Format all files
 dart format .
 
-# Check formatting (CI)
+# Format check (CI mode -- exits non-zero if changes needed)
 dart format --set-exit-if-changed .
 
-# Format specific files
-dart format lib/src/commands/
-```
-
-### Analysis
-
-```bash
-# Analyze all code
+# Static analysis
 dart analyze
 
-# Analyze with fatal warnings
-dart analyze --fatal-infos
+# Apply automatic fixes
+dart fix --apply
+```
 
-# Fix auto-fixable issues
+All three must pass before opening a pull request.
+
+---
+
+## Contribution Workflow
+
+1. Create a feature branch from `main`:
+
+   ```bash
+   git checkout -b feat/my-feature
+   ```
+
+2. Make changes, run tests and analysis:
+
+   ```bash
+   dart test
+   dart format --set-exit-if-changed .
+   dart analyze
+   ```
+
+3. Commit using [Conventional Commits](https://www.conventionalcommits.org/):
+
+   ```text
+   feat: add --no-osv flag to skip vulnerability checks
+   fix: prevent double-init race in CacheDatabase
+   chore: update sqflite_common_ffi to 2.3.0
+   ```
+
+4. Push and open a pull request against `main`.
+
+Branch naming convention: `feat/description`, `fix/description`,
+`chore/description`.
+
+---
+
+## Architecture Principles
+
+- **No service locator** -- all dependencies are injected via constructors.
+- **Domain isolation** -- `lib/src/domain/` must not import anything from
+  `infrastructure/` or `presentation/`.
+- **Ports & Adapters** -- domain interfaces (`ports/`) define contracts;
+  infrastructure provides concrete implementations.
+- **Sealed result types** -- use `Result<T>` and `PackageResult` instead of
+  throwing exceptions across layer boundaries.
+- **Minimum viable complexity** -- do not add abstractions, helpers, or
+  configuration options that do not have an immediate use case.
+
+---
+
+## Related
+
+- [Architecture overview](architecture.md) -- layer diagram and key patterns
+- [Configuration reference](configuration.md) -- all config keys
+- [Scoring algorithm](scoring.md) -- how scores are calculated
