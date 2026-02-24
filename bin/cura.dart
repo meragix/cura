@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:cura/src/application/commands/cache/cache_command.dart';
 import 'package:cura/src/application/commands/check_command.dart';
 import 'package:cura/src/application/commands/config/config_command.dart';
 import 'package:cura/src/application/commands/version_command.dart';
@@ -152,6 +153,8 @@ Future<void> main(List<String> arguments) async {
 
   final versionCommand = VersionCommand(logger: logger);
 
+  final cacheCommand = CacheCommand(logger: logger);
+
   // ===========================================================================
   // PHASE 6 : CLI RUNNER
   // ===========================================================================
@@ -163,7 +166,8 @@ Future<void> main(List<String> arguments) async {
     ..addCommand(checkCommand)
     ..addCommand(viewCommand)
     ..addCommand(configCommand)
-    ..addCommand(versionCommand);
+    ..addCommand(versionCommand)
+    ..addCommand(cacheCommand);
 
   // ===========================================================================
   // PHASE 7 : EXECUTION & CLEANUP
@@ -252,6 +256,7 @@ Available commands:
   check       Audit all pub.dev packages listed in pubspec.yaml
   view        Show detailed health information for a single package
   config      Read and write cura configuration
+  cache       Manage the local SQLite cache (clear, stats, cleanup)
   version     Print version information
 
 Global options:
