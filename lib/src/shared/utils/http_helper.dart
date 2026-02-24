@@ -2,11 +2,26 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
-/// HTTP Helpers : Utilities pour requêtes HTTP
+/// Factory and utility class for building configured [Dio] HTTP clients.
+///
+/// All Cura API integrations (pub.dev, GitHub, OSV) obtain their [Dio]
+/// instance from [buildClient] so timeouts, the User-Agent header, retry
+/// logic, and optional verbose logging are applied consistently.
+///
+/// The class is uninstantiable; use the static members directly.
 class HttpHelper {
   const HttpHelper._();
 
-  /// Build Dio client with standard configuration
+  /// Creates a fully configured [Dio] client.
+  ///
+  /// The returned client has:
+  /// - Standard connect / receive / send timeouts (defaults: 10 s / 30 s / 30 s).
+  /// - A `User-Agent: Cura/<version>` header on every request.
+  /// - A [RetryInterceptor] that retries transient failures up to 3 times with
+  ///   exponential back-off (500 ms → 1 s → 2 s).
+  /// - An optional [LoggingInterceptor] when [enableLogging] is `true`.
+  ///
+  /// Extra [headers] are merged with (and may override) the defaults.
   static Dio buildClient({
     Duration? connectTimeout,
     Duration? receiveTimeout,
@@ -16,172 +31,224 @@ class HttpHelper {
   }) {
     final dio = Dio(
       BaseOptions(
-        connectTimeout: connectTimeout ?? Duration(seconds: 10),
-        receiveTimeout: receiveTimeout ?? Duration(seconds: 30),
-        sendTimeout: sendTimeout ?? Duration(seconds: 30),
+        connectTimeout: connectTimeout ?? const Duration(seconds: 10),
+        receiveTimeout: receiveTimeout ?? const Duration(seconds: 30),
+        sendTimeout: sendTimeout ?? const Duration(seconds: 30),
         headers: {
-          'User-Agent': 'Cura/${_getVersion()}',
+          'User-Agent': 'Cura/${_appVersion()}',
           ...?headers,
         },
       ),
     );
 
-    // Add interceptors
+    // Logging is added first so retried requests also appear in the log.
     if (enableLogging) {
-      dio.interceptors.add(_buildLoggingInterceptor());
+      dio.interceptors.add(LoggingInterceptor());
     }
 
-    dio.interceptors.add(_buildRetryInterceptor());
+    // Retry is added after logging so every attempt is logged.
+    dio.interceptors.add(RetryInterceptor(dio: dio));
 
     return dio;
   }
 
-  /// Build retry interceptor
-  static Interceptor _buildRetryInterceptor() {
-    return InterceptorsWrapper(
-      onError: (error, handler) async {
-        if (_shouldRetry(error)) {
-          final retryCount = error.requestOptions.extra['retry_count'] as int? ?? 0;
+  /// Returns `true` when [response] signals rate-limiting (HTTP 429).
+  static bool isRateLimited(Response response) => response.statusCode == 429;
 
-          if (retryCount < 3) {
-            // Wait before retry (exponential backoff)
-            final delay = Duration(
-              milliseconds: 500 * (1 << retryCount), // 500ms, 1s, 2s
-            );
-            await Future.delayed(delay);
-
-            // Retry request
-            error.requestOptions.extra['retry_count'] = retryCount + 1;
-
-            try {
-              final response = await Dio().fetch(error.requestOptions);
-              return handler.resolve(response);
-            } catch (e) {
-              return handler.next(error);
-            }
-          }
-        }
-
-        return handler.next(error);
-      },
-    );
-  }
-
-  /// Build logging interceptor
-  static Interceptor _buildLoggingInterceptor() {
-    return InterceptorsWrapper(
-      onRequest: (options, handler) {
-        print('→ ${options.method} ${options.uri}');
-        return handler.next(options);
-      },
-      onResponse: (response, handler) {
-        print('← ${response.statusCode} ${response.requestOptions.uri}');
-        return handler.next(response);
-      },
-      onError: (error, handler) {
-        print('✗ ${error.requestOptions.method} ${error.requestOptions.uri}');
-        print('  Error: ${error.message}');
-        return handler.next(error);
-      },
-    );
-  }
-
-  /// Check if error should trigger retry
-  static bool _shouldRetry(DioException error) {
-    // Retry on timeout
-    if (error.type == DioExceptionType.connectionTimeout ||
-        error.type == DioExceptionType.receiveTimeout ||
-        error.type == DioExceptionType.sendTimeout) {
-      return true;
-    }
-
-    // Retry on connection errors
-    if (error.type == DioExceptionType.connectionError) {
-      return true;
-    }
-
-    // Retry on 5xx server errors
-    final statusCode = error.response?.statusCode;
-    if (statusCode != null && statusCode >= 500 && statusCode < 600) {
-      return true;
-    }
-
-    // Retry on 429 (rate limit)
-    if (statusCode == 429) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /// Parse rate limit headers
+  /// Parses standard `x-ratelimit-*` response headers into a [RateLimitInfo].
+  ///
+  /// Returns `null` when any of the three required headers
+  /// (`x-ratelimit-remaining`, `x-ratelimit-limit`, `x-ratelimit-reset`) is
+  /// absent.
   static RateLimitInfo? parseRateLimitHeaders(Headers headers) {
     final remaining = headers.value('x-ratelimit-remaining');
     final limit = headers.value('x-ratelimit-limit');
     final reset = headers.value('x-ratelimit-reset');
 
-    if (remaining == null || limit == null || reset == null) {
-      return null;
-    }
+    if (remaining == null || limit == null || reset == null) return null;
 
     return RateLimitInfo(
       remaining: int.parse(remaining),
       limit: int.parse(limit),
-      resetAt: DateTime.fromMillisecondsSinceEpoch(
-        int.parse(reset) * 1000,
-      ),
+      // x-ratelimit-reset is Unix epoch in seconds.
+      resetAt: DateTime.fromMillisecondsSinceEpoch(int.parse(reset) * 1000),
     );
   }
 
-  /// Check if response indicates rate limiting
-  static bool isRateLimited(Response response) {
-    return response.statusCode == 429;
-  }
-
-  /// Extract retry-after duration
+  /// Extracts the `Retry-After` wait duration from a rate-limit response.
+  ///
+  /// Supports both integer (seconds) and HTTP-date header formats as defined
+  /// in RFC 7231 §7.1.3. Returns `null` when the header is absent or cannot
+  /// be parsed.
   static Duration? getRetryAfter(Response response) {
-    final retryAfter = response.headers.value('retry-after');
-    if (retryAfter == null) return null;
+    final value = response.headers.value('retry-after');
+    if (value == null) return null;
 
-    // Try parsing as seconds
-    final seconds = int.tryParse(retryAfter);
-    if (seconds != null) {
-      return Duration(seconds: seconds);
-    }
+    final seconds = int.tryParse(value);
+    if (seconds != null) return Duration(seconds: seconds);
 
-    // Try parsing as HTTP date
     try {
-      final date = HttpDate.parse(retryAfter);
-      return date.difference(DateTime.now());
-    } catch (e) {
+      return HttpDate.parse(value).difference(DateTime.now());
+    } catch (_) {
       return null;
     }
   }
 
-  /// Get app version (for User-Agent)
-  static String _getVersion() {
-    return const String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
+  /// Resolves the application version embedded at compile time via
+  /// `--dart-define=APP_VERSION=x.y.z`. Falls back to `1.0.0` when not set.
+  static String _appVersion() =>
+      const String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
+}
+
+// =============================================================================
+// Interceptors
+// =============================================================================
+
+/// Dio interceptor that transparently retries transient HTTP failures with
+/// exponential back-off.
+///
+/// ### Retryable conditions
+/// | Category        | Criterion                           |
+/// |-----------------|-------------------------------------|
+/// | Timeouts        | Connection / send / receive timeout  |
+/// | Connectivity    | `DioExceptionType.connectionError`   |
+/// | Server errors   | HTTP 5xx                             |
+/// | Rate limiting   | HTTP 429                             |
+///
+/// ### Retry mechanics
+/// 1. The attempt counter is stored in [RequestOptions.extra] under
+///    `retry_attempt` so it survives re-queuing through the interceptor stack.
+/// 2. The **original** [Dio] instance is reused for retries (`_dio.fetch`) so
+///    every interceptor (auth headers, logging) participates in each attempt.
+/// 3. After [maxRetries] exhausted attempts the original error is forwarded
+///    to the next handler unchanged.
+class RetryInterceptor extends Interceptor {
+  final Dio _dio;
+  final int _maxRetries;
+  final List<Duration> _retryDelays;
+
+  static const _kAttemptKey = 'retry_attempt';
+
+  /// Default back-off schedule: 500 ms → 1 s → 2 s.
+  static const List<Duration> defaultDelays = [
+    Duration(milliseconds: 500),
+    Duration(seconds: 1),
+    Duration(seconds: 2),
+  ];
+
+  /// Creates a [RetryInterceptor].
+  ///
+  /// [dio] **must** be the same [Dio] instance this interceptor is attached
+  /// to. Passing a different instance would bypass auth and logging
+  /// interceptors on retry.
+  ///
+  /// [maxRetries] defaults to 3. [retryDelays] defaults to [defaultDelays];
+  /// the last entry is reused when the attempt index exceeds the list length.
+  RetryInterceptor({
+    required Dio dio,
+    int maxRetries = 3,
+    List<Duration>? retryDelays,
+  })  : _dio = dio,
+        _maxRetries = maxRetries,
+        _retryDelays = retryDelays ?? defaultDelays;
+
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    if (!_shouldRetry(err)) return handler.next(err);
+
+    final attempt = err.requestOptions.extra[_kAttemptKey] as int? ?? 0;
+    if (attempt >= _maxRetries) return handler.next(err);
+
+    final delay = _retryDelays[attempt.clamp(0, _retryDelays.length - 1)];
+    await Future.delayed(delay);
+
+    try {
+      final options = err.requestOptions;
+      options.extra[_kAttemptKey] = attempt + 1;
+      final response = await _dio.fetch(options);
+      return handler.resolve(response);
+    } on DioException catch (e) {
+      return handler.next(e);
+    }
+  }
+
+  static bool _shouldRetry(DioException error) {
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.connectionError) {
+      return true;
+    }
+
+    final code = error.response?.statusCode;
+    return code != null && (code == 429 || (code >= 500 && code < 600));
   }
 }
 
-/// Rate limit information
+/// Dio interceptor that prints HTTP traffic to stdout for debugging.
+///
+/// Attach this interceptor only in verbose mode (see [HttpHelper.buildClient]'s
+/// `enableLogging` flag) to avoid cluttering normal CLI output.
+///
+/// Output format:
+/// - **Request**: `→ METHOD URI` and optionally `  Body: <data>`.
+/// - **Response**: `← STATUS URI`.
+/// - **Error**: `✗ METHOD URI` followed by `  Error: <message>`.
+class LoggingInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    print('→ ${options.method} ${options.uri}');
+    if (options.data != null) print('  Body: ${options.data}');
+    handler.next(options);
+  }
+
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    print('← ${response.statusCode} ${response.requestOptions.uri}');
+    handler.next(response);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    print('✗ ${err.requestOptions.method} ${err.requestOptions.uri}');
+    print('  Error: ${err.message}');
+    handler.next(err);
+  }
+}
+
+// =============================================================================
+// Value objects
+// =============================================================================
+
+/// Parsed representation of the standard `x-ratelimit-*` response headers.
 class RateLimitInfo {
+  /// Number of requests remaining in the current window.
   final int remaining;
+
+  /// Total request quota for the current window.
   final int limit;
+
+  /// The UTC instant at which the quota resets.
   final DateTime resetAt;
 
+  /// Creates a [RateLimitInfo] from parsed header values.
   const RateLimitInfo({
     required this.remaining,
     required this.limit,
     required this.resetAt,
   });
 
-  /// Check if rate limited
+  /// Whether the remaining quota has been exhausted.
   bool get isLimited => remaining <= 0;
 
-  /// Time until reset
+  /// Time remaining until the quota resets.
+  ///
+  /// May return a negative [Duration] if [resetAt] is in the past.
   Duration get timeUntilReset => resetAt.difference(DateTime.now());
 
-  /// Usage percentage
-  double get usagePercentage => ((limit - remaining) / limit * 100);
+  /// Percentage of the total quota already consumed (0–100).
+  double get usagePercentage => (limit - remaining) / limit * 100;
 }
