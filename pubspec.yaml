@@ -15,7 +15,6 @@ dependencies:
 
   # HTTP
   dio: ^5.9.1
-  retry: ^3.1.2
 
   # Logger
   mason_logger: ^0.3.3
@@ -24,9 +23,8 @@ dependencies:
   yaml: ^3.1.2
   yaml_writer: ^2.0.0
 
-  path: ^1.8.3
-
   # Utils
+  path: ^1.8.3
   pool: ^1.5.1
   cli_table: ^1.0.2
 

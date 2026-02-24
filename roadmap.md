@@ -1,4 +1,4 @@
-# 🗺️ Roadmap Complète `pub_pulse` (2026-2027)
+# 🗺️ Roadmap Complète `cura` (2026-2027)
 
 > **Vision** : Devenir l'outil de référence pour l'audit de santé des dépendances Dart/Flutter, éliminant le "vibe code" et guidant les développeurs vers des choix de production robustes.
 
@@ -29,7 +29,7 @@ Créer un outil fonctionnel minimal qui résout le problème principal : **ident
 
 **Fonctionnalités :**
 
-- ✅ Commande `pub_pulse view <package>` fonctionnelle
+- ✅ Commande `cura view <package>` fonctionnelle
 - ✅ Scoring basique (maintenance + trust + popularity)
 - ✅ Affichage terminal simple (pas de table élégante encore)
 - ✅ Cache local opérationnel
@@ -38,7 +38,7 @@ Créer un outil fonctionnel minimal qui résout le problème principal : **ident
 **Livrable :**
 
 ```bash
-$ pub_pulse view dio
+$ cura view dio
 Package: dio (v5.4.0)
 Score: 95/100 ✅ HEALTHY
 Last update: 15 days ago
@@ -63,7 +63,7 @@ Publisher: dart.dev (verified)
 
 **Fonctionnalités :**
 
-- ✅ Commande `pub_pulse check` qui lit `pubspec.yaml`
+- ✅ Commande `cura check` qui lit `pubspec.yaml`
 - ✅ Parsing des dépendances (dependencies + dev_dependencies)
 - ✅ Pool de requêtes concurrent (max 5 simultanées)
 - ✅ Barre de progression (`mason_logger.progress()`)
@@ -72,7 +72,7 @@ Publisher: dart.dev (verified)
 **Livrable :**
 
 ```bash
-$ pub_pulse check
+$ cura check
 📦 Analyse de 23 paquets...
 [████████████████████████] 100%
 
@@ -116,7 +116,7 @@ PAQUETS CRITIQUES:
 
 ```bash
 # Pipeline GitLab CI
-$ pub_pulse check --fail-on 50 --json > report.json
+$ cura check --fail-on 50 --json > report.json
 $ echo $?  # 1 si un paquet < 50/100
 
 # Format JSON
@@ -149,12 +149,12 @@ $ echo $?  # 1 si un paquet < 50/100
 - ✅ Table ASCII élégante (avec `package:cli_table`)
 - ✅ Couleurs et émojis pour les statuts
 - ✅ Flag `--skip-cache` pour forcer la mise à jour
-- ✅ Commande `pub_pulse cache clear`
+- ✅ Commande `cura cache clear`
 
 **Livrable :**
 
 ```bash
-$ pub_pulse check
+$ cura check
 
 ┌─────────────────────┬───────┬────────┬─────────────┐
 │ Package             │ Score │ Status │ Last Update │
@@ -220,7 +220,7 @@ Construire une communauté active et améliorer l'outil grâce aux retours utili
 **Exemple :**
 
 ```bash
-$ pub_pulse check
+$ cura check
 ⚠️  internal_package (Git dependency)
    └─ Impossible à analyser (non publié sur pub.dev)
    └─ Recommandation: Auditer manuellement
@@ -238,7 +238,7 @@ $ pub_pulse check
 
 **Fonctionnalités :**
 
-- ✅ Commande `pub_pulse suggest <package>`
+- ✅ Commande `cura suggest <package>`
 - ✅ Base de données de similarités (JSON local)
 - ✅ Scoring comparatif
 - ✅ Raisons de la suggestion
@@ -246,7 +246,7 @@ $ pub_pulse check
 **Livrable :**
 
 ```bash
-$ pub_pulse suggest shared_preferences
+$ cura suggest shared_preferences
 
 📦 shared_preferences (score: 65/100)
    └─ Dernière update: 8 mois
@@ -268,7 +268,7 @@ $ pub_pulse suggest shared_preferences
 
 - Construire une base de similarités (scraping des tags pub.dev)
 - Éviter les suggestions absurdes (`dio` ≠ `http` en usage)
-- Permettre le crowdsourcing (fichier `.pub_pulse_suggestions.yaml`)
+- Permettre le crowdsourcing (fichier `.cura_suggestions.yaml`)
 
 **Critères de succès :**
 
@@ -282,14 +282,14 @@ $ pub_pulse suggest shared_preferences
 
 **Fonctionnalités :**
 
-- ✅ Fichier `.pub_pulse_whitelist.yaml` dans les projets
+- ✅ Fichier `.cura_whitelist.yaml` dans les projets
 - ✅ Whitelist globale communautaire (GitHub repo)
-- ✅ Commande `pub_pulse whitelist add <package> --reason "..."`
+- ✅ Commande `cura whitelist add <package> --reason "..."`
 
 **Use case :**
 
 ```yaml
-# .pub_pulse_whitelist.yaml
+# .cura_whitelist.yaml
 packages:
   old_but_gold_pkg:
     reason: "Package stable, pas de bugs depuis 2 ans"
@@ -314,7 +314,7 @@ packages:
 
 ### Objectif
 
-Ajouter des fonctionnalités avancées qui font de `pub_pulse` un outil indispensable.
+Ajouter des fonctionnalités avancées qui font de `cura` un outil indispensable.
 
 ---
 
@@ -329,7 +329,7 @@ Ajouter des fonctionnalités avancées qui font de `pub_pulse` un outil indispen
 **Livrable :**
 
 ```bash
-$ pub_pulse check --deep
+$ cura check --deep
 
 📦 Analyse profonde (3 niveaux)...
 
@@ -368,7 +368,7 @@ $ pub_pulse check --deep
 **Livrable :**
 
 ```bash
-$ pub_pulse check --security
+$ cura check --security
 
 🚨 VULNÉRABILITÉS DÉTECTÉES:
 
@@ -407,7 +407,7 @@ $ pub_pulse check --security
 **Livrable :**
 
 ```bash
-$ pub_pulse check --report html --output audit.html
+$ cura check --report html --output audit.html
 
 ✅ Rapport généré: audit.html
    └─ Contenu:
@@ -434,7 +434,7 @@ $ pub_pulse check --report html --output audit.html
 
 ### Objectif
 
-Rendre `pub_pulse` utilisable en entreprise avec des fonctionnalités de gouvernance.
+Rendre `cura` utilisable en entreprise avec des fonctionnalités de gouvernance.
 
 ---
 
@@ -450,7 +450,7 @@ Rendre `pub_pulse` utilisable en entreprise avec des fonctionnalités de gouvern
 **Livrable :**
 
 ```bash
-$ pub_pulse serve --port 8080
+$ cura serve --port 8080
 
 🌐 Dashboard disponible sur http://localhost:8080
 
@@ -487,7 +487,7 @@ $ pub_pulse serve --port 8080
 **Livrable :**
 
 ```bash
-$ pub_pulse check --licenses
+$ cura check --licenses
 
 ⚠️  CONFLIT DE LICENCE DÉTECTÉ:
 
@@ -518,7 +518,7 @@ Votre app: Licence propriétaire
 **Exemple plugin :**
 
 ```dart
-// package: pub_pulse_plugin_jira
+// package: cura_plugin_jira
 class JiraPlugin extends PubPulsePlugin {
   @override
   Future<void> onCriticalPackageDetected(PackageInfo pkg) async {
@@ -541,7 +541,7 @@ class JiraPlugin extends PubPulsePlugin {
 
 ### Objectif
 
-Construire un écosystème complet autour de `pub_pulse`.
+Construire un écosystème complet autour de `cura`.
 
 ---
 
@@ -572,7 +572,7 @@ Construire un écosystème complet autour de `pub_pulse`.
 **Exemple :**
 
 ```bash
-$ pub_pulse suggest shared_preferences --ai
+$ cura suggest shared_preferences --ai
 
 🤖 Analyse IA en cours...
 
@@ -608,7 +608,7 @@ $ pub_pulse suggest shared_preferences --ai
 | Métrique | 6 mois | 12 mois | 24 mois |
 |----------|--------|---------|---------|
 | Téléchargements hebdomadaires | 5,000 | 20,000 | 100,000 |
-| Projets utilisant pub_pulse | 1,000 | 10,000 | 50,000 |
+| Projets utilisant cura | 1,000 | 10,000 | 50,000 |
 | Stars GitHub | 500 | 2,000 | 10,000 |
 | Contributors | 10 | 50 | 200 |
 
@@ -675,7 +675,7 @@ Pour démarrer aujourd'hui :
    - LICENSE (MIT)
 
 2. ✅ **Implémenter v0.1.0**
-   - `pub_pulse view <package>`
+   - `cura view <package>`
    - Tests de base
    - CI/CD GitHub Actions
 

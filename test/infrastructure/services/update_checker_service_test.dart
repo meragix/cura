@@ -26,7 +26,7 @@ void main() {
                 },
               ));
 
-      final updateInfo = await service.checkForUpdate();
+      final updateInfo = await service.checkForUpdate('2.0.0');
 
       expect(updateInfo, isNotNull);
       expect(updateInfo!.updateAvailable, true);
@@ -44,7 +44,7 @@ void main() {
                 },
               ));
 
-      final updateInfo = await service.checkForUpdate();
+      final updateInfo = await service.checkForUpdate('0.4.0');
 
       expect(updateInfo, isNotNull);
       expect(updateInfo!.updateAvailable, false);
@@ -54,7 +54,7 @@ void main() {
       when(() => mockDio.get(any(), options: any(named: 'options')))
           .thenThrow(Exception('Network error'));
 
-      final updateInfo = await service.checkForUpdate();
+      final updateInfo = await service.checkForUpdate('1.0.0');
 
       expect(updateInfo, isNull);
     });
