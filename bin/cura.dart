@@ -58,28 +58,28 @@ Future<void> main(List<String> arguments) async {
   ThemeManager.setTheme(config.theme);
 
   // ===========================================================================
-  // PHASE 2 : INFRASTRUCTURE LAYER (Adapters externes)
+  // PHASE 2 : INFRASTRUCTURE LAYER (External adapters)
   // ===========================================================================
 
-  // HTTP Client avec interceptors
+  // HTTP client with retry/logging interceptors.
   final httpClient = HttpHelper.buildClient(
     connectTimeout: Duration(seconds: config.timeoutSeconds),
     enableLogging: config.verboseLogging,
   );
 
-  // API Clients
+  // Concrete API clients — one per external data source.
   final pubDevClient = PubDevApiClient(httpClient);
   final githubClient = GitHubApiClient(httpClient, token: config.githubToken);
   final osvClient = OsvApiClient(httpClient);
 
-  // JSON File Cache — initialize on first run, then sweep expired entries.
+  // JSON file cache — create the directory on first run, then evict stale entries.
   final cache = JsonFileSystemCache(
     cacheDir: '${_homeDir()}/.cura/cache',
   );
   await cache.initialize();
   await cache.cleanupExpired();
 
-  // ⭐ AGGREGATOR (remplace les 3 providers séparés)
+  // Decorator: CachedAggregator wraps MultiApiAggregator to add transparent caching.
   final aggregator = CachedAggregator(
     delegate: MultiApiAggregator(
       pubDevClient: pubDevClient,
@@ -91,7 +91,7 @@ Future<void> main(List<String> arguments) async {
   );
 
   // ===========================================================================
-  // PHASE 3 : DOMAIN LAYER (Use Cases)
+  // PHASE 3 : DOMAIN LAYER (Use cases)
   // ===========================================================================
 
   final scoreCalculator = CalculateScore(
@@ -195,14 +195,15 @@ Future<void> main(List<String> arguments) async {
 // FACTORY METHODS (Composition logic)
 // =============================================================================
 
-/// Initialize configuration repository
+/// Builds the [ConfigRepository] and ensures a default config file exists
+/// on first run. Merges global (`~/.cura/config.yaml`) and project-level
+/// (`./.cura/config.yaml`) settings, with project values taking precedence.
 Future<ConfigRepository> _initializeConfiguration() async {
   final configRepo = YamlConfigRepository(
     globalConfigPath: _resolveGlobalConfigPath(),
     projectConfigPath: _resolveProjectConfigPath(),
   );
 
-  // Create default configuration if it doesn't exist
   if (!await configRepo.exists()) {
     await configRepo.createDefault();
   }
@@ -228,18 +229,35 @@ Future<void> _cleanup({
 // PATH RESOLUTION (Platform-agnostic)
 // =============================================================================
 
+/// Returns the current user's home directory.
+///
+/// Reads `HOME` on POSIX systems and `USERPROFILE` on Windows.
+/// Throws [StateError] if neither variable is set (e.g. in a locked-down CI
+/// environment), so the failure is explicit rather than silently using a
+/// wrong path.
 String _homeDir() {
   final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
   if (home == null) throw StateError('Cannot resolve HOME directory');
   return home;
 }
 
+/// Absolute path to the user-level config file (`~/.cura/config.yaml`).
+///
+/// Applies to all projects on this machine and acts as the lowest-priority
+/// defaults in the config hierarchy.
 String _resolveGlobalConfigPath() => '${_homeDir()}/.cura/config.yaml';
 
+/// Absolute path to the project-level config file (`./.cura/config.yaml`).
+///
+/// Scoped to the directory from which `cura` is invoked. Overrides global
+/// config for repository-specific settings (e.g. `min_score`, `ignored_packages`).
 String _resolveProjectConfigPath() => '${Directory.current.path}/.cura/config.yaml';
 
 
-/// Print custom help message
+/// Prints a hand-crafted help message and exits.
+///
+/// Used instead of the default [CommandRunner] help output so we can control
+/// the exact wording, example commands, and homepage link in one place.
 Future<void> _printHelp() async {
   final version = await AppInfo.getVersion();
 
