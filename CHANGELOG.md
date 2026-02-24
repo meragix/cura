@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-02-24
+
 ### Fixed
 
 - **`CacheDatabase` double-initialisation race**: Two concurrent `await CacheDatabase.instance` calls arriving before the database was ready both invoked `_initDatabase()`, creating the SQLite connection twice. Fixed by memoising the initialisation `Future` (`_initFuture ??= _initDatabase()`), ensuring all concurrent callers share a single in-flight operation. `close()` now also resets `_initFuture` so re-opening is safe.

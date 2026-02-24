@@ -1,6 +1,6 @@
 name: cura
 description: "CLI tool to audit Flutter/Dart package health, dependency scores, and maintenance status."
-version: 0.6.0
+version: 0.6.1
 homepage: https://github.com/meragix/cura
 repository: https://github.com/meragix/cura/tree/main
 issue_tracker: https://github.com/meragix/cura/issues
