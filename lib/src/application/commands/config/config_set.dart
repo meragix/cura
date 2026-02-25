@@ -48,7 +48,7 @@ class ConfigSetCommand extends Command<int> {
     final value = argResults!.rest[1];
 
     try {
-      await _configRepository.setValue(key, _parseValue(value));
+      await _configRepository.updateKey(key, _parseValue(value));
       print('✓ $key = $value');
       return 0;
     } catch (e) {

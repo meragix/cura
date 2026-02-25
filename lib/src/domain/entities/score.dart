@@ -137,14 +137,11 @@ class Score {
     return HealthStatus.critical;
   }
 
-  /// Whether the package meets the general health threshold (total ≥ 70).
-  bool get isHealthy => total >= 70;
+  bool get isHealthy => status == HealthStatus.healthy;
+  bool get isCritical => status == HealthStatus.critical;
 
   /// Whether the package achieved an excellent score (total ≥ 90).
   bool get isExcellent => total >= 90;
-
-  /// Whether the package is in a critical state (total < 50).
-  bool get isCritical => total < 50;
 
   @override
   String toString() => 'Score($total/100, grade: $grade)';

@@ -65,12 +65,8 @@ class ConsoleLogger {
   }
 
   /// Log warning message (yellow).
-  void warn(String message, {bool showSymbol = true}) {
-    if (showSymbol) {
-      _logger.info('${theme.symbolWarning} ${theme.warning.wrap(message)}');
-    } else {
-      _logger.info('${theme.warning.wrap(message)}');
-    }
+  void warn(String message) {
+    _logger.warn('${theme.warning.wrap(message)}', tag: '');
   }
 
   /// Log error message (red).
@@ -283,10 +279,10 @@ class ConsoleLogger {
   String _getAlertEmoji(AlertLevel level) {
     if (!_useEmojis) return '';
     return switch (level) {
-      AlertLevel.info => 'i',
-      AlertLevel.success => '✓',
-      AlertLevel.warning => '!',
-      AlertLevel.error => '✗',
+      AlertLevel.info => cyan.wrap('i')!,
+      AlertLevel.success => green.wrap('✓')!,
+      AlertLevel.warning => yellow.wrap('!')!,
+      AlertLevel.error => red.wrap('✗')!,
     };
   }
 }

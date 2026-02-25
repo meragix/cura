@@ -172,7 +172,7 @@ class ViewPresenter {
       final repoUrl = info.repositoryUrl!.replaceFirst('https://', '');
       _logger.info('  Repository:  ${cyan.wrap(repoUrl)}');
     } else {
-      _logger.warn('  Repository:  None', showSymbol: false);
+      _logger.warn('  Repository:  None');
     }
 
     if (info.supportedPlatforms.isNotEmpty) {
@@ -237,13 +237,11 @@ class ViewPresenter {
     final score = audit.score.total;
 
     if (score >= 80) {
-      _logger.success('Recommended - High-quality, actively maintained package');
+      _logger.alert('Recommended - High-quality, actively maintained package', level: AlertLevel.success);
     } else if (score >= 60) {
-      final warning = yellow.wrap('!')!;
-      _logger.warn('$warning Use with caution - Some concerns, review before using', showSymbol: false);
+      _logger.alert('Use with caution - Some concerns, review before using', level: AlertLevel.warning);
     } else {
-      final cross = red.wrap('✗')!;
-      _logger.error('$cross Not Recommended - Appears abandoned, high risk for production use');
+      _logger.alert('Not Recommended - Appears abandoned, high risk for production use', level: AlertLevel.error);
     }
   }
 

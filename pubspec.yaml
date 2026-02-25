@@ -21,7 +21,7 @@ dependencies:
 
   # YAML
   yaml: ^3.1.2
-  yaml_writer: ^2.0.0
+  yaml_edit: ^2.2.4
 
   # Utils
   path: ^1.8.3

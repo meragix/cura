@@ -55,4 +55,7 @@ abstract class ConfigRepository {
   /// Throws a [TypeError] when [value] cannot be cast to the field's expected
   /// type (e.g. passing a [String] for a boolean field).
   Future<void> setValue(String key, dynamic value);
+
+  //todo: to be removed 
+  Future<void> updateKey(String key, dynamic value);
 }

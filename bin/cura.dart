@@ -28,6 +28,7 @@ import 'package:cura/src/shared/app_info.dart';
 import 'package:cura/src/shared/constants/app_constants.dart';
 import 'package:cura/src/shared/utils/http_helper.dart';
 import 'package:dio/dio.dart';
+import 'package:path/path.dart' as p;
 
 /// Composition Root: Single entry point for dependency graph construction.
 ///
@@ -258,8 +259,22 @@ String _resolveGlobalConfigPath() => '${_homeDir()}/.cura/config.yaml';
 ///
 /// Scoped to the directory from which `cura` is invoked. Overrides global
 /// config for repository-specific settings (e.g. `min_score`, `ignored_packages`).
-String _resolveProjectConfigPath() => '${Directory.current.path}/.cura/config.yaml';
+String _resolveProjectConfigPath() {
+  var current = Directory.current;
 
+  while (true) {
+    final configPath = p.join(current.path, '.cura', 'config.yaml');
+    if (File(configPath).existsSync()) return configPath;
+
+    // Stop si on trouve un pubspec.yaml mais pas de config cura (racine atteinte)
+    if (File(p.join(current.path, 'pubspec.yaml')).existsSync()) return '';
+
+    final parent = current.parent;
+    if (parent.path == current.path) break; // Racine système atteinte
+    current = parent;
+  }
+  return '';
+}
 
 /// Prints a hand-crafted help message and exits.
 ///

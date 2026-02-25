@@ -471,3 +471,33 @@ class CalculateScore {
     return parts.isEmpty ? 'No official support' : parts.join(', ');
   }
 }
+
+// Agis en tant que Senior Software Architect. Je souhaite refactoriser ma classe CalculateScore pour la rendre plus scalable, testable et robuste.
+
+// Problèmes identifiés :
+
+// Fragilité sémantique : Les Red Flags et Recommandations sont basés sur du 'String matching', ce qui est sujet aux régressions.
+
+// Couplage : La logique de calcul est monolithique.
+
+// Extensibilité : Difficile d'ajouter de nouvelles dimensions de score sans surcharger la classe.
+
+// Travail demandé :
+
+// Strong Typing : Remplace les listes de String (flags/recs) par des objets typés (ex: Sealed Classes ou Enums avec métadonnées) pour gérer des niveaux de sévérité (INFO, WARNING, CRITICAL).
+
+// Pattern Strategy / Visitor : Propose une structure où chaque dimension (Vitality, Trust, etc.) est un composant indépendant injecté dans le moteur.
+
+// Gestion des Trusted Publishers : Affine la logique pour que le statut 'Trusted' ne soit plus un 'pass' total mais un bonus/plancher (un package Google obsolète ou vulnérable doit quand même être signalé).
+
+// Validation de Licence : Intègre la vérification de licence comme un Red Flag prioritaire (Risque juridique).
+
+// Testabilité : Structure le code pour faciliter le TDD, en isolant les calculs mathématiques des objets PackageInfo complexes.
+
+// Contraintes :
+
+// Utilise les fonctionnalités modernes de Dart (Patterns, Records, Sealed classes).
+
+// Garde une approche 'Fail-safe'.
+
+// Ne réécris pas toute la logique de points, concentre-toi sur la structure et la sécurité du typage
