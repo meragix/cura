@@ -6,7 +6,7 @@ class ScoreFormatter {
 
   /// Format: "85/100 (A)"
   static String format(Score score) {
-    return '${score.total.toString().padLeft(3)}/100 (${score.grade})';
+    return '${score.total.toString().padLeft(3)}/100 (${score.grade.label})';
   }
 
   /// Format avec couleurs

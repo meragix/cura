@@ -52,13 +52,30 @@ bin/
 
 lib/src/
   domain/
-    entities/                     <- PackageInfo, Score, Vulnerability, ...
-    value_objects/                 <- Score (0-100), Grade, PackageName, Result<T>
+    entities/                     <- PackageInfo, Score, GitHubMetrics, Vulnerability
+    value_objects/
+      grade.dart                  <- Grade enum (A+…F) with Grade.fromScore()
+      red_flag.dart               <- sealed class RedFlag + 12 typed subtypes
+      recommendation.dart         <- Recommendation with RecommendationLevel
+      score_weights.dart          <- ScoreWeights (source of truth — domain layer)
+      result.dart, exception.dart <- sealed Result<T>, CuraException
     ports/                         <- abstract interfaces (contracts)
       package_data_aggregator.dart
       config_repository.dart
-    usecases/                      <- CalculateScore, CheckPackagesUsecase,
+      score_calculator.dart        <- ScoreCalculator (mockable port for CalculateScore)
+    usecases/                      <- CalculateScore (orchestrator), CheckPackagesUsecase,
                                       ViewPackageDetails
+    services/
+      scoring/                     <- Strategy pattern: one class per dimension
+        scoring_input.dart         <- ScoringInput record typedef + isConsideredStable()
+        scoring_dimension.dart     <- ScoringDimension abstract interface
+        vitality_dimension.dart
+        technical_health_dimension.dart
+        trust_dimension.dart
+        maintenance_dimension.dart
+        penalty_evaluator.dart
+        red_flag_detector.dart
+        recommendation_engine.dart
     exceptions/                    <- CuraException hierarchy
 
   application/
@@ -79,6 +96,7 @@ lib/src/
     repositories/
       yaml_config_repository.dart  <- ConfigRepository adapter
     config/
+    config/models/score_weights.dart <- re-exports domain/value_objects/score_weights.dart
 
   presentation/
     loggers/                       <- ConsoleLogger (normal/verbose/quiet/JSON)
@@ -167,6 +185,74 @@ application layers.
 `MultiApiAggregator` hides the complexity of three separate APIs behind the
 single `PackageDataAggregator` port. It uses `PoolManager` to bound concurrency
 (default: 5 simultaneous requests) so large projects do not hammer the APIs.
+
+---
+
+### Strategy Pattern — Scoring Engine
+
+The scoring engine decomposes `CalculateScore` into eight single-responsibility
+classes wired together at construction time:
+
+```text
+CalculateScore (implements ScoreCalculator)
+  ├─ VitalityDimension          (implements ScoringDimension)
+  ├─ TechnicalHealthDimension   (implements ScoringDimension)
+  ├─ TrustDimension             (implements ScoringDimension)
+  ├─ MaintenanceDimension       (implements ScoringDimension)
+  ├─ PenaltyEvaluator
+  ├─ RedFlagDetector
+  └─ RecommendationEngine
+```
+
+All components receive a **`ScoringInput` record** — an immutable snapshot of
+`PackageInfo`, `GitHubMetrics?`, and `List<Vulnerability>`:
+
+```dart
+typedef ScoringInput = ({
+  PackageInfo package,
+  GitHubMetrics? github,
+  List<Vulnerability> vulnerabilities,
+});
+```
+
+Using a Dart record eliminates the need to mock complex objects in dimension
+unit tests — you construct the record inline with exactly the fields you need.
+
+**Adding a new dimension** requires only implementing `ScoringDimension` and
+injecting it via `CalculateScore.withDimensions()`. The orchestrator and all
+other dimensions remain unchanged (Open/Closed Principle).
+
+---
+
+### Strong Typing — RedFlag, Recommendation, Grade
+
+Qualitative signals are typed, not plain strings:
+
+| Old (fragile) | New (type-safe) |
+|---|---|
+| `List<String> redFlags` | `List<RedFlag>` (sealed class, 12 subtypes) |
+| `flags.any((f) => f.contains('No release'))` | `flags.any((f) => f is StalePackageFlag)` |
+| `List<String> recommendations` | `List<Recommendation>` with `RecommendationLevel` |
+| `grade: 'A+'` (String) | `grade: Grade.aPlus` (enum with `.label`) |
+
+Each `RedFlag` subtype carries its own structured data (e.g.
+`StalePackageFlag(months: 18)`) and a typed `severity` (info / warning /
+critical), enabling the presentation layer to render colour, icons, and sort
+order without parsing message strings.
+
+---
+
+### Trusted Publisher Floor
+
+Trusted-publisher packages (e.g. `dart.dev`, `flutter.dev`) receive a
+**score floor of 70** — `total.clamp(70, 100)` instead of an automatic
+perfect score. This means:
+
+- A stale or unlicensed official package **can still score below 80** and
+  will show warnings.
+- Red flags are **always evaluated** for trusted packages.
+- The zero-score overrides (discontinued, critical CVE) **take precedence**
+  over the floor.
 
 ---
 

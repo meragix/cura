@@ -134,10 +134,10 @@ Documentation is crucial! You can contribute by:
 
 **Documentation locations:**
 
-- `README.md` - Main project readme
-- `docs/` - Detailed documentation
-- Inline code comments
-- `examples/` - Usage examples
+- `README.md` — Main project readme
+- `doc/` — Detailed documentation (scoring, architecture, caching, CI/CD, etc.)
+- Inline code comments and doc comments (`///`)
+- `CONTRIBUTING.md` — This guide
 
 ---
 
@@ -168,11 +168,16 @@ Help build the alternatives database:
 ````bash
 lib/
 ├── src/
-│   ├── domain/          # Business logic (no dependencies)
-│   ├── infrastructure/  # External adapters (APIs, DB, cache)
-│   ├── application/     # Commands (orchestration)
-│   ├── presentation/    # CLI UI (formatters, presenters)
-│   └── shared/          # Utilities, constants
+│   ├── domain/                    # Pure Dart — zero external dependencies
+│   │   ├── entities/              # PackageInfo, Score, GitHubMetrics, Vulnerability
+│   │   ├── value_objects/         # Grade, RedFlag, Recommendation, ScoreWeights
+│   │   ├── ports/                 # Abstract interfaces (ScoreCalculator, etc.)
+│   │   ├── usecases/              # CalculateScore, CheckPackages, ViewPackageDetails
+│   │   └── services/scoring/      # Strategy dimensions (Vitality, Trust, etc.)
+│   ├── infrastructure/            # External adapters (pub.dev, GitHub, OSV.dev, cache)
+│   ├── application/               # Commands (orchestration layer)
+│   ├── presentation/              # CLI UI (formatters, renderers, presenters)
+│   └── shared/                    # Utilities, constants
 test/
 ├── unit/               # Unit tests (fast, isolated)
 ├── integration/        # Integration tests (with real APIs)
@@ -277,7 +282,7 @@ Follow these principles:
 dart test
 
 # Run specific test file
-dart test test/core/calculators/score_calculator_test.dart
+dart test test/unit/domain/usecases/calculate_score_test.dart
 
 # Run with coverage
 dart test --coverage=coverage
@@ -410,31 +415,25 @@ try {
 
 ```dart
 void main() {
-  group('ScoreCalculator', () {
-    group('calculate', () {
-      test('returns 0 for discontinued packages', () {
-        final package = CuraPackage(
-          isDiscontinued: true,
-          // ...
-        );
-        
-        final score = ScoreCalculator.calculate(package);
-        
-        expect(score, equals(0));
-      });
-      
-      test('calculates vitality correctly', () {
-        // Given
-        final package = CuraPackage(
-          lastPublished: DateTime.now().subtract(Duration(days: 45)),
-        );
-        
-        // When
-        final score = ScoreCalculator.calculate(package);
-        
-        // Then
-        expect(score.vitality, equals(35));
-      });
+  group('CalculateScore', () {
+    test('returns 0 for discontinued packages', () {
+      final score = Score.discontinued('my_package');
+
+      expect(score.total, equals(0));
+      expect(score.grade, equals(Grade.f));
+    });
+  });
+
+  group('VitalityDimension', () {
+    test('scores 35 pts for a package updated 45 days ago', () {
+      final dimension = VitalityDimension(weight: 40);
+      final input = (
+        package: mockPackageUpdatedDaysAgo(45),
+        github: null,
+        vulnerabilities: const <Vulnerability>[],
+      );
+
+      expect(dimension.calculate(input), equals(35));
     });
   });
 }
@@ -463,21 +462,26 @@ open coverage/html/index.html
 
 ### Mocking
 
-Use [mocktail](https://pub.dev/packages/mocktail):
+Use [mocktail](https://pub.dev/packages/mocktail) for ports and aggregators.
+Scoring dimensions can be tested without mocking — pass a `ScoringInput` record directly:
 
 ```dart
 import 'package:mocktail/mocktail.dart';
 
-class MockPubDevClient extends Mock implements PubDevClient {}
+// Mock a port (abstract interface)
+class MockScoreCalculator extends Mock implements ScoreCalculator {}
 
+// Test a dimension without any mock — ScoringInput is just a record
 void main() {
-  test('handles API errors gracefully', () async {
-    final mockClient = MockPubDevClient();
-    
-    when(() => mockClient.getPackageInfo('pkg'))
-        .thenThrow(NetworkException());
-    
-    // Test error handling
+  test('TrustDimension awards stars bonus', () {
+    final dimension = TrustDimension(weight: 20);
+    final input = (
+      package: mockPackageWithLikes(1200),
+      github: GitHubMetrics(stars: 1500, ...),
+      vulnerabilities: const [],
+    );
+
+    expect(dimension.calculate(input), greaterThan(20));
   });
 }
 ```
@@ -507,7 +511,7 @@ Format: `<type>(<scope>): <subject>`
 feat(scoring): add GitHub stars to trust calculation
 
 # Bug fix
-fix(cache): prevent race condition in SQLite writes
+fix(cache): handle concurrent JSON file writes safely
 
 # Documentation
 docs(api): update configuration examples

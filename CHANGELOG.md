@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Strategy pattern for scoring**: `CalculateScore` is now a pure orchestrator delegating to `VitalityDimension`, `TechnicalHealthDimension`, `TrustDimension`, `MaintenanceDimension`, `PenaltyEvaluator`, `RedFlagDetector`, and `RecommendationEngine` — each independently testable via the `ScoringInput` Dart record.
+- **`RedFlag` sealed class** with 12 typed subtypes and `RedFlagSeverity` (`info` / `warning` / `critical`) — replaces `List<String>` and eliminates fragile string matching in recommendation logic.
+- **`Recommendation`** value object with `RecommendationLevel` — replaces `List<String>`.
+- **`Grade` enum** with `Grade.fromScore()` and `.label` — replaces `String` grade field on `Score`.
+- **`ScoreCalculator` port** (`domain/ports/`) — enables clean mocking without touching `CalculateScore`.
+- **`MissingLicenseFlag`** (`critical` severity) — packages without an SPDX license are now flagged as a priority legal risk.
+- **`ScoreWeights`** moved to `domain/value_objects/` (infrastructure path re-exports for compatibility).
+
+### Changed
+
+- **Trusted publisher**: removed automatic score of 100. Publishers like `dart.dev` now receive a **score floor of 70** — penalties and red flags still apply, ensuring stale or unlicensed official packages are surfaced.
+- **`Score.grade`** `String` → `Grade`, **`Score.redFlags`** `List<String>` → `List<RedFlag>`, **`Score.recommendations`** `List<String>` → `List<Recommendation>`.
+
+### Breaking
+
+- `Score.grade`, `Score.redFlags`, `Score.recommendations` field types changed — callers must use `score.grade.label` for string display.
+
 ## [0.7.0] - 2026-02-24
 
 ### Added

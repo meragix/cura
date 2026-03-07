@@ -97,7 +97,7 @@ cura check --min-score 75 --fail-on-vulnerable
 
 **Sample output:**
 
-```
+```bash
 Scanning pubspec.yaml...
 Found 15 dependencies
 
@@ -220,7 +220,7 @@ cura view dio --json | jq '.score.total'
 
 **Output:**
 
-```
+```bash
 ═════════════════════════════════════════════════════════════════
 
   dio v5.4.0
@@ -312,7 +312,7 @@ cura cache cleanup
 
 **Sample `stats` output:**
 
-```
+```text
 Cache Statistics:
 
   Package cache    : 47 entries
@@ -327,8 +327,10 @@ Cache Statistics:
 
 ## 📊 Scoring Algorithm
 
-```
+```text
 Total Score = Vitality (40) + Technical Health (30) + Trust (20) + Maintenance (10)
+            + Bonuses (variable) + Penalties (variable)
+            clamped to [0, 100]
 ```
 
 ### Vitality — 40 pts
@@ -344,49 +346,62 @@ How actively is the package maintained?
 | 1–2 years    |     10 |
 | > 2 years    |      0 |
 
-Stable packages with a Pana score > 130 receive a bonus even when older.
+**Bonuses:** +5 pts for stable packages (Pana ≥ 130, popularity > 70 %) even when older. +5 pts when > 10 GitHub commits in the last 90 days.
 
 ### Technical Health — 30 pts
 
-| Criterion                           | Points |
-|-------------------------------------|--------|
-| Pana score (normalized from 0–140)  |     15 |
-| Null safety                         |     10 |
-| Platform support (per platform)     |      5 |
+| Criterion                          | Points |
+|------------------------------------|--------|
+| Pana score (normalized from 0–130) |   0–15 |
+| Null safety                        |     10 |
+| Dart 3 compatible                  |      3 |
+| Platform breadth (beyond 1st, max) |    0–2 |
 
 ### Trust — 20 pts
 
-| Criterion                   | Points |
-|-----------------------------|--------|
-| pub.dev likes (normalized)  |     10 |
-| Download popularity         |     10 |
+| Criterion                  | Points |
+|----------------------------|--------|
+| pub.dev likes (normalized) |   0–10 |
+| Download popularity        |   0–10 |
+| GitHub stars > 1 000       |     +3 |
 
 ### Maintenance — 10 pts
 
-| Criterion               | Points |
-|-------------------------|--------|
-| Verified publisher      |      5 |
-| Flutter Favorite badge  |      5 |
+| Criterion              | Points |
+|------------------------|--------|
+| Verified publisher     |      5 |
+| Flutter Favorite badge |      5 |
+
+### Penalties
+
+| Condition                                     | Deduction |
+|-----------------------------------------------|-----------|
+| No source repository                          |   −30 pts |
+| Experimental `0.0.x` stalled > 1 year         |   −20 pts |
+
+### Trusted Publisher Floor
+
+Packages from trusted publishers (`dart.dev`, `flutter.dev`) receive a **score floor of 70** — they cannot score below it. They are **not** exempt from penalties or red flags; a stale or unlicensed official package is still flagged.
 
 ### Grade Mapping
 
-| Score   | Grade | Meaning                         |
-|---------|-------|---------------------------------|
-| 90–100  | A+    | Excellent — production ready    |
-| 80–89   | A     | Very good — highly recommended  |
-| 70–79   | B     | Good — safe to use              |
-| 60–69   | C     | Fair — use with caution         |
-| 50–59   | D     | Poor — seek alternatives        |
-| 0–49    | F     | Critical — avoid                |
+| Score  | Grade | Meaning                        |
+|--------|-------|--------------------------------|
+| 90–100 | A+    | Excellent — production ready   |
+| 80–89  | A     | Very good — highly recommended |
+| 70–79  | B     | Good — safe to use             |
+| 60–69  | C     | Fair — use with caution        |
+| 50–59  | D     | Poor — seek alternatives       |
+| 0–49   | F     | Critical — avoid               |
 
 ### Automatic zero
 
-A score of **0** is forced when:
+A score of **0** is forced (regardless of trusted-publisher status) when:
 
 - The package is **discontinued**
 - A **critical CVE** is detected via OSV.dev
 
-> Detailed algorithm with code and full examples: [doc/scoring.md](doc/scoring.md)
+> Detailed algorithm, red flags, recommendations, and examples: [doc/scoring.md](doc/scoring.md)
 
 ---
 
@@ -394,7 +409,7 @@ A score of **0** is forced when:
 
 ### Hierarchy
 
-```
+```text
 CLI flags               (highest priority)
   ↓
 ./.cura/config.yaml     (project config — commit to share with your team)

@@ -123,7 +123,7 @@ class ViewPresenter {
     _logger.spacer();
 
     final scoreStr = _formatScore(audit.score.total);
-    final grade = _formatGrade(audit.score.grade);
+    final grade = _formatGrade(audit.score.grade.label);
 
     _logger.info(' ● Score: $scoreStr $grade');
   }

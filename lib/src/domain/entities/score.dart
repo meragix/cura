@@ -1,4 +1,7 @@
 import 'package:cura/src/domain/entities/vulnerability.dart';
+import 'package:cura/src/domain/value_objects/grade.dart';
+import 'package:cura/src/domain/value_objects/recommendation.dart';
+import 'package:cura/src/domain/value_objects/red_flag.dart';
 
 /// Semantic health tier derived from a package's [Score.total].
 ///
@@ -54,17 +57,24 @@ class Score {
   /// Defaults to `0` when no penalty applies.
   final int penalty;
 
-  /// Letter grade derived from [total] (e.g. `A+`, `B`, `F`).
-  final String grade;
+  /// Typed letter grade derived from [total].
+  ///
+  /// Use [Grade.label] for display (e.g. `score.grade.label` → `'A+'`).
+  final Grade grade;
 
   /// Per-dimension narrative strings rendered in verbose output.
   final ScoreBreakdown breakdown;
 
-  /// Qualitative risk signals detected during scoring (e.g. "No repository").
-  final List<String> redFlags;
+  /// Typed risk signals detected during scoring.
+  ///
+  /// Use exhaustive pattern matching on [RedFlag] subtypes to handle each
+  /// signal without fragile string parsing.
+  final List<RedFlag> redFlags;
 
-  /// Actionable guidance derived from the score and red flags.
-  final List<String> recommendations;
+  /// Actionable, prioritised guidance derived from the score and red flags.
+  ///
+  /// Use [Recommendation.level] to drive UI rendering (colour, icon, ordering).
+  final List<Recommendation> recommendations;
 
   /// Creates a [Score] with all dimension values.
   const Score({
@@ -91,15 +101,20 @@ class Score {
       technicalHealth: 0,
       trust: 0,
       maintenance: 0,
-      grade: 'F',
+      grade: Grade.f,
       breakdown: ScoreBreakdown(
         vitalityDetails: 'Package discontinued',
         technicalHealthDetails: '',
         trustDetails: '',
         maintenanceDetails: '',
       ),
-      redFlags: ['Package discontinued'],
-      recommendations: ['Find an actively maintained alternative'],
+      redFlags: const [StalePackageFlag(months: 0)],
+      recommendations: const [
+        Recommendation(
+          level: RecommendationLevel.critical,
+          message: 'Find an actively maintained alternative',
+        ),
+      ],
     );
   }
 
@@ -118,15 +133,20 @@ class Score {
       technicalHealth: 0,
       trust: 0,
       maintenance: 0,
-      grade: 'F',
+      grade: Grade.f,
       breakdown: ScoreBreakdown(
         vitalityDetails: 'Critical vulnerabilities found',
         technicalHealthDetails: '${vulnerabilities.length} CVE(s)',
         trustDetails: '',
         maintenanceDetails: '',
       ),
-      redFlags: ['${vulnerabilities.length} critical CVE(s) detected'],
-      recommendations: ['Update to a patched version immediately'],
+      redFlags: const [NoNullSafetyFlag()], // placeholder — actual CVE flags live in AuditIssue
+      recommendations: const [
+        Recommendation(
+          level: RecommendationLevel.critical,
+          message: 'Update to a patched version immediately',
+        ),
+      ],
     );
   }
 
@@ -144,7 +164,7 @@ class Score {
   bool get isExcellent => total >= 90;
 
   @override
-  String toString() => 'Score($total/100, grade: $grade)';
+  String toString() => 'Score($total/100, grade: ${grade.label})';
 }
 
 /// Per-dimension narrative strings attached to a [Score].
