@@ -97,27 +97,7 @@ cura check --min-score 75 --fail-on-vulnerable
 
 **Sample output:**
 
-```bash
-Scanning pubspec.yaml...
-Found 15 dependencies
-
-Analyzing packages... [████████████████████] 15/15 (3.2s)
-
-┌────────────────────────┬───────┬────────┬──────────────┐
-│ Package                │ Score │ Grade  │ Last Update  │
-├────────────────────────┼───────┼────────┼──────────────┤
-│ riverpod               │  92   │  A+    │ 1 month      │
-│ dio                    │  88   │  A     │ 15 days      │
-│ provider               │  68   │  C     │ 8 months     │
-│ old_package            │  25   │  F     │ 32 months    │
-└────────────────────────┴───────┴────────┴──────────────┘
-
-Summary
-  Average Score : 75.3 / 100
-  Healthy       : 12 / 15  (80%)
-  Warnings      : 2
-  Critical      : 1
-```
+![cura check](screenshots/cura-check.png)
 
 ---
 
@@ -220,31 +200,7 @@ cura view dio --json | jq '.score.total'
 
 **Output:**
 
-```bash
-═════════════════════════════════════════════════════════════════
-
-  dio v5.4.0
-
-  Score : 92 / 100  (A+)
-
-Key Metrics
-  Publisher   : dart.dev  (verified)
-  Pub Score   : 135 / 140
-  Popularity  : 98%
-  Likes       : 12,450
-  Last Update : 1 month ago
-  Platforms   : android, ios, web, linux, macos, windows
-  Flutter Favorite
-
-GitHub
-  Stars       : 12.0K
-  Forks       : 1,234
-  Open Issues : 45
-  Commits 90d : 87
-  Last Commit : 2 days ago
-
-  Recommended — high-quality, actively maintained package
-```
+![cura view](screenshots/cura-view.png)
 
 ---
 
