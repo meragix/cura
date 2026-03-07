@@ -1,41 +1,39 @@
-# 🗺️ Roadmap Complète `cura` (2026-2027)
+# 🗺️ Full Roadmap — `cura` (2026–2027)
 
-> **Vision** : Devenir l'outil de référence pour l'audit de santé des dépendances Dart/Flutter, éliminant le "vibe code" et guidant les développeurs vers des choix de production robustes.
+> **Vision**: Become the reference tool for auditing Dart/Flutter dependency health, eliminating "vibe code" and guiding developers toward robust production choices.
 
 ---
 
-## 📅 Timeline Globale
+## 📅 Global Timeline
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │ Q1 2026      │ Q2 2026      │ Q3 2026      │ Q4 2026    │ 2027      │
 ├─────────────────────────────────────────────────────────────────────┤
 │ MVP          │ Community    │ Advanced     │ Enterprise │ Ecosystem │
-│ v0.1-v0.5    │ v1.0-v1.2    │ v1.3-v1.5    │ v2.0       │ v2.x+     │
+│ v0.1–v0.5   │ v1.0–v1.2   │ v1.3–v1.5   │ v2.0       │ v2.x+     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🎯 Phase 1 : MVP - "Le Fondement" (Q1 2026, ~6-8 semaines)
+## 🎯 Phase 1: MVP — "The Foundation" (Q1 2026, ~6–8 weeks)
 
-### Objectif
+**Goal**: Build a minimal working tool that solves the core problem: **identifying dead packages in a `pubspec.yaml`**.
 
-Créer un outil fonctionnel minimal qui résout le problème principal : **identifier les paquets morts dans un `pubspec.yaml`**.
+---
 
-### Milestones
+### v0.1.0 — Proof of Concept (Week 1–2)
 
-#### **v0.1.0 - Proof of Concept** (Semaine 1-2)
+**Features:**
 
-**Fonctionnalités :**
+- ✅ Working `cura view <package>` command
+- ✅ Basic scoring (maintenance + trust + popularity)
+- ✅ Simple terminal output (no fancy table yet)
+- ✅ Local cache operational
+- ✅ Unit tests for `ScoreCalculator` (>80% coverage)
 
-- ✅ Commande `cura view <package>` fonctionnelle
-- ✅ Scoring basique (maintenance + trust + popularity)
-- ✅ Affichage terminal simple (pas de table élégante encore)
-- ✅ Cache local opérationnel
-- ✅ Tests unitaires du `ScoreCalculator` (>80% coverage)
-
-**Livrable :**
+**Expected output:**
 
 ```bash
 $ cura view dio
@@ -45,81 +43,81 @@ Last update: 15 days ago
 Publisher: dart.dev (verified)
 ```
 
-**Décisions techniques :**
+**Technical decisions:**
 
-- Utiliser `mason_logger` pour les logs colorés
-- Pas encore de gestion de pool de requêtes (ajouté en v0.2)
-- Cache simple sans TTL variable (24h fixe)
+- Use `mason_logger` for colored output
+- No request pool yet (added in v0.2)
+- Simple cache without variable TTL (24h fixed)
 
-**Critères de succès :**
+**Success criteria:**
 
-- [ ] L'outil analyse correctement `dio`, `http`, `flutter_bloc`
-- [ ] Le cache fonctionne et évite les appels répétés
-- [ ] Les tests passent sur CI/CD (GitHub Actions)
+- [ ] Tool correctly analyzes `dio`, `http`, `flutter_bloc`
+- [ ] Cache works and avoids repeated API calls
+- [ ] Tests pass on CI/CD (GitHub Actions)
 
 ---
 
-#### **v0.2.0 - Scan Automatique** (Semaine 3-4)
+### v0.2.0 — Automatic Scan (Week 3–4)
 
-**Fonctionnalités :**
+**Features:**
 
-- ✅ Commande `cura check` qui lit `pubspec.yaml`
-- ✅ Parsing des dépendances (dependencies + dev_dependencies)
-- ✅ Pool de requêtes concurrent (max 5 simultanées)
-- ✅ Barre de progression (`mason_logger.progress()`)
-- ✅ Rapport textuel avec résumé
+- ✅ `cura check` command reading `pubspec.yaml`
+- ✅ Dependency parsing (dependencies + dev_dependencies)
+- ✅ Concurrent request pool (max 5 simultaneous)
+- ✅ Progress bar (`mason_logger.progress()`)
+- ✅ Text report with summary
 
-**Livrable :**
+**Expected output:**
 
 ```bash
 $ cura check
-📦 Analyse de 23 paquets...
+📦 Analyzing 23 packages...
 [████████████████████████] 100%
 
 ╭───────────────────────────────────────╮
-│ RÉSUMÉ                                │
+│ SUMMARY                               │
 ├───────────────────────────────────────┤
-│ ✅ Healthy: 18 paquets                │
-│ ⚠️  Warning: 4 paquets                │
-│ ❌ Critical: 1 paquet                 │
+│ ✅ Healthy:  18 packages              │
+│ ⚠️  Warning:  4 packages              │
+│ ❌ Critical:  1 package               │
 ╰───────────────────────────────────────╯
 
-PAQUETS CRITIQUES:
+CRITICAL PACKAGES:
 - old_package (score: 25/100)
-  └─ Legacy (540+ jours), pas de repository
+  └─ Legacy (540+ days), no repository
 ```
 
-**Défis techniques :**
+**Technical challenges:**
 
-- Parser correctement les dépendances Git/Path (ignorer pour MVP)
-- Gérer les erreurs réseau gracieusement
-- Afficher la progression sans polluer le terminal
+- Correctly parse Git/Path dependencies (ignore for MVP)
+- Handle network errors gracefully
+- Display progress without polluting the terminal
 
-**Critères de succès :**
+**Success criteria:**
 
-- [ ] Analyse un projet Flutter standard (30+ deps) en <30 secondes
-- [ ] Rate limiting respecté (aucune erreur 429)
-- [ ] Gestion d'erreurs robuste (paquet introuvable → warning, pas crash)
+- [ ] Analyzes a standard Flutter project (30+ deps) in <30 seconds
+- [ ] Rate limiting respected (no 429 errors)
+- [ ] Robust error handling (package not found → warning, not crash)
 
 ---
 
-#### **v0.3.0 - Mode CI/CD** (Semaine 5-6)
+### v0.3.0 — CI/CD Mode (Week 5–6)
 
-**Fonctionnalités :**
+**Features:**
 
-- ✅ Flag `--fail-on <score>` qui retourne exit code 1 si seuil atteint
-- ✅ Format JSON (`--json`) pour parsing automatique
-- ✅ Flag `--verbose` pour debug
-- ✅ Documentation complète du README
+- ✅ `--fail-on <score>` flag returning exit code 1 if threshold reached
+- ✅ JSON output (`--json`) for automated parsing
+- ✅ `--verbose` flag for debugging
+- ✅ Complete README documentation
 
-**Livrable :**
+**Expected output:**
 
 ```bash
-# Pipeline GitLab CI
+# GitLab CI pipeline
 $ cura check --fail-on 50 --json > report.json
-$ echo $?  # 1 si un paquet < 50/100
+$ echo $?  # 1 if any package < 50/100
 
-# Format JSON
+# JSON format
 {
   "overall_score": 68,
   "status": "FAILED",
@@ -129,29 +127,29 @@ $ echo $?  # 1 si un paquet < 50/100
 }
 ```
 
-**Cas d'usage :**
+**Use cases:**
 
-- Bloquer un merge request si un paquet critique est ajouté
-- Dashboard de monitoring (intégration avec Grafana/DataDog)
+- Block a merge request if a critical package is added
+- Monitoring dashboard (integration with Grafana/Datadog)
 
-**Critères de succès :**
+**Success criteria:**
 
-- [ ] Intégration réussie dans un pipeline GitHub Actions
-- [ ] Documentation détaillée avec exemples `.gitlab-ci.yml`
-- [ ] Format JSON valide (validation avec JSON Schema)
+- [ ] Successful integration in a GitHub Actions pipeline
+- [ ] Detailed documentation with `.gitlab-ci.yml` examples
+- [ ] Valid JSON output (validated with JSON Schema)
 
 ---
 
-#### **v0.4.0 - UX Polish** (Semaine 7)
+### v0.4.0 — UX Polish (Week 7)
 
-**Fonctionnalités :**
+**Features:**
 
-- ✅ Table ASCII élégante (avec `package:cli_table`)
-- ✅ Couleurs et émojis pour les statuts
-- ✅ Flag `--skip-cache` pour forcer la mise à jour
-- ✅ Commande `cura cache clear`
+- ✅ Elegant ASCII table (with `package:cli_table`)
+- ✅ Colors and emojis for status display
+- ✅ `--skip-cache` flag to force refresh
+- ✅ `cura cache clear` command
 
-**Livrable :**
+**Expected output:**
 
 ```bash
 $ cura check
@@ -165,530 +163,587 @@ $ cura check
 └─────────────────────┴───────┴────────┴─────────────┘
 ```
 
-**Critères de succès :**
+**Success criteria:**
 
-- [ ] Interface comparable à `flutter pub outdated` en qualité
-- [ ] Temps de réponse acceptable (cache hit <50ms)
+- [ ] Interface quality comparable to `flutter pub outdated`
+- [ ] Acceptable response time (cache hit <50ms)
 
 ---
 
-#### **v0.5.0 - Publication Officielle** (Semaine 8)
+### v0.5.0 — Official Publication (Week 8)
 
-**Tâches :**
+**Tasks:**
 
-- ✅ Publication sur pub.dev
-- ✅ Logo et branding
-- ✅ README avec GIF démo
-- ✅ Changelog structuré
-- ✅ Licence MIT
+- ✅ Publish to pub.dev
+- ✅ Logo and branding
+- ✅ README with demo GIF
+- ✅ Structured changelog
+- ✅ MIT license
 - ✅ Contributing guidelines
 
-**Métriques de succès :**
+**Success metrics:**
 
-- [ ] 100+ likes sur pub.dev dans le premier mois
-- [ ] 1000+ téléchargements/semaine
-- [ ] 50+ stars sur GitHub
-- [ ] Aucun bug critique reporté
-
----
-
-## 🌍 Phase 2 : Community - "L'Adoption" (Q2 2026, ~12 semaines)
-
-### Objectif
-
-Construire une communauté active et améliorer l'outil grâce aux retours utilisateurs.
+- [ ] 100+ likes on pub.dev in the first month
+- [ ] 1,000+ downloads/week
+- [ ] 50+ GitHub stars
+- [ ] No critical bugs reported
 
 ---
 
-#### **v1.0.0 - Stable Release** (Semaine 9-10)
+## 🌍 Phase 2: Community — "Adoption" (Q2 2026, ~12 weeks)
 
-**Focus : Production-ready**
+**Goal**: Build an active community and improve the tool based on user feedback.
 
-**Améliorations :**
+---
 
-- 🔒 API stable (pas de breaking changes avant v2.0)
-- 📝 Documentation exhaustive (pub.dev + docs.pub-pulse.dev)
-- 🧪 Tests d'intégration (100+ scénarios)
-- 🐛 Correction de tous les bugs majeurs
+### v1.0.0 — Stable Release (Week 9–10)
 
-**Nouveautés :**
+Focus: Production-ready
 
-- ✅ Support des dépendances Git (`git: url: ...`)
-- ✅ Support des dépendances Path (`path: ../local_pkg`)
-- ✅ Détection des paquets hébergés sur GitLab/Bitbucket
+**Improvements:**
 
-**Exemple :**
+- 🔒 Stable API (no breaking changes before v2.0)
+- 📝 Comprehensive documentation (pub.dev + docs)
+- 🧪 Integration tests (100+ scenarios)
+- 🐛 All major bugs fixed
+
+**New features:**
+
+- ✅ Git dependency support (`git: url: ...`)
+- ✅ Path dependency support (`path: ../local_pkg`)
+- ✅ Detection of packages hosted on GitLab/Bitbucket
+
+**Expected output:**
 
 ```bash
 $ cura check
 ⚠️  internal_package (Git dependency)
-   └─ Impossible à analyser (non publié sur pub.dev)
-   └─ Recommandation: Auditer manuellement
+   └─ Cannot analyze (not published on pub.dev)
+   └─ Recommendation: Audit manually
 ```
 
-**Critères de succès :**
+**Success criteria:**
 
-- [ ] Zéro crash sur 1000 projets Flutter analysés
-- [ ] Score pub.dev de 130/140 minimum
-- [ ] Featured dans Flutter Weekly newsletter
+- [ ] Zero crashes on 1,000 Flutter projects analyzed
+- [ ] pub.dev score of 130/140 minimum
+- [ ] Featured in Flutter Weekly newsletter
 
 ---
 
-#### **v1.1.0 - Alternative Suggestion** (Semaine 11-14)
+## Contributor Guide
 
-**Fonctionnalités :**
+> All contributions are welcome. To maintain project quality, please follow these rules before opening a PR.
 
-- ✅ Commande `cura suggest <package>`
-- ✅ Base de données de similarités (JSON local)
-- ✅ Scoring comparatif
-- ✅ Raisons de la suggestion
+### Before contributing
 
-**Livrable :**
+- [ ] Read [CONTRIBUTING.md](./CONTRIBUTING.md) in full
+- [ ] Check that no existing issue already covers your topic
+- [ ] Open a discussion issue before any significant work
+- [ ] Fork the repo and create a branch from `main`
+
+### Branch naming convention
+
+```text
+feat/v1.1.0-suggest-command
+fix/score-calculation-edge-case
+docs/update-contributing-guide
+test/add-integration-tests-osv
+refactor/extract-cache-strategy
+```
+
+### PR checklist (mandatory)
+
+Every Pull Request must check all of these before review:
+
+- [ ] Branch starts from `main` and is up to date
+- [ ] Title follows [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`)
+- [ ] Unit tests pass: `dart test`
+- [ ] No analysis regressions: `dart analyze`
+- [ ] Formatting respected: `dart format --set-exit-if-changed .`
+- [ ] Test coverage stays >= 80%
+- [ ] A clear description explains the "why" of the change
+- [ ] Edge cases are covered (package not found, network error, invalid cache)
+- [ ] No raw `print()` — use `mason_logger`
+- [ ] New dependencies are justified in the PR description
+
+### Code standards
+
+- Strict hexagonal architecture: the domain never imports infrastructure
+- Manual dependency injection only — no `GetIt` or service locator
+- Typed exceptions only — no `throw Exception('message')`
+- Zero native dependencies outside `dart:io`
+
+### Review process
+
+1. At least **1 approval** required to merge
+2. Blocking comments must be resolved, not ignored
+3. The maintainer performs the merge (not the contributor)
+4. Squash merge mandatory to keep a clean history
+
+---
+
+### v1.1.0 — Alternative Suggestion (Week 11–14)
+
+**Suggested owner**: maintainer + external contributor welcome
+**GitHub label**: `feat`, `good first issue` (for similarity mappings)
+
+**Features to implement:**
+
+- [ ] `cura suggest <package>` command
+- [ ] `SuggestionEntry` data model in the domain layer
+- [ ] Similarity database (`assets/suggestions.json`)
+- [ ] Comparative scoring between source package and alternatives
+- [ ] Display suggestion reasons (performance, maintenance, security)
+- [ ] Support for `.cura/suggestions.yaml` for project-level overrides
+
+**Expected output:**
 
 ```bash
 $ cura suggest shared_preferences
 
-📦 shared_preferences (score: 65/100)
-   └─ Dernière update: 8 mois
-   └─ Publisher: flutter.dev
+shared_preferences (score: 65/100)
+   Last update: 8 months — Publisher: flutter.dev
 
-🔍 Alternatives plus saines:
+Recommended alternatives:
 
-1. ✅ hive (score: 92/100) ⭐ Recommandé
-   └─ NoSQL léger, mieux maintenu
-   └─ +45% plus rapide en lecture
-   └─ Migration: guide disponible
+1. hive (score: 92/100) — Recommended
+   Lightweight NoSQL, better maintained
+   +45% faster reads
+   Migration guide: https://docs.hivedb.dev
 
-2. ⚠️  flutter_secure_storage (score: 88/100)
-   └─ Si besoin de chiffrement
-   └─ Overhead de performance (+20ms)
+2. flutter_secure_storage (score: 88/100)
+   Best if encryption is required
+   Overhead: +20ms per operation
 ```
 
-**Défis techniques :**
+**Technical challenges:**
 
-- Construire une base de similarités (scraping des tags pub.dev)
-- Éviter les suggestions absurdes (`dio` ≠ `http` en usage)
-- Permettre le crowdsourcing (fichier `.cura_suggestions.yaml`)
+- Build the initial similarity database (50+ manual mappings)
+- Avoid out-of-context suggestions (`dio` is not a replacement for `http` in all cases)
+- Allow clean crowdsourcing via PR on the JSON file
 
-**Critères de succès :**
+**Acceptance criteria:**
 
-- [ ] 80% de pertinence des suggestions (validation manuelle)
-- [ ] 50+ mappings de similarités
-- [ ] Mécanisme de contribution communautaire opérationnel
+- [ ] `cura suggest <package>` works for the 20 most-used packages in the Flutter ecosystem
+- [ ] 80%+ suggestion relevance (manual validation by maintainer)
+- [ ] 50+ similarity mappings documented in `assets/suggestions.json`
+- [ ] Contribution mechanism via PR clearly documented in CONTRIBUTING.md
+- [ ] Unit tests for suggestion file parsing
+- [ ] Correct handling of the "no known alternative" case
 
 ---
 
-#### **v1.2.0 - Whitelist Communautaire** (Semaine 15-17)
+### v1.2.0 — Local & Community Whitelist (Week 15–17)
 
-**Fonctionnalités :**
+**Suggested owner**: maintainer
+**GitHub label**: `feat`, `community`
 
-- ✅ Fichier `.cura_whitelist.yaml` dans les projets
-- ✅ Whitelist globale communautaire (GitHub repo)
-- ✅ Commande `cura whitelist add <package> --reason "..."`
+**Features to implement:**
 
-**Use case :**
+- [ ] Support for `.cura/whitelist.yaml` in the current project
+- [ ] Support for global whitelist in `~/.cura/whitelist.yaml`
+- [ ] `cura whitelist add <package> --reason "..."` command
+- [ ] `cura whitelist list` command to inspect active entries
+- [ ] `cura whitelist remove <package>` command
+- [ ] Community whitelist hosted on GitHub (optional sync)
+
+**File format:**
 
 ```yaml
-# .cura_whitelist.yaml
+# .cura/whitelist.yaml
 packages:
-  old_but_gold_pkg:
-    reason: "Package stable, pas de bugs depuis 2 ans"
-    whitelisted_by: "john@company.com"
+  old_but_stable_pkg:
+    reason: "Stable package, no bugs in 2 years, no viable alternative"
+    added_by: "john@company.com"
     date: "2026-04-15"
+    expires: "2026-10-15"   # optional — forces periodic review
 ```
 
-**Impact :**
+**Acceptance criteria:**
 
-- Évite les faux positifs pour les équipes
-- Permet de documenter les exceptions
-- Whitelist partagée sur `github.com/pub-pulse/whitelist`
-
-**Critères de succès :**
-
-- [ ] 100+ paquets dans la whitelist communautaire
-- [ ] Pull requests de la communauté acceptées
+- [ ] Local whitelist takes priority over global
+- [ ] A whitelisted package displays a distinct badge in the results table
+- [ ] Expiration is checked at analysis time and generates a warning if exceeded
+- [ ] `cura whitelist list` displays reasons and dates
+- [ ] 100+ initial packages in the community whitelist on GitHub
+- [ ] Tests covering the merging of both whitelist levels
 
 ---
 
-## 🚀 Phase 3 : Advanced - "L'Intelligence" (Q3 2026, ~12 semaines)
+## 🚀 Phase 3: Advanced — "Intelligence" (Q3 2026, ~12 weeks)
 
-### Objectif
-
-Ajouter des fonctionnalités avancées qui font de `cura` un outil indispensable.
+**Goal**: Add advanced features that make `cura` indispensable in team workflows.
 
 ---
 
-#### **v1.3.0 - Analyse des Dépendances Transitives** (Semaine 18-21)
+### v1.3.0 — Transitive Dependency Analysis (Week 18–21)
 
-**Fonctionnalités :**
+**Suggested owner**: maintainer
+**GitHub label**: `feat`, `hard`
 
-- ✅ Graph de dépendances complet
-- ✅ Détection de paquets morts en profondeur
-- ✅ Visualisation ASCII du graphe
+**Features to implement:**
 
-**Livrable :**
+- [ ] Parse `pubspec.lock` to extract the full dependency graph
+- [ ] Recursive resolution up to N levels deep (default: 3, max: 5)
+- [ ] Cycle detection with clean exit (no infinite loop)
+- [ ] Aggregate scoring taking transitive dependencies into account
+- [ ] ASCII graph visualization in the terminal
+- [ ] `--deep` flag to enable transitive analysis
+
+**Expected output:**
 
 ```bash
 $ cura check --deep
 
-📦 Analyse profonde (3 niveaux)...
+Deep analysis (3 levels)...
 
-┌─ Votre app (score: 85/100)
-│  ├─✅ dio (95/100)
-│  │  └─✅ http_parser (90/100)
-│  ├─⚠️  old_package (45/100)
-│  │  └─❌ deprecated_lib (10/100)  ← RISQUE
-│  └─✅ flutter_bloc (92/100)
+Your app (aggregate score: 85/100)
+├── dio (95/100)
+│   └── http_parser (90/100)
+├── old_package (45/100)
+│   └── deprecated_lib (10/100)  <-- TRANSITIVE RISK
+└── flutter_bloc (92/100)
 
-⚠️  ALERTE: old_package dépend de deprecated_lib (abandonné)
-   Recommandation: Migrer vers new_package
+ALERT: old_package ships deprecated_lib (abandoned 900+ days ago)
+Recommendation: Migrate to new_package
 ```
 
-**Défis techniques :**
+**Technical challenges:**
 
-- Parser le fichier `pubspec.lock` (format complexe)
-- Gérer les cycles de dépendances
-- Limiter la profondeur (max 5 niveaux pour éviter explosion)
+- Parse `pubspec.lock` (complex YAML with nested dependencies)
+- Handle dependency cycles without infinite loops
+- Limit depth (max 5 levels to prevent request explosion)
 
-**Critères de succès :**
+**Acceptance criteria:**
 
-- [ ] Détecte 95%+ des dépendances transitives problématiques
-- [ ] Temps d'analyse <2 minutes pour un projet moyen
+- [ ] Detects 95%+ of problematic transitive dependencies on a reference test project
+- [ ] Analysis time under 2 minutes for a project with 50+ direct dependencies
+- [ ] Cycles are detected and logged without crashing
+- [ ] `--deep` flag documented in `--help`
+- [ ] Integration tests with a fixture `pubspec.lock`
 
 ---
 
-#### **v1.4.0 - Sécurité & CVE** (Semaine 22-25)
+### v1.4.0 — Security & CVE (Week 22–25)
 
-**Fonctionnalités :**
+**Suggested owner**: maintainer + security contributor welcome
+**GitHub label**: `feat`, `security`
 
-- ✅ Intégration avec OSV (Open Source Vulnerabilities)
-- ✅ Détection de CVEs connues
-- ✅ Scoring de sévérité (Critical/High/Medium/Low)
+**Features to implement:**
 
-**Livrable :**
+- [ ] Integration with OSV.dev API (`OsvApiClient` — already architected)
+- [ ] Batch request for all packages in a single pass
+- [ ] CVE → CVSS severity mapping (Critical / High / Medium / Low)
+- [ ] Score automatically set to zero if a Critical CVE is detected
+- [ ] `--security` flag to display the vulnerability report
+- [ ] JSON output enriched with `vulnerabilities` field
+
+**Expected output:**
 
 ```bash
 $ cura check --security
 
-🚨 VULNÉRABILITÉS DÉTECTÉES:
+VULNERABILITIES DETECTED:
 
-❌ CRITICAL: dio@4.0.0
-   └─ CVE-2023-12345: SSRF vulnerability
-   └─ Fix: Mettre à jour vers dio@5.4.0+
-   └─ CVSS Score: 9.8/10
+[CRITICAL] dio@4.0.0
+   CVE-2023-12345 — SSRF vulnerability (CVSS: 9.8)
+   Fix: Update to dio >= 5.4.0
 
-⚠️  MEDIUM: http@0.13.0
-   └─ CVE-2022-67890: Header injection
-   └─ Fix: Mettre à jour vers http@1.0.0+
+[MEDIUM] http@0.13.0
+   CVE-2022-67890 — Header injection (CVSS: 5.4)
+   Fix: Update to http >= 1.0.0
 ```
 
-**Sources de données :**
+**Data sources:**
 
-- GitHub Advisory Database (API gratuite)
-- OSV.dev (Open Source Vulnerabilities)
-- Snyk (si partenariat)
+- OSV.dev (Open Source Vulnerabilities) — free API
+- GitHub Advisory Database — free API
 
-**Critères de succès :**
+**Acceptance criteria:**
 
-- [ ] 100% des CVEs critiques détectées
-- [ ] Faux positifs <2%
+- [ ] 100% of known critical CVEs detected (validated against OSV.dev dataset)
+- [ ] False positives below 2%
+- [ ] Overall score drops to 0 when a Critical CVE is present (rule documented)
+- [ ] Graceful degradation if OSV.dev is unreachable (warning, not crash)
+- [ ] Tests with mocked OSV response fixtures
 
 ---
 
-#### **v1.5.0 - Rapport HTML/PDF** (Semaine 26-29)
+### v1.5.0 — HTML Export & Audit Report (Week 26–29)
 
-**Fonctionnalités :**
+**Suggested owner**: maintainer
+**GitHub label**: `feat`
 
-- ✅ Export HTML interactif
-- ✅ Graphiques (Chart.js)
-- ✅ Historique d'évolution des scores
-- ✅ Export PDF pour audits
+**Features to implement:**
 
-**Livrable :**
+- [ ] `--report html` flag to generate an `audit.html` file
+- [ ] Interactive, filterable, sortable table (vanilla JS)
+- [ ] Score evolution chart over time (Chart.js, using cached data)
+- [ ] "Priority recommendations" section generated automatically
+- [ ] `--output <path>` flag to choose the output path
+
+**Expected output:**
 
 ```bash
 $ cura check --report html --output audit.html
 
-✅ Rapport généré: audit.html
-   └─ Contenu:
-      • Graphique d'évolution temporelle
-      • Tableau interactif filtrable
-      • Recommandations prioritaires
-      • Roadmap de migration
+Report generated: audit.html
+   Contents:
+     - Score evolution chart
+     - Interactive filterable table
+     - Priority recommendations
+     - Migration roadmap
 ```
 
-**Cas d'usage :**
+**Acceptance criteria:**
 
-- Audits de sécurité pour clients
-- Revues trimestrielles en équipe
-- Documentation technique
-
-**Critères de succès :**
-
-- [ ] Rapport professionnel (design moderne)
-- [ ] Export PDF <5MB pour 100 paquets
+- [ ] Report opens in modern browsers with no network dependency
+- [ ] Self-contained HTML file (inline assets or CDN acceptable)
+- [ ] File size under 2MB for a 100-package project
+- [ ] Report data matches terminal output exactly
+- [ ] Non-regression test: compare generated HTML to a reference snapshot
 
 ---
 
-## 🏢 Phase 4 : Enterprise - "La Scale" (Q4 2026, ~12 semaines)
+## 🏢 Phase 4: Enterprise — "Scale" (Q4 2026, ~12 weeks)
 
-### Objectif
-
-Rendre `cura` utilisable en entreprise avec des fonctionnalités de gouvernance.
+**Goal**: Make `cura` usable in enterprise environments with governance and monitoring features.
 
 ---
 
-#### **v2.0.0 - Multi-Projets & Dashboard** (Semaine 30-35)
+### v2.0.0 — Multi-Project & Dashboard (Week 30–35)
 
-**Fonctionnalités :**
+**Suggested owner**: maintainer
+**GitHub label**: `feat`, `breaking-change`
 
-- ✅ Scan de workspaces (monorepos)
-- ✅ Dashboard web local (serveur HTTP intégré)
-- ✅ Comparaison inter-projets
-- ✅ Alertes par email/Slack
+**Features to implement:**
 
-**Livrable :**
+- [ ] `cura serve [--port <port>]` command starting a local HTTP server
+- [ ] Workspace scan: auto-detect `pubspec.yaml` files in a directory
+- [ ] Internal REST API exposing results as JSON
+- [ ] HTML/CSS/JS vanilla dashboard (zero framework)
+- [ ] Cross-project comparison view
+- [ ] Score history persistence with SQLite
+
+**Target architecture:**
+
+- Backend: `package:shelf` (Dart)
+- Frontend: HTML + CSS + Alpine.js for lightweight interactivity
+- Storage: SQLite via `package:sqlite3`
+
+**Expected output:**
 
 ```bash
 $ cura serve --port 8080
 
-🌐 Dashboard disponible sur http://localhost:8080
+Dashboard available at http://localhost:8080
 
-┌─────────────────────────────────────────┐
-│ Projets Monitorés                       │
-├─────────────────────────────────────────┤
-│ app_mobile    │ 85/100 │ 23 paquets    │
-│ app_web       │ 92/100 │ 18 paquets    │
-│ shared_lib    │ 78/100 │ 12 paquets    │
-└─────────────────────────────────────────┘
+Detected projects:
+  app_mobile    85/100   23 packages
+  app_web       92/100   18 packages
+  shared_lib    78/100   12 packages
 ```
 
-**Architecture :**
+**Acceptance criteria:**
 
-- Backend: Dart shelf server
-- Frontend: HTML/CSS/JS vanilla (pas de framework lourd)
-- Stockage: SQLite local
-
-**Critères de succès :**
-
-- [ ] Support de 50+ projets simultanés
-- [ ] Dashboard responsive (mobile-friendly)
+- [ ] Support for 50+ simultaneous projects without visible degradation
+- [ ] Responsive interface (tested on mobile via Chrome DevTools)
+- [ ] Clean server shutdown via Ctrl+C (port released)
+- [ ] `cura serve` command documented in the README
+- [ ] REST API integration tests (endpoints `/projects`, `/packages/:name`)
 
 ---
 
-#### **v2.1.0 - Détection de Licences** (Semaine 36-38)
+### v2.1.0 — License Detection (Week 36–38)
 
-**Fonctionnalités :**
+**Suggested owner**: external contributor welcome
+**GitHub label**: `feat`, `help wanted`
 
-- ✅ Analyse des licences (MIT, Apache, GPL, etc.)
-- ✅ Détection de conflits (GPL dans app propriétaire)
-- ✅ Export de compliance report
+**Features to implement:**
 
-**Livrable :**
+- [ ] Extract license from pub.dev metadata
+- [ ] License compatibility table (MIT, Apache 2.0, BSD, GPL-2, GPL-3, AGPL, etc.)
+- [ ] Conflict detection against the current project's license (config `.cura/config.yaml`)
+- [ ] `--licenses` flag to display the license report
+- [ ] CSV export of license report for compliance audits
+
+**Expected output:**
 
 ```bash
 $ cura check --licenses
 
-⚠️  CONFLIT DE LICENCE DÉTECTÉ:
+LICENSE CONFLICT DETECTED:
 
-Votre app: Licence propriétaire
-├─ dio (Apache 2.0) ✅ Compatible
-├─ flutter_bloc (MIT) ✅ Compatible
-└─ gpl_package (GPL-3.0) ❌ INCOMPATIBLE
-   └─ GPL-3.0 nécessite open-sourcing
+Your app: Proprietary license
+├── dio (Apache 2.0)       compatible
+├── flutter_bloc (MIT)     compatible
+└── gpl_package (GPL-3.0)  INCOMPATIBLE
+    GPL-3.0 requires open-sourcing the project
 
-📄 Compliance Report: licenses_report.pdf
+CSV report generated: licenses_report.csv
 ```
 
-**Critères de succès :**
+**Acceptance criteria:**
 
-- [ ] 95%+ de précision sur détection de licences
-- [ ] Format rapport compatible ISO 27001
+- [ ] Precision >= 95% on license detection (manual validation)
+- [ ] The 10 most common licenses in the pub.dev ecosystem are handled
+- [ ] A GPL conflict in a proprietary project generates an error (exit code 1)
+- [ ] CSV report is importable in Excel and Google Sheets without manipulation
 
 ---
 
-#### **v2.2.0 - Plugins & Extensions** (Semaine 39-41)
+### v2.2.0 — Plugin System (Week 39–41)
 
-**Fonctionnalités :**
+**Suggested owner**: maintainer
+**GitHub label**: `feat`, `architecture`
 
-- ✅ Système de plugins (Dart packages)
-- ✅ Hooks personnalisables
-- ✅ Marketplace de plugins communautaires
+**Features to implement:**
 
-**Exemple plugin :**
+- [ ] `CuraPlugin` interface in the domain layer (port)
+- [ ] Hooks: `onAnalysisStart`, `onPackageScored`, `onCriticalPackageDetected`, `onAnalysisComplete`
+- [ ] Plugin loading via `.cura/config.yaml` configuration
+- [ ] Official `cura_plugin_github_actions` plugin (PR annotation)
+- [ ] Plugin API documentation in `/docs/plugins.md`
+
+**Target interface:**
 
 ```dart
-// package: cura_plugin_jira
-class JiraPlugin extends PubPulsePlugin {
-  @override
-  Future<void> onCriticalPackageDetected(PackageInfo pkg) async {
-    await jiraClient.createIssue(
-      title: 'Package critique détecté: ${pkg.name}',
-      priority: 'High',
-    );
-  }
+abstract class CuraPlugin {
+  String get name;
+  String get version;
+
+  Future<void> onAnalysisStart(List<String> packages) async {}
+  Future<void> onPackageScored(PackageScore result) async {}
+  Future<void> onCriticalPackageDetected(PackageScore result) async {}
+  Future<void> onAnalysisComplete(AnalysisReport report) async {}
 }
 ```
 
-**Critères de succès :**
+**Acceptance criteria:**
 
-- [ ] 10+ plugins officiels
-- [ ] API de plugins documentée
-
----
-
-## 🌐 Phase 5 : Ecosystem - "L'Écosystème" (2027+)
-
-### Objectif
-
-Construire un écosystème complet autour de `cura`.
+- [ ] 3+ official plugins published on pub.dev at launch
+- [ ] Plugin API documented with complete examples
+- [ ] A failing plugin does not crash `cura` (error isolation)
+- [ ] Plugin API versioning (`PLUGIN_API_VERSION = 1`)
 
 ---
 
-#### **v2.3.0 - API Publique Cloud** (Q1 2027)
+## 🌐 Phase 5: Ecosystem — "The Ecosystem" (2027+)
 
-**Fonctionnalités :**
-
-- ✅ API REST cloud (`api.pub-pulse.dev`)
-- ✅ Webhooks pour monitoring continu
-- ✅ Intégrations natives (GitHub App, GitLab Bot)
-
-**Business model :**
-
-- Tier gratuit: 1000 requêtes/mois
-- Tier Pro: 50,000 requêtes/mois ($29/mois)
-- Tier Enterprise: Illimité ($299/mois)
+**Goal**: Build a sustainable ecosystem around `cura`: cloud API, AI, SaaS platform.
 
 ---
 
-#### **v2.4.0 - AI-Powered Suggestions** (Q2 2027)
+### v2.3.0 — Public Cloud API (Q1 2027)
 
-**Fonctionnalités :**
+**Target features:**
 
-- ✅ LLM pour générer des guides de migration
-- ✅ Analyse de code pour détecter l'usage réel
-- ✅ Suggestions contextuelles
+- [ ] Hosted REST cloud API (`api.cura.dev`)
+- [ ] API key authentication
+- [ ] Webhooks for continuous dependency monitoring
+- [ ] Native GitHub App and GitLab Bot integration
+- [ ] Free tier: 1,000 requests/month
+- [ ] Pro tier: 50,000 requests/month ($29/month)
+- [ ] Enterprise tier: unlimited ($299/month)
 
-**Exemple :**
+**Acceptance criteria:**
+
+- [ ] Availability SLA >= 99.5%
+- [ ] Median latency < 200ms per request
+- [ ] Complete and up-to-date OpenAPI documentation
+
+---
+
+### v2.4.0 — AI-Powered Suggestions (Q2 2027)
+
+**Target features:**
+
+- [ ] Static analysis of the source code to detect actual package usage
+- [ ] Personalized migration guide generation via LLM
+- [ ] Contextual suggestions based on project code (not just package name)
+- [ ] LLM API key optional (graceful degradation without key)
+
+**Expected output:**
 
 ```bash
 $ cura suggest shared_preferences --ai
 
-🤖 Analyse IA en cours...
+Analyzing code...
 
-✅ Votre code utilise shared_preferences pour:
-   - Stockage de tokens JWT (détecté dans auth_service.dart)
-   - Préférences utilisateur (détecté dans settings_page.dart)
+Usage detected in your codebase:
+  - JWT token storage (auth_service.dart:42)
+  - User UI preferences (settings_page.dart:18)
 
-💡 Recommandation personnalisée:
-   1. Migrer tokens vers flutter_secure_storage (chiffrement)
-   2. Garder shared_preferences pour préférences UI
+Recommendations:
+  1. flutter_secure_storage for tokens (AES encryption)
+  2. Keep shared_preferences for UI preferences
 
-📝 Guide de migration généré: migration_guide.md
+Migration guide generated: migration_guide.md
 ```
 
----
+**Acceptance criteria:**
 
-#### **v3.0.0 - The Ultimate Tool** (Q4 2027)
-
-**Vision finale :**
-
-- Plateforme SaaS complète (`pub-pulse.dev`)
-- Monitoring temps réel
-- Recommandations prédictives (ML)
-- Intégrations avec tous les outils DevOps
-- Certification "Pub Pulse Verified" pour paquets de qualité
+- [ ] Static analysis covers Dart and Flutter without obvious false positives
+- [ ] Generated migration guide is syntactically valid
+- [ ] LLM API usage is optional and documented
 
 ---
 
-## 📊 Métriques de Succès Globales
+### v3.0.0 — Full Platform (Q4 2027)
+
+- [ ] `cura.dev` SaaS platform with hosted web dashboard
+- [ ] Continuous monitoring and real-time alerts
+- [ ] Predictive recommendations based on pub.dev trends
+- [ ] DevOps integrations: Jira, Linear, PagerDuty, Datadog
+- [ ] "Cura Verified" certification for quality packages
+
+---
+
+## 📊 Global Success Metrics
 
 ### Adoption
 
-| Métrique | 6 mois | 12 mois | 24 mois |
-|----------|--------|---------|---------|
-| Téléchargements hebdomadaires | 5,000 | 20,000 | 100,000 |
-| Projets utilisant cura | 1,000 | 10,000 | 50,000 |
-| Stars GitHub | 500 | 2,000 | 10,000 |
-| Contributors | 10 | 50 | 200 |
+| Metric                     | 6 months | 12 months | 24 months |
+|----------------------------|----------|-----------|-----------|
+| Weekly downloads           | 5,000    | 20,000    | 100,000   |
+| Projects using cura        | 1,000    | 10,000    | 50,000    |
+| GitHub stars               | 500      | 2,000     | 10,000    |
+| Active contributors        | 10       | 50        | 200       |
 
-### Impact
+### Measured impact
 
-- **Réduction du temps d'audit** : 80% (8h → 1.5h)
-- **Détection de paquets morts** : 95%+ de précision
-- **Adoption en entreprise** : 100+ entreprises en Q4 2026
-
----
-
-## 🎓 Enseignements à Tirer
-
-### Ce qui fera réussir le projet
-
-1. **Résoudre un vrai problème** : La pollution pub.dev est réelle
-2. **Qualité dès le MVP** : Première impression cruciale
-3. **Communauté early** : Impliquer les utilisateurs dès v0.5
-4. **Documentation excellente** : Le code ne suffit pas
-5. **Open-source sincère** : Accepter les contributions
-
-### Ce qui pourrait faire échouer le projet
-
-1. **Faux positifs élevés** : Tue la confiance
-2. **Perf médiocre** : Personne n'attend 5 minutes
-3. **API pub.dev instable** : Plan B nécessaire (cache agressif)
-4. **Monétisation prématurée** : Garder gratuit jusqu'à v2.0
-5. **Complexité excessive** : Rester simple et focalisé
+- Audit time reduction: 80% (8h → 1.5h)
+- Dead package detection accuracy: >= 95%
+- Enterprise adoption: 100+ teams by Q4 2026
 
 ---
 
-## 🛠️ Stack Technique Finale
+## 🛠️ Tech Stack
 
 ```yaml
-Backend:
-  - Dart pur (CLI)
-  - Shelf (serveur HTTP pour dashboard)
-  - SQLite (stockage local)
-  
-Frontend (Dashboard):
-  - HTML/CSS/JS vanilla
-  - Chart.js (graphiques)
-  - Alpine.js (interactivité légère)
-  
-Infra:
-  - Docker (déploiement)
+CLI:
+  - Pure Dart
+  - mason_logger (terminal output)
+  - args (command parsing)
+
+Cache & Storage:
+  - JSON files (package cache, dart:io only)
+  - SQLite (dashboard history, v2.0+)
+
+Dashboard (v2.0+):
+  - Shelf (Dart HTTP server)
+  - HTML + CSS + Alpine.js
+  - Chart.js (charts)
+
+Infrastructure:
   - GitHub Actions (CI/CD)
-  - DigitalOcean (API cloud)
-  
+  - Docker (distribution packaging)
+
 Monitoring:
   - Sentry (error tracking)
-  - Plausible (analytics privacy-first)
+  - Plausible (privacy-first analytics)
 ```
 
 ---
 
-## ✅ Prochaines Actions Immédiates
-
-Pour démarrer aujourd'hui :
-
-1. ✅ **Créer le repo GitHub**
-   - Structure des dossiers
-   - README avec vision
-   - LICENSE (MIT)
-
-2. ✅ **Implémenter v0.1.0**
-   - `cura view <package>`
-   - Tests de base
-   - CI/CD GitHub Actions
-
-3. ✅ **Première release**
-   - Publier sur pub.dev
-   - Annoncer sur Reddit r/FlutterDev
-   - Poster sur Twitter/X
-
-4. 📣 **Collecter feedback**
-   - Créer Discord/Slack communautaire
-   - Issues template GitHub
-   - Roadmap publique (GitHub Projects)
-
----
-
-**Conclusion** : Ce projet a un potentiel énorme. La clé est de démarrer simple (MVP en 6 semaines), itérer vite, et construire une communauté engagée. Le marché est là, le problème est réel, l'architecture est solide. **Time to ship!** 🚀
+**Conclusion**: The key to success is starting simple, iterating on field feedback, and maintaining exemplary code quality to attract serious contributors. The market is real, the architecture is solid. Every PR counts.
