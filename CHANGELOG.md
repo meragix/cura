@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.8.0] - 2026-03-08
 
-## [0.8.11] - 2026-03-08
-
 ### Added
 
 - **Strategy pattern for scoring**: `CalculateScore` is now a pure orchestrator delegating to `VitalityDimension`, `TechnicalHealthDimension`, `TrustDimension`, `MaintenanceDimension`, `PenaltyEvaluator`, `RedFlagDetector`, and `RecommendationEngine` — each independently testable via the `ScoringInput` Dart record.
@@ -147,7 +145,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operational local cache.
 - ScoreCalculator unit tests (>80% coverage)
 
-[unreleased]: https://github.com/meragix/cura/compare/cura-0.7.0...HEAD
+[unreleased]: https://github.com/meragix/cura/compare/cura-0.8.0...HEAD
+[0.8.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.7.0]: https://github.com/meragix/cura/releases/tag/cura-0.7.0
 [0.6.1]: https://github.com/meragix/cura/releases/tag/cura-0.6.1
 [0.6.0]: https://github.com/meragix/cura/releases/tag/cura-0.6.0
