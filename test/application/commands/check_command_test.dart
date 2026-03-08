@@ -183,6 +183,7 @@ void main() {
           total: any(named: 'total'),
           failures: any(named: 'failures'),
           stopwatch: any(named: 'stopwatch'),
+          passed: any(named: 'passed'),
         )).thenReturn(null);
     when(() => presenter.showJsonOutput(any())).thenReturn(null);
     when(() => presenter.showError(any())).thenReturn(null);
@@ -483,6 +484,7 @@ void main() {
             total: any(named: 'total'),
             failures: any(named: 'failures'),
             stopwatch: any(named: 'stopwatch'),
+            passed: any(named: 'passed'),
           ));
     });
 
@@ -527,6 +529,7 @@ void main() {
             total: any(named: 'total'),
             failures: any(named: 'failures'),
             stopwatch: any(named: 'stopwatch'),
+            passed: any(named: 'passed'),
           ));
     });
 
@@ -546,6 +549,7 @@ void main() {
             total: any(named: 'total'),
             failures: any(named: 'failures'),
             stopwatch: any(named: 'stopwatch'),
+            passed: any(named: 'passed'),
           )).called(1);
       verifyNever(() => presenter.showJsonOutput(any()));
     });

@@ -139,7 +139,24 @@ class CheckPresenter {
     required int total,
     required int failures,
     required Stopwatch stopwatch,
+    required bool passed,
   }) {
+    // Quiet mode: minimal PASS/FAIL output only.
+    if (_logger.isQuiet) {
+      _logger.write(passed ? 'PASS\n' : 'FAIL\n');
+      if (!passed) {
+        final criticalResults =
+            _results.where((r) => r.score.total < 50).toList();
+        if (criticalResults.isNotEmpty) {
+          _logger.write('\nCRITICAL ISSUES (require action):\n');
+          for (final r in criticalResults) {
+            _logger.write('  ✗ ${r.name} (score: ${r.score.total})\n');
+          }
+        }
+      }
+      return;
+    }
+
     _logger.spacer();
 
     // ------------------------------------------------------------------
@@ -319,7 +336,8 @@ class CheckPresenter {
       },
     };
 
-    _logger.info(const JsonEncoder.withIndent('  ').convert(output));
+    // Use write() so JSON output is never suppressed by quiet mode.
+    _logger.write('${const JsonEncoder.withIndent('  ').convert(output)}\n');
   }
 
   /// Displays a top-level error message (e.g. "no packages found").

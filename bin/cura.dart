@@ -121,8 +121,13 @@ Future<void> main(List<String> arguments) async {
   // CircleCI, Bitrise, and most other CI platforms). In CI mode: no colors,
   // no emojis, no spinners — plain text output for log readability.
   final isCI = Platform.environment['CI']?.isNotEmpty == true;
-  final logger =
-      isCI ? LoggerFactory.minimal() : LoggerFactory.fromConfig(config);
+  final isQuiet =
+      arguments.contains('--quiet') || arguments.contains('-q');
+  final logger = isCI
+      ? LoggerFactory.minimal()
+      : isQuiet
+          ? LoggerFactory.quiet()
+          : LoggerFactory.fromConfig(config);
 
   // ErrorHandler wraps the runner so every unhandled exception is formatted
   // with context-aware suggestions before the process exits.

@@ -168,6 +168,11 @@ class CheckCommand extends Command<int> {
     // Runtime overrides — CLI flags take precedence over the config file.
     final minScore =
         int.tryParse(argResults!['min-score'] as String? ?? '') ?? 70;
+    if (minScore < 0 || minScore > 100) {
+      _presenter.showError(
+          '--min-score must be between 0 and 100 (got $minScore)');
+      return 1;
+    }
     final failOnVulnerable = argResults!['fail-on-vulnerable'] as bool;
     final failOnDiscontinued = argResults!['fail-on-discontinued'] as bool;
 
@@ -237,6 +242,7 @@ class CheckCommand extends Command<int> {
         total: packagesToAudit.length,
         failures: failureCount,
         stopwatch: _stopwatch,
+        passed: failureCount == 0 && auditFailureCount == 0,
       );
     }
 
