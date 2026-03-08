@@ -2,7 +2,7 @@
 
 ## Overview
 
-Cura calculates a **health score from 0 to 100** for each package based on four
+Cura calculates a health score from 0 to 100 for each package based on four
 weighted dimensions, plus bonuses and penalties applied on top:
 
 ```text
@@ -17,7 +17,7 @@ Total Score = Vitality (40) + Technical Health (30) + Trust (20) + Maintenance (
 
 ### 1. Vitality — 40 pts
 
-Measures how actively maintained the package is.
+Vitality reflects the recency and frequency of package updates.
 
 | Last update  | Base points |
 |--------------|-------------|
@@ -28,16 +28,15 @@ Measures how actively maintained the package is.
 | 1–2 years    | 10          |
 | > 2 years    | 0           |
 
-**Stability bonus (+5 pts):** A package that is 6+ months old but has a proven
-track record avoids the staleness penalty. A package qualifies as stable when:
+**Stability bonus (+5 pts):** Applies to packages 6+ months old that meet all of the following criteria:
 
 - Pana score ≥ 130/130, **and**
 - Popularity > 70 %, **and**
 - Version is a stable `1.x+` release (no pre-release suffix)
 
-OR when it is published by a [trusted publisher](#trusted-publisher-floor).
+OR when the package is published by a [trusted publisher](#trusted-publisher-floor).
 
-**GitHub activity bonus (+5 pts):** Awarded when the repository recorded more
+**GitHub activity bonus (+5 pts):** Applies when the repository recorded more
 than 10 commits in the last 90 days (requires GitHub data to be available).
 
 **Examples:**
@@ -53,7 +52,7 @@ than 10 commits in the last 90 days (requires GitHub data to be available).
 
 ### 2. Technical Health — 30 pts
 
-Evaluates code quality, language evolution adoption, and platform coverage.
+Technical Health evaluates code quality, language compliance, and platform coverage.
 
 #### a) Pana score — 0–15 pts
 
@@ -107,7 +106,7 @@ Technical total =  30 / 30
 
 ### 3. Trust — 20 pts
 
-Measures community confidence and adoption.
+Trust reflects community adoption and download activity.
 
 #### a) Pub.dev likes — 0–10 pts
 
@@ -153,7 +152,7 @@ Trust total      =  23 / 23  (clamped to 20 by weight normalisation)
 
 ### 4. Maintenance — 10 pts
 
-Indicates official backing and long-term reliability.
+Maintenance reflects official backing and recognition.
 
 #### a) Verified publisher — 5 pts
 
@@ -176,7 +175,7 @@ dimensions are summed. The result is then clamped to `[0, 100]`.
 | No source repository linked                     | −30 pts   |
 | Experimental `0.0.x` version stalled > 1 year  | −20 pts   |
 
-A package with no repository and an experimental stalled version can lose up
+A package with no repository and an experimental stalled version loses up
 to 50 pts, which typically pushes the score below the critical threshold (< 50).
 
 ---
@@ -192,13 +191,9 @@ This is a **floor**, not an exemption:
 - Trusted publishers still go through full dimension scoring.
 - Penalties still apply (a Google package with no repository loses 30 pts).
 - [Red flags](#red-flags) are still detected and surfaced to the user.
-- The [zero-score overrides](#zero-score-overrides) below take precedence —
-  a discontinued or critically vulnerable trusted-publisher package still
+- The [zero-score overrides](#zero-score-overrides) below take precedence.
+  A discontinued or critically vulnerable trusted-publisher package still
   scores 0.
-
-This models the real-world situation correctly: a stale or unlicensed official
-package should still be flagged, even if the baseline trust in the publisher
-keeps its numeric score above the warning threshold.
 
 ---
 
@@ -212,20 +207,18 @@ floor:
 2. **Critical security vulnerability** — at least one CVE with
    `severity == critical` detected via OSV.dev with no known patch.
 
-These are deal-breakers regardless of how high the package otherwise scores.
-
 ---
 
 ## Red Flags
 
-Red flags are **qualitative risk signals** that complement the numeric score.
+Red flags are qualitative risk signals that complement the numeric score.
 They are evaluated for every package, including trusted-publisher packages.
 Each flag carries a typed severity level:
 
 | Severity   | Meaning                                     |
 |------------|---------------------------------------------|
-| `critical` | Immediate risk — action or avoidance needed |
-| `warning`  | Elevated risk — review recommended          |
+| `critical` | Immediate risk; action or avoidance required|
+| `warning`  | Elevated risk; review recommended           |
 | `info`     | Worth monitoring                            |
 
 | Flag                         | Severity | Condition                                            |
@@ -241,20 +234,20 @@ Each flag carries a typed severity level:
 | `NotDart3CompatibleFlag`     | warning  | Not tagged `is:dart3-compatible`                    |
 | `NotWasmReadyFlag`           | info     | Web package not tagged `is:wasm-ready`              |
 | `MissingLicenseFlag`         | critical | No SPDX license detected — legal risk (priority)   |
-| `MultipleRisksFlag`          | critical | ≥ 3 flags on an unverified package — suspicious     |
+| `MultipleRisksFlag`          | critical | ≥ 3 flags on an unverified package                  |
 
 `MissingLicenseFlag` is a priority legal-risk signal: any package without a
 detectable SPDX license requires legal review before commercial use.
 
 `MultipleRisksFlag` is prepended to the list when three or more individual
-flags are present on an unverified package, giving tools a single top-level
-signal to act on.
+flags are present on an unverified package, providing a single top-level
+signal for downstream tooling.
 
 ---
 
 ## Recommendations
 
-Recommendations are **typed, prioritised, actionable guidance** derived from
+Recommendations are typed, prioritised, actionable guidance derived from
 the score and red flags. Each recommendation has a level:
 
 | Level      | Meaning                                          |
@@ -262,7 +255,7 @@ the score and red flags. Each recommendation has a level:
 | `critical` | Do not use in production without resolution      |
 | `warning`  | Review required before production use            |
 | `action`   | Specific investigation step recommended          |
-| `advisory` | General guidance — low urgency                   |
+| `advisory` | General guidance, low urgency                    |
 
 Key recommendation rules (in priority order):
 
@@ -282,14 +275,14 @@ Key recommendation rules (in priority order):
 Grades are derived from the final `total` score after all dimension scores,
 bonuses, penalties, and the trusted-publisher floor are applied.
 
-| Score range | Grade | Meaning                         |
-|-------------|-------|---------------------------------|
-| 90–100      | A+    | Excellent — production ready    |
-| 80–89       | A     | Very good — highly recommended  |
-| 70–79       | B     | Good — safe to use              |
-| 60–69       | C     | Fair — use with caution         |
-| 50–59       | D     | Poor — consider alternatives    |
-| 0–49        | F     | Critical — avoid                |
+| Score range | Grade | Meaning                      |
+|-------------|-------|------------------------------|
+| 90–100      | A+    | Excellent, production-ready  |
+| 80–89       | A     | Very good, recommended       |
+| 70–79       | B     | Good, safe to use            |
+| 60–69       | C     | Fair, use with caution       |
+| 50–59       | D     | Poor, consider alternatives  |
+| 0–49        | F     | Critical, avoid              |
 
 ---
 

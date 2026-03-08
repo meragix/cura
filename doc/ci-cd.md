@@ -1,28 +1,26 @@
 # CI/CD Integration
 
-Cura is designed for seamless pipeline integration:
+Cura integrates with CI/CD pipelines via the following mechanisms:
 
 - Structured exit codes (`0` = pass, `1` = fail)
 - `--quiet` mode for clean logs
 - `--json` output for downstream tooling
 - Configurable thresholds via project config or CLI flags
-- Local SQLite cache that can be persisted between runs
+- Local JSON file cache, persistable between runs
 
 ---
 
 ## Quick Setup
 
-Add a project config so every developer and pipeline uses the same standards:
+Commit a project config to enforce consistent standards across all environments:
 
 ```yaml
-# ./.cura/config.yaml — commit this file
+# ./.cura/config.yaml
 theme: minimal
 use_colors: false
 min_score: 80
 fail_on_vulnerable: true
 ```
-
-Then install and run in one step:
 
 ```bash
 dart pub global activate cura
@@ -101,7 +99,7 @@ jobs:
           path: cura-report.json
 ```
 
-The cache key is tied to `pubspec.lock` so it is invalidated whenever
+The cache key is tied to `pubspec.lock` and is invalidated whenever
 dependencies change.
 
 ---
@@ -183,7 +181,7 @@ workflows:
 | `0`  | All packages passed all configured checks              |
 | `1`  | One or more packages failed the threshold or have CVEs |
 
-Use in shell scripts:
+Shell script usage:
 
 ```bash
 cura check --min-score 80 --quiet
@@ -236,7 +234,7 @@ cura check --json | jq '.packages[] | select(.score.total < 70) | .name'
 
 **Symptom:** `Rate limit exceeded` error from the GitHub API.
 
-**Fix:** Persist the `~/.cura/cache/` directory between runs (see examples
+**Resolution:** Persist the `~/.cura/cache/` directory between runs (see examples
 above), or inject a GitHub token:
 
 ```bash
@@ -245,7 +243,7 @@ cura config set github_token "$GITHUB_TOKEN"
 
 ### Job times out
 
-**Fix:** Skip GitHub metrics or ensure caching is enabled:
+**Resolution:** Skip GitHub metrics or ensure caching is enabled:
 
 ```bash
 cura check --no-github
@@ -253,7 +251,7 @@ cura check --no-github
 
 ### Internal packages fail the check
 
-**Fix:** Add them to `ignore_packages` in the project config:
+**Resolution:** Add them to `ignore_packages` in the project config:
 
 ```yaml
 # ./.cura/config.yaml

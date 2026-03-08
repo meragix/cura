@@ -1,6 +1,6 @@
 # Development Guide
 
-Complete guide for setting up Cura locally and contributing code.
+Local setup, testing procedures, and contribution workflow for Cura.
 
 ---
 
@@ -73,7 +73,7 @@ lib/src/
   infrastructure/              # External adapters
     api/clients/               # pub.dev, GitHub, OSV.dev HTTP clients
     aggregators/               # MultiApiAggregator, CachedAggregator
-    cache/                     # SQLite database + TTL strategy
+    cache/                     # JSON file cache + TTL strategy
     repositories/              # YAML config repository
 
   presentation/
@@ -133,7 +133,7 @@ dart test --reporter=expanded
 dart test --coverage=coverage
 ```
 
-**Target:** >= 80 % line coverage across unit and integration tests.
+Target: >= 80 % line coverage across unit and integration tests.
 
 ### Writing a unit test
 
@@ -170,7 +170,7 @@ dart analyze
 dart fix --apply
 ```
 
-All three must pass before opening a pull request.
+All three checks must pass before opening a pull request.
 
 ---
 
@@ -182,7 +182,7 @@ All three must pass before opening a pull request.
    git checkout -b feat/my-feature
    ```
 
-2. Make changes, run tests and analysis:
+2. Run tests and static analysis after changes:
 
    ```bash
    dart test
@@ -200,27 +200,26 @@ All three must pass before opening a pull request.
 
 4. Push and open a pull request against `main`.
 
-Branch naming convention: `feat/description`, `fix/description`,
-`chore/description`.
+Branch naming: `feat/description`, `fix/description`, `chore/description`.
 
 ---
 
 ## Architecture Principles
 
-- **No service locator** -- all dependencies are injected via constructors.
-- **Domain isolation** -- `lib/src/domain/` must not import anything from
+- **No service locator** — all dependencies are injected via constructors.
+- **Domain isolation** — `lib/src/domain/` must not import anything from
   `infrastructure/` or `presentation/`.
-- **Ports & Adapters** -- domain interfaces (`ports/`) define contracts;
+- **Ports & Adapters** — domain interfaces (`ports/`) define contracts;
   infrastructure provides concrete implementations.
-- **Sealed result types** -- use `Result<T>` and `PackageResult` instead of
+- **Sealed result types** — use `Result<T>` and `PackageResult` instead of
   throwing exceptions across layer boundaries.
-- **Minimum viable complexity** -- do not add abstractions, helpers, or
-  configuration options that do not have an immediate use case.
+- **Minimum viable complexity** — do not add abstractions, helpers, or
+  configuration options without an immediate use case.
 
 ---
 
 ## Related
 
-- [Architecture overview](architecture.md) -- layer diagram and key patterns
-- [Configuration reference](configuration.md) -- all config keys
-- [Scoring algorithm](scoring.md) -- how scores are calculated
+- [Architecture overview](architecture.md) — layer diagram and key patterns
+- [Configuration reference](configuration.md) — all config keys
+- [Scoring algorithm](scoring.md) — how scores are calculated

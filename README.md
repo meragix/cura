@@ -1,12 +1,4 @@
-# 🩺 Cura
-
-<!-- <p align="center">
-  <img src="assets/logo.png" alt="Cura Logo" width="200"/>
-</p> -->
-
-<p align="center">
-  <strong>Stop guessing. Start scoring. Ship with confidence.</strong>
-</p>
+# Cura
 
 <p align="center">
   <a href="https://pub.dev/packages/cura"><img src="https://img.shields.io/pub/v/cura.svg" alt="Pub Version"></a>
@@ -17,13 +9,11 @@
 
 ---
 
-## Why Cura?
+## Overview
 
-Every Flutter project accumulates dependencies. Most teams pick packages by instinct — a quick pub.dev glance, a few GitHub stars, a "looks maintained" gut feeling. Then, months later, a package stops receiving updates, a CVE lands, or an abandoned dependency blocks your SDK upgrade.
+Cura computes a health score (0–100) for each package in a Flutter or Dart project by querying pub.dev, GitHub, and OSV.dev. A weighted algorithm evaluates four dimensions: vitality, technical health, trust, and maintenance. The result is an objective, auditable metric for every dependency in the project.
 
-**Cura turns that guesswork into a data-driven score.**
-
-One command audits your entire dependency tree against pub.dev, GitHub, and OSV.dev, produces an objective 0–100 health score for each package, and fails your CI pipeline before a problem reaches production.
+A single command audits the entire dependency tree, surfaces security advisories, and integrates with CI/CD pipelines as a configurable quality gate.
 
 ```bash
 dart pub global activate cura
@@ -55,18 +45,18 @@ cura check
 
 ### Core
 
-- **Full project audit** — scans every dependency in `pubspec.yaml` in seconds
-- **Objective scoring** — 0–100 with a transparent, weighted algorithm
-- **Security checks** — CVE detection via OSV.dev; critical vulnerabilities force score to 0
-- **Smart suggestions** — recommends higher-scoring alternatives for low-scoring packages
-- **Local JSON cache** — repeat runs are instant; TTL scales with package popularity; zero native dependencies
+- **Full project audit**: analyzes every dependency declared in `pubspec.yaml`
+- **Objective scoring**: 0–100 score computed by a transparent, weighted algorithm
+- **Security checks**: CVE detection via OSV.dev; critical vulnerabilities force the score to 0
+- **Smart suggestions**: recommends higher-scoring alternatives for low-scoring packages
+- **Local JSON cache**: repeat runs are served from disk; TTL scales with package popularity; no native dependencies required
 
 ### Developer Experience
 
-- **Beautiful CLI** — color-coded tables, progress bars, score breakdowns
-- **Four themes** — Dark, Light, Minimal, Dracula
-- **Hierarchical config** — project config overrides global config overrides defaults
-- **CI/CD ready** — structured exit codes, `--json` output, `--quiet` mode
+- **CLI output**: color-coded tables, progress bars, score breakdowns
+- **Four themes**: Dark, Light, Minimal, Dracula
+- **Hierarchical config**: project config overrides global config, which overrides built-in defaults
+- **CI/CD ready**: structured exit codes, `--json` output, `--quiet` mode
 
 ### Data Sources
 
@@ -110,7 +100,7 @@ dart pub global activate cura
 cura --version
 ```
 
-Make sure `~/.pub-cache/bin` is in your `PATH`. The Dart installer adds it automatically; if not, add it manually:
+`~/.pub-cache/bin` must be in your `PATH`. The Dart installer adds it automatically. If not present, add it manually:
 
 ```bash
 export PATH="$PATH:$HOME/.pub-cache/bin"
@@ -136,7 +126,7 @@ dart pub global activate --source path .
 
 ### Check Command
 
-Audit every dependency declared in `pubspec.yaml`.
+Audits every dependency declared in `pubspec.yaml`.
 
 ```bash
 cura check [options]
@@ -159,7 +149,7 @@ cura check [options]
 # Audit the current project
 cura check
 
-# Strict CI gate: score ≥ 80, no CVEs, no discontinued packages
+# Strict CI gate: score >= 80, no CVEs, no discontinued packages
 cura check --min-score 80 --fail-on-vulnerable --fail-on-discontinued
 
 # Export a JSON report
@@ -179,7 +169,7 @@ echo $?   # 0 = all passed, 1 = failures
 
 ### View Command
 
-Deep-dive into a single package.
+Displays the full health report for a single package.
 
 ```bash
 cura view <package> [options]
@@ -206,7 +196,7 @@ cura view dio --json | jq '.score.total'
 
 ### Config Command
 
-Read and write Cura configuration.
+Reads and writes Cura configuration.
 
 ```bash
 cura config <subcommand> [options]
@@ -241,7 +231,7 @@ cura config set theme dracula
 
 ### Cache Command
 
-Manage the local JSON file cache without touching package analysis.
+Manages the local JSON file cache without triggering package analysis.
 
 ```bash
 cura cache <subcommand>
@@ -256,13 +246,13 @@ cura cache <subcommand>
 **Examples:**
 
 ```bash
-# How many entries are cached?
+# Inspect cache occupancy
 cura cache stats
 
-# Purge everything (useful when testing)
+# Purge all entries
 cura cache clear
 
-# Sweep expired entries at end of sprint
+# Remove expired entries
 cura cache cleanup
 ```
 
@@ -291,7 +281,7 @@ Total Score = Vitality (40) + Technical Health (30) + Trust (20) + Maintenance (
 
 ### Vitality — 40 pts
 
-How actively is the package maintained?
+Reflects the recency and frequency of package updates.
 
 | Last update  | Points |
 |--------------|--------|
@@ -302,7 +292,9 @@ How actively is the package maintained?
 | 1–2 years    |     10 |
 | > 2 years    |      0 |
 
-**Bonuses:** +5 pts for stable packages (Pana ≥ 130, popularity > 70 %) even when older. +5 pts when > 10 GitHub commits in the last 90 days.
+**Stability bonus (+5 pts):** Applies to packages with Pana score ≥ 130 and popularity > 70%, regardless of last update date.
+
+**GitHub activity bonus (+5 pts):** Applies when the repository recorded more than 10 commits in the last 90 days.
 
 ### Technical Health — 30 pts
 
@@ -337,20 +329,20 @@ How actively is the package maintained?
 
 ### Trusted Publisher Floor
 
-Packages from trusted publishers (`dart.dev`, `flutter.dev`) receive a **score floor of 70** — they cannot score below it. They are **not** exempt from penalties or red flags; a stale or unlicensed official package is still flagged.
+Packages from trusted publishers (`dart.dev`, `flutter.dev`) receive a score floor of 70: their composite score is clamped to [70, 100]. Penalties and red flags still apply. Zero-score overrides (discontinued status, critical CVE) take precedence over the floor.
 
 ### Grade Mapping
 
-| Score  | Grade | Meaning                        |
-|--------|-------|--------------------------------|
-| 90–100 | A+    | Excellent — production ready   |
-| 80–89  | A     | Very good — highly recommended |
-| 70–79  | B     | Good — safe to use             |
-| 60–69  | C     | Fair — use with caution        |
-| 50–59  | D     | Poor — seek alternatives       |
-| 0–49   | F     | Critical — avoid               |
+| Score  | Grade | Meaning                      |
+|--------|-------|------------------------------|
+| 90–100 | A+    | Excellent, production-ready  |
+| 80–89  | A     | Very good, recommended       |
+| 70–79  | B     | Good, safe to use            |
+| 60–69  | C     | Fair, use with caution       |
+| 50–59  | D     | Poor, seek alternatives      |
+| 0–49   | F     | Critical, avoid              |
 
-### Automatic zero
+### Automatic Zero
 
 A score of **0** is forced (regardless of trusted-publisher status) when:
 
@@ -370,7 +362,7 @@ CLI flags               (highest priority)
   ↓
 ./.cura/config.yaml     (project config — commit to share with your team)
   ↓
-~/.cura/config.yaml     (global config — your personal preferences)
+~/.cura/config.yaml     (global config — machine-level preferences)
   ↓
 Built-in defaults       (lowest priority)
 ```
@@ -381,7 +373,7 @@ Built-in defaults       (lowest priority)
 |-------------------------|--------|---------|------------------------------------------------------|
 | `theme`                 | string | `dark`  | `dark` / `light` / `minimal` / `dracula`             |
 | `min_score`             | int    | `70`    | Minimum acceptable score                             |
-| `github_token`          | string | —       | GitHub PAT (raises rate limit from 60 → 5 000 req/h) |
+| `github_token`          | string | —       | GitHub PAT (raises rate limit from 60 to 5 000 req/h)|
 | `timeout_seconds`       | int    | `10`    | HTTP request timeout                                 |
 | `ignore_packages`       | list   | `[]`    | Packages skipped during analysis                     |
 | `fail_on_vulnerable`    | bool   | `false` | Exit 1 on any CVE                                    |
@@ -469,7 +461,7 @@ dependency-health:
 
 ```bash
 cura config set theme dracula     # persist globally
-cura check --theme minimal        # one-off override
+cura check --theme minimal        # per-invocation override
 ```
 
 Available: `dark` (default), `light`, `minimal`.
@@ -488,22 +480,22 @@ Cura caches results as JSON files under `~/.cura/cache/`. TTL scales with packag
 | `score < 40`    | 3 h  |
 
 ```bash
-cura cache stats    # how full is the cache?
+cura cache stats    # inspect cache occupancy
 cura cache cleanup  # sweep expired entries
-cura cache clear    # wipe everything
+cura cache clear    # wipe all entries
 ```
 
 > File schema, TTL tiers, and CI cache setup: [doc/caching.md](doc/caching.md)
 
 ### GitHub Token
 
-Without a token, GitHub caps anonymous requests at **60/hour**. With a token the limit rises to **5 000/hour**.
+Without a token, GitHub enforces an anonymous rate limit of **60 requests/hour**. With a personal access token the limit rises to **5 000 requests/hour**.
 
 ```bash
 cura config set github_token ghp_xxxxx
 ```
 
-Generate a token at [github.com/settings/tokens](https://github.com/settings/tokens) — no scopes required for public repositories.
+Generate a token at [github.com/settings/tokens](https://github.com/settings/tokens). No scopes are required for public repositories.
 
 ### Rate Limits Reference
 
@@ -519,13 +511,11 @@ Generate a token at [github.com/settings/tokens](https://github.com/settings/tok
 
 ## 🤝 Contributing
 
-Contributions are welcome — bug reports, feature requests, and pull requests alike.
-
-### Bug Reports & Feature Requests
+### Bug Reports and Feature Requests
 
 [Open an issue](https://github.com/meragix/cura/issues/new) with:
 
-- A clear description of the problem or request
+- A description of the problem or request
 - Steps to reproduce (for bugs)
 - Expected vs actual behaviour
 
@@ -573,20 +563,8 @@ Cura is released under the [MIT License](LICENSE).
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Inspired by [Pana](https://pub.dev/packages/pana) and [Snyk](https://snyk.io/)
 - CLI output powered by [mason_logger](https://pub.dev/packages/mason_logger)
 - Data provided by [pub.dev](https://pub.dev), [GitHub](https://github.com), and [OSV.dev](https://osv.dev)
-
----
-
-<p align="center">
-  Made with care for the Flutter &amp; Dart community
-</p>
-
-<p align="center">
-  <a href="https://github.com/meragix/cura">Star on GitHub</a> •
-  <a href="https://github.com/meragix/cura/issues">Report a bug</a> •
-  <a href="https://github.com/orgs/meragix/discussions">Discussions</a>
-</p>

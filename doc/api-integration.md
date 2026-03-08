@@ -1,18 +1,18 @@
 # API Integration
 
-Cura aggregates data from three external APIs to compute each package's health
-score. This document describes what is fetched from each source, how errors are
-handled, and how to configure authentication.
+Cura aggregates data from three external APIs. This document specifies the
+endpoints consumed, field mappings, authentication requirements, and
+error-handling behaviour.
 
 ---
 
 ## Data Sources
 
-| Source      | Base URL                        | Auth required |
-|-------------|---------------------------------|---------------|
-| **pub.dev** | `https://pub.dev/api`           | No            |
+| Source      | Base URL                        | Auth required    |
+|-------------|---------------------------------|------------------|
+| **pub.dev** | `https://pub.dev/api`           | No               |
 | **GitHub**  | `https://api.github.com`        | Optional (token) |
-| **OSV.dev** | `https://api.osv.dev/v1`        | No            |
+| **OSV.dev** | `https://api.osv.dev/v1`        | No               |
 
 ---
 
@@ -45,14 +45,14 @@ requests with exponential back-off (default: 3 retries).
 
 ### Endpoints used
 
-| Endpoint                        | Data retrieved                        |
-|---------------------------------|---------------------------------------|
-| `GET /repos/{owner}/{repo}`     | Stars, forks, open issues, description |
-| `GET /repos/{owner}/{repo}/commits` | Commit recency (last 90 days)     |
+| Endpoint                            | Data retrieved                         |
+|-------------------------------------|----------------------------------------|
+| `GET /repos/{owner}/{repo}`         | Stars, forks, open issues, description |
+| `GET /repos/{owner}/{repo}/commits` | Commit recency (last 90 days)          |
 
 The repository URL is extracted from the package's `pubspec.yaml` `repository`
-or `homepage` field. If neither contains a `github.com` URL, GitHub metrics are
-skipped for that package.
+or `homepage` field. If neither field contains a `github.com` URL, GitHub
+metrics are skipped for that package.
 
 ### Key fields
 
@@ -82,16 +82,14 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Then pass it to Cura before running the check:
-
 ```bash
 cura config set github_token "$GITHUB_TOKEN"
 ```
 
 ### Skipping GitHub
 
-If a GitHub token is unavailable and rate limits are a concern, disable GitHub
-metrics entirely:
+To disable GitHub metrics when a token is unavailable or rate limits are
+a concern:
 
 ```bash
 cura check --no-github
@@ -106,9 +104,9 @@ the Vitality score (commit recency). All other dimensions are unaffected.
 
 ### Endpoint used
 
-| Endpoint                   | Data retrieved               |
-|----------------------------|------------------------------|
-| `POST /query`              | Security advisories for a package |
+| Endpoint      | Data retrieved                    |
+|---------------|-----------------------------------|
+| `POST /query` | Security advisories for a package |
 
 ### Request body
 
@@ -150,7 +148,7 @@ client configured at startup:
 - **Concurrency** — bounded to `max_concurrency` simultaneous requests
   (default: 5) via a pool
 
-The GitHub client attaches a `Bearer` token only when one is configured; the
+The GitHub client attaches a `Bearer` token only when one is configured. The
 auth header is injected per-request and never touches the shared client options,
 so pub.dev and OSV.dev requests are never accidentally authenticated.
 
@@ -162,7 +160,7 @@ so pub.dev and OSV.dev requests are never accidentally authenticated.
 |----------------------|---------------------------------------------------------------|
 | Network timeout      | Retried up to `max_retries` times, then `NetworkException`    |
 | 404 Not Found        | `PackageNotFoundException` — package skipped in results       |
-| 429 Rate Limited     | `RateLimitException` — surface to user with advice            |
+| 429 Rate Limited     | `RateLimitException` — surfaced to user with advice           |
 | 5xx Server Error     | Retried, then treated as a transient failure                  |
 | Missing GitHub URL   | GitHub metrics set to defaults (0 stars, no commits data)     |
 | OSV.dev error        | Vulnerabilities treated as unknown — score not forced to 0    |

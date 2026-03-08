@@ -1,9 +1,9 @@
 # Configuration Reference
 
-Cura uses a **hierarchical configuration** system. Settings are resolved in
+Cura uses a hierarchical configuration system. Settings are resolved in
 priority order — higher sources override lower ones:
 
-```
+```text
 CLI flags                        (highest priority)
   ↓
 ./.cura/config.yaml              (project config)
@@ -19,13 +19,14 @@ Built-in defaults                (lowest priority)
 
 ### Global config — `~/.cura/config.yaml`
 
-Created automatically on first run with built-in defaults. Use this for
-personal preferences (theme, GitHub token) that apply to every project.
+Created automatically on first run with built-in defaults. Applies to all
+projects on the machine. Use this for machine-level preferences (theme,
+GitHub token).
 
 ### Project config — `./.cura/config.yaml`
 
-Created manually via `cura config init`. Commit this file to share quality
-standards with your team (minimum score, ignored packages).
+Created via `cura config init`. Commit this file to enforce quality standards
+across the team (minimum score, ignored packages).
 
 ---
 
@@ -105,7 +106,7 @@ ignore_packages:
 
 | Key                   | Type | Default | Description                               |
 |-----------------------|------|---------|-------------------------------------------|
-| `enable_cache`        | bool | `true`  | Enable the local SQLite cache             |
+| `enable_cache`        | bool | `true`  | Enable the local JSON file cache          |
 | `cache_max_age_hours` | int  | —       | Override the TTL (hours) for all packages |
 | `auto_update`         | bool | `true`  | Sweep expired entries at startup          |
 
@@ -225,10 +226,10 @@ min_score: 85
 ## Best Practices
 
 - Commit `.cura/config.yaml` to enforce shared standards across the team.
-- Store your GitHub token only in `~/.cura/config.yaml` — never commit tokens.
+- Store the GitHub token only in `~/.cura/config.yaml`. Never commit tokens.
 - Use `minimal` theme and `use_colors: false` for cleaner CI logs.
-- Start with `min_score: 70` and raise it gradually as the team improves
-  package hygiene.
+- Set `min_score` to the lowest acceptable value and raise it incrementally
+  as dependency hygiene improves.
 
 ---
 

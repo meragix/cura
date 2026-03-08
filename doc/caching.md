@@ -1,9 +1,9 @@
 # Caching
 
-Cura stores API responses as JSON files on disk so that repeated runs over the
-same dependencies avoid redundant network calls and respect external rate limits.
-The cache requires no native dependencies and works out-of-the-box on macOS,
-Linux, and Windows.
+Cura persists API responses as JSON files on disk. Subsequent runs serve data
+from the local cache, avoiding redundant network calls and reducing external
+API consumption. The implementation has no native dependencies and runs on
+macOS, Linux, and Windows.
 
 ---
 
@@ -11,7 +11,7 @@ Linux, and Windows.
 
 ```text
 ~/.cura/cache/
-  aggregated/          ← AggregatedPackageData per package
+  aggregated/          <- AggregatedPackageData per package
     dio.json
     provider.json
     ...
@@ -43,9 +43,9 @@ On subsequent runs, before touching any API:
 
 1. Cura opens `~/.cura/cache/aggregated/<packageName>.json`
 2. If the file exists and `expiresAt` is in the future, the payload is returned
-3. The result is tagged `fromCache: true` so presenters can show a cache-hit
+3. The result is tagged `fromCache: true` so presenters can display a cache-hit
    indicator
-4. If the file is absent, expired, or unparseable it is treated as a cache miss
+4. If the file is absent, expired, or unparseable, it is treated as a cache miss
 
 ### Startup sweep
 
@@ -96,9 +96,9 @@ Cache lifetime scales with package popularity, measured by the
 | Normal          | `score >= 40` | 6 h  |
 | Low             | `score < 40`  | 3 h  |
 
-Rationale: popular packages publish updates frequently and may have new CVEs
-reported at any time, so their cache is intentionally short. Obscure packages
-change rarely; a longer TTL avoids hitting OSV.dev unnecessarily.
+Popular packages receive shorter TTLs because they publish updates frequently
+and are more likely to have new CVEs. Low-popularity packages change rarely;
+a longer TTL reduces unnecessary API calls.
 
 ---
 
@@ -127,7 +127,6 @@ cura cache cleanup
 ```
 
 Removes expired entries and orphaned `.tmp` files. Valid entries are untouched.
-Safe to run at any time.
 
 ### Wipe everything
 
@@ -136,8 +135,8 @@ cura cache clear
 ```
 
 Prompts for confirmation, then deletes all `.json` files across all cache
-namespaces. Use this when you want to force a fully fresh analysis (e.g. after
-a security incident or to verify a fix).
+namespaces. Use this to force a fully fresh analysis (e.g. after a security
+incident or to verify a fix).
 
 ---
 
@@ -155,8 +154,8 @@ a security incident or to verify a fix).
 cura config set enable_cache false
 ```
 
-When the cache is disabled every run fetches live data from all three APIs.
-Useful for debugging but increases latency and API consumption.
+When disabled, every run fetches live data from all three APIs. Latency and
+API consumption increase accordingly.
 
 ### Pin a custom TTL
 
@@ -171,8 +170,8 @@ strategy.
 
 ## CI/CD Considerations
 
-Cache the `~/.cura/cache/` directory between pipeline runs to dramatically
-reduce API calls and execution time.
+Persist the `~/.cura/cache/` directory between pipeline runs to reduce API
+calls and execution time.
 
 ### GitHub Actions
 
@@ -184,7 +183,7 @@ reduce API calls and execution time.
     restore-keys: cura-
 ```
 
-The cache key is tied to `pubspec.lock` so it is invalidated whenever
+The cache key is tied to `pubspec.lock` and is invalidated whenever
 dependencies change.
 
 ### GitLab CI

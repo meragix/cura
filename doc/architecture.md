@@ -54,21 +54,21 @@ lib/src/
   domain/
     entities/                     <- PackageInfo, Score, GitHubMetrics, Vulnerability
     value_objects/
-      grade.dart                  <- Grade enum (A+…F) with Grade.fromScore()
+      grade.dart                  <- Grade enum (A+...F) with Grade.fromScore()
       red_flag.dart               <- sealed class RedFlag + 12 typed subtypes
       recommendation.dart         <- Recommendation with RecommendationLevel
-      score_weights.dart          <- ScoreWeights (source of truth — domain layer)
+      score_weights.dart          <- ScoreWeights (source of truth, domain layer)
       result.dart, exception.dart <- sealed Result<T>, CuraException
-    ports/                         <- abstract interfaces (contracts)
+    ports/                        <- abstract interfaces (contracts)
       package_data_aggregator.dart
       config_repository.dart
-      score_calculator.dart        <- ScoreCalculator (mockable port for CalculateScore)
-    usecases/                      <- CalculateScore (orchestrator), CheckPackagesUsecase,
-                                      ViewPackageDetails
+      score_calculator.dart       <- ScoreCalculator (mockable port for CalculateScore)
+    usecases/                     <- CalculateScore (orchestrator), CheckPackagesUsecase,
+                                     ViewPackageDetails
     services/
-      scoring/                     <- Strategy pattern: one class per dimension
-        scoring_input.dart         <- ScoringInput record typedef + isConsideredStable()
-        scoring_dimension.dart     <- ScoringDimension abstract interface
+      scoring/                    <- Strategy pattern: one class per dimension
+        scoring_input.dart        <- ScoringInput record typedef + isConsideredStable()
+        scoring_dimension.dart    <- ScoringDimension abstract interface
         vitality_dimension.dart
         technical_health_dimension.dart
         trust_dimension.dart
@@ -76,40 +76,40 @@ lib/src/
         penalty_evaluator.dart
         red_flag_detector.dart
         recommendation_engine.dart
-    exceptions/                    <- CuraException hierarchy
+    exceptions/                   <- CuraException hierarchy
 
   application/
-    commands/                      <- CheckCommand, ViewCommand, ConfigCommand,
-                                      VersionCommand, CacheCommand + sub-commands
-    dto/                           <- Data Transfer Objects
+    commands/                     <- CheckCommand, ViewCommand, ConfigCommand,
+                                     VersionCommand, CacheCommand + sub-commands
+    dto/                          <- Data Transfer Objects
 
   infrastructure/
     api/
-      clients/                     <- PubDevApiClient, GitHubApiClient, OsvApiClient
+      clients/                    <- PubDevApiClient, GitHubApiClient, OsvApiClient
     aggregators/
-      multi_api_aggregator.dart    <- Facade: coordinates all three API clients
-      cached_aggregator.dart       <- Decorator: adds caching transparently
+      multi_api_aggregator.dart   <- Facade: coordinates all three API clients
+      cached_aggregator.dart      <- Decorator: adds caching transparently
     cache/
-      json_file_system_cache.dart  <- JSON file cache
+      json_file_system_cache.dart <- JSON file cache
       strategies/ttl_strategy.dart <- popularity-based TTL
       models/cached_entry.dart
     repositories/
-      yaml_config_repository.dart  <- ConfigRepository adapter
+      yaml_config_repository.dart <- ConfigRepository adapter
     config/
     config/models/score_weights.dart <- re-exports domain/value_objects/score_weights.dart
 
   presentation/
-    loggers/                       <- ConsoleLogger (normal/verbose/quiet/JSON)
-    presenters/                    <- CheckPresenter, ViewPresenter
-    renderers/                     <- table, bar, summary
-    themes/                        <- dark, light, minimal + ThemeManager
-    formatters/                    <- ScoreFormatter, DateFormatter
+    loggers/                      <- ConsoleLogger (normal/verbose/quiet/JSON)
+    presenters/                   <- CheckPresenter, ViewPresenter
+    renderers/                    <- table, bar, summary
+    themes/                       <- dark, light, minimal + ThemeManager
+    formatters/                   <- ScoreFormatter, DateFormatter
 
   shared/
     constants/
     utils/
-      http_helper.dart             <- Dio builder + RetryInterceptor + LoggingInterceptor
-      pool_manager.dart            <- concurrency-bounded task pool
+      http_helper.dart            <- Dio builder + RetryInterceptor + LoggingInterceptor
+      pool_manager.dart           <- concurrency-bounded task pool
     app_info.dart
 ```
 
@@ -130,9 +130,8 @@ constructs every object explicitly in seven phases:
 6. **Runner** — build `CommandRunner` and register commands
 7. **Execute** — run the command, then clean up in `finally`
 
-This makes the full dependency graph visible at a glance and guarantees that
-every resource (HTTP client, concurrency pool) is closed in `_cleanup`
-regardless of success or failure.
+The full dependency graph is visible at a glance. Every resource (HTTP client,
+concurrency pool) is closed in `_cleanup` regardless of success or failure.
 
 ---
 
@@ -184,7 +183,8 @@ application layers.
 
 `MultiApiAggregator` hides the complexity of three separate APIs behind the
 single `PackageDataAggregator` port. It uses `PoolManager` to bound concurrency
-(default: 5 simultaneous requests) so large projects do not hammer the APIs.
+(default: 5 simultaneous requests) so large projects do not exceed API rate
+limits.
 
 ---
 
@@ -216,7 +216,7 @@ typedef ScoringInput = ({
 ```
 
 Using a Dart record eliminates the need to mock complex objects in dimension
-unit tests — you construct the record inline with exactly the fields you need.
+unit tests — the record is constructed inline with exactly the fields needed.
 
 **Adding a new dimension** requires only implementing `ScoringDimension` and
 injecting it via `CalculateScore.withDimensions()`. The orchestrator and all
@@ -228,12 +228,12 @@ other dimensions remain unchanged (Open/Closed Principle).
 
 Qualitative signals are typed, not plain strings:
 
-| Old (fragile) | New (type-safe) |
-|---|---|
-| `List<String> redFlags` | `List<RedFlag>` (sealed class, 12 subtypes) |
-| `flags.any((f) => f.contains('No release'))` | `flags.any((f) => f is StalePackageFlag)` |
-| `List<String> recommendations` | `List<Recommendation>` with `RecommendationLevel` |
-| `grade: 'A+'` (String) | `grade: Grade.aPlus` (enum with `.label`) |
+| Before (fragile)                                         | After (type-safe)                                           |
+|----------------------------------------------------------|-------------------------------------------------------------|
+| `List<String> redFlags`                                  | `List<RedFlag>` (sealed class, 12 subtypes)                 |
+| `flags.any((f) => f.contains('No release'))`            | `flags.any((f) => f is StalePackageFlag)`                   |
+| `List<String> recommendations`                           | `List<Recommendation>` with `RecommendationLevel`           |
+| `grade: 'A+'` (String)                                   | `grade: Grade.aPlus` (enum with `.label`)                   |
 
 Each `RedFlag` subtype carries its own structured data (e.g.
 `StalePackageFlag(months: 18)`) and a typed `severity` (info / warning /
@@ -281,7 +281,7 @@ sealed class PackageResult {
 plain files under `~/.cura/cache/`. It requires no native libraries and holds
 no persistent connection, so no explicit disposal is needed.
 
-Every write uses the **write-then-rename** pattern for atomicity, and every
+Every write uses the **write-then-rename** pattern for atomicity. Every
 read/write method is fail-safe: any `FileSystemException` is silently swallowed
 and treated as a cache miss, so the CLI never crashes due to a degraded cache.
 
