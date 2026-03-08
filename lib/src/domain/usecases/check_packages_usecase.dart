@@ -3,7 +3,7 @@ import 'package:cura/src/domain/entities/package_info.dart';
 import 'package:cura/src/domain/entities/score.dart';
 import 'package:cura/src/domain/entities/vulnerability.dart';
 import 'package:cura/src/domain/ports/package_data_aggregator.dart';
-import 'package:cura/src/domain/usecases/calculate_score.dart';
+import 'package:cura/src/domain/ports/score_calculator.dart';
 import 'package:cura/src/domain/value_objects/package_result.dart';
 import 'package:cura/src/domain/value_objects/result.dart';
 
@@ -14,7 +14,7 @@ import 'package:cura/src/domain/value_objects/result.dart';
 ///
 /// 1. Delegates data fetching to [PackageDataAggregator], which fans out
 ///    requests to pub.dev, GitHub, and OSV.dev APIs (with optional caching).
-/// 2. Computes a composite health [Score] via [CalculateScore].
+/// 2. Computes a composite health [Score] via [ScoreCalculator].
 /// 3. Identifies [AuditIssue]s (discontinued status, critical CVEs, low score,
 ///    staleness).
 /// 4. Yields a [Result]<[PackageAuditResult]> for each package so the caller
@@ -30,25 +30,19 @@ import 'package:cura/src/domain/value_objects/result.dart';
 /// conservative to avoid false positives on stable, mature packages.
 class CheckPackagesUsecase {
   final PackageDataAggregator _aggregator;
-  final CalculateScore _scoreCalculator;
+  final ScoreCalculator _scoreCalculator;
 
   /// Creates a [CheckPackagesUsecase].
   ///
   /// - [aggregator] provides aggregated package data from all external APIs.
   /// - [scoreCalculator] computes the composite health score for each package.
-  /// - [minScore], [failOnVulnerable], and [failOnDiscontinued] are acceptance
-  ///   criteria that will be used by the command layer to determine the final
-  ///   exit code.
   ///
-  /// > **Note:** `minScore`, `failOnVulnerable`, and `failOnDiscontinued` are
-  /// > currently consumed by the composition root and not yet forwarded to this
-  /// > use case at runtime. See TODO(#42) in [CheckCommand].
+  /// Acceptance criteria (`minScore`, `failOnVulnerable`, `failOnDiscontinued`)
+  /// are read from CLI flags at runtime by [CheckCommand] and applied to the
+  /// exit-code logic — they are not part of this use case's contract.
   CheckPackagesUsecase({
     required PackageDataAggregator aggregator,
-    required CalculateScore scoreCalculator,
-    int minScore = 70,
-    bool failOnVulnerable = false,
-    bool failOnDiscontinued = false,
+    required ScoreCalculator scoreCalculator,
   })  : _aggregator = aggregator,
         _scoreCalculator = scoreCalculator;
 
@@ -87,7 +81,6 @@ class CheckPackagesUsecase {
             vulnerabilities: aggregated.vulnerabilities,
             issues: _identifyIssues(
                 aggregated.packageInfo, score, aggregated.vulnerabilities),
-            suggestions: [], // TODO(#44): implement suggestion engine
             fromCache: fromCache,
             requestCount: requestCount,
           );

@@ -48,6 +48,9 @@ class PackageAuditResult {
   final List<AuditIssue> issues;
 
   /// Human-readable improvement suggestions derived from the score and issues.
+  ///
+  /// Populated by the future `suggest` command. For programmatic access to
+  /// scored improvement guidance use [score.recommendations] instead.
   final List<String> suggestions;
 
   /// Creates a [PackageAuditResult] with all required fields.
@@ -61,7 +64,7 @@ class PackageAuditResult {
     this.requestCount = 0,
     required this.vulnerabilities,
     required this.issues,
-    required this.suggestions,
+    this.suggestions = const [],
   });
 
   // ---------------------------------------------------------------------------

@@ -22,7 +22,7 @@ void main() {
                 requestOptions: RequestOptions(path: ''),
                 statusCode: 200,
                 data: {
-                  'latest': {'version': '2.0.0'},
+                  'latest': {'version': '2.4.0'},
                 },
               ));
 
@@ -30,7 +30,7 @@ void main() {
 
       expect(updateInfo, isNotNull);
       expect(updateInfo!.updateAvailable, true);
-      expect(updateInfo.latestVersion, '2.0.0');
+      expect(updateInfo.latestVersion, '2.4.0');
     });
 
     test('handles no update available', () async {

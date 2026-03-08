@@ -181,13 +181,6 @@ $ cura check
 - ✅ MIT license
 - ✅ Contributing guidelines
 
-**Success metrics:**
-
-- [ ] 100+ likes on pub.dev in the first month
-- [ ] 1,000+ downloads/week
-- [ ] 50+ GitHub stars
-- [ ] No critical bugs reported
-
 ---
 
 ## 🌍 Phase 2: Community — "Adoption" (Q2 2026, ~12 weeks)
@@ -638,7 +631,7 @@ abstract class CuraPlugin {
 
 **Target features:**
 
-- [ ] Hosted REST cloud API (`api.cura.dev`)
+- [ ] Hosted REST cloud API (`api.cura.meragix.dev`)
 - [ ] API key authentication
 - [ ] Webhooks for continuous dependency monitoring
 - [ ] Native GitHub App and GitLab Bot integration
@@ -696,25 +689,6 @@ Migration guide generated: migration_guide.md
 - [ ] Predictive recommendations based on pub.dev trends
 - [ ] DevOps integrations: Jira, Linear, PagerDuty, Datadog
 - [ ] "Cura Verified" certification for quality packages
-
----
-
-## 📊 Global Success Metrics
-
-### Adoption
-
-| Metric                     | 6 months | 12 months | 24 months |
-|----------------------------|----------|-----------|-----------|
-| Weekly downloads           | 5,000    | 20,000    | 100,000   |
-| Projects using cura        | 1,000    | 10,000    | 50,000    |
-| GitHub stars               | 500      | 2,000     | 10,000    |
-| Active contributors        | 10       | 50        | 200       |
-
-### Measured impact
-
-- Audit time reduction: 80% (8h → 1.5h)
-- Dead package detection accuracy: >= 95%
-- Enterprise adoption: 100+ teams by Q4 2026
 
 ---
 

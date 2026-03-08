@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-03-08
+
 ### Added
 
 - **`PackageSuccess.requestCount`**: tracks exact HTTP requests per package (0 from cache).
 - **`PackageAuditResult.requestCount`**: propagated from `PackageSuccess` through `mapAsync`.
+- **`check --json` structured output**: `--json` now emits a full JSON report with `timestamp`, `total_packages`, `overall_health`, `status` (`PASSED` / `WARNING` / `FAILED`), `summary`, `packages` (with `red_flags` when present), `critical_packages`, and `performance` metrics.
+- **`check` runtime flag overrides**: `--min-score`, `--fail-on-vulnerable`, and `--fail-on-discontinued` now take effect at runtime and override config-file values.
+- **`check` config hierarchy**: `CheckCommand` accepts `defaultMinScore`, `defaultFailOnVulnerable`, `defaultFailOnDiscontinued` seeded from the resolved config — the full `CLI flag > config file > built-in default` hierarchy is now enforced.
+- **`check` CI auto-detection**: `$CI` environment variable is detected at startup; cura automatically switches to plain-text output (no colors, no emojis) in any standard CI environment without extra configuration.
+- **`CheckPackagesUsecase` unit tests**: 19 tests covering success path, all failure variants, and all 4 issue-detection rules (discontinued, critical CVE, low score, stale) including boundary conditions.
+- **`CheckCommand` integration tests**: 20 tests covering pubspec parsing, exit-code logic for all flag combinations, config hierarchy overrides, and output mode selection.
 
 ### Changed
 
@@ -20,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`PubDevApiClient`**: pub.dev requests are now sequential to avoid `ParallelWaitError` swallowing typed exceptions. `fetchJson` catches `DioException` and maps 404 → `PackageNotFoundException`, 429 → `RateLimitException`.
 - **`ViewCommand` / `CheckPresenter`**: `PackageProviderError` now routed through `ErrorFormatter` instead of raw `toString()`.
 - **`CheckCommand`**: aborts on first `NetworkError` instead of continuing to remaining packages.
+- **`CheckPackagesUsecase`**: `scoreCalculator` parameter type changed from `CalculateScore` to `ScoreCalculator` port — domain layer no longer depends on a concrete adapter.
+- **`CheckPackagesUsecase`**: removed unused constructor params `minScore`, `failOnVulnerable`, `failOnDiscontinued` — acceptance criteria belong to the command layer, not the use case.
+- **`PackageAuditResult.suggestions`**: changed from `required` to optional with default `[]`; use `score.recommendations` for programmatic improvement guidance.
 
 ## [0.8.0] - 2026-03-08
 
@@ -159,7 +170,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operational local cache.
 - ScoreCalculator unit tests (>80% coverage)
 
-[unreleased]: https://github.com/meragix/cura/compare/cura-0.8.0...HEAD
+[unreleased]: https://github.com/meragix/cura/compare/cura-0.9.0...HEAD
+[0.9.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.8.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.7.0]: https://github.com/meragix/cura/releases/tag/cura-0.7.0
 [0.6.1]: https://github.com/meragix/cura/releases/tag/cura-0.6.1

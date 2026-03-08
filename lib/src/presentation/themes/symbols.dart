@@ -6,7 +6,8 @@
 class SpinnerSymbols {
   const SpinnerSymbols._();
 
-  static List<String> get braille => ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  static List<String> get braille =>
+      ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
   static List<String> get dots => ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'];
 

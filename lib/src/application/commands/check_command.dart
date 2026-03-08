@@ -84,10 +84,16 @@ class CheckCommand extends Command<int> {
   /// - [checkUseCase] orchestrates data fetching and scoring for each package.
   /// - [presenter] renders all output (progress bar, results table, summary).
   /// - [ignoredPackages] lists package names to skip; defaults to an empty list.
+  /// - [defaultMinScore], [defaultFailOnVulnerable], [defaultFailOnDiscontinued]
+  ///   seed the argParser defaults from the resolved config so that the
+  ///   hierarchy `CLI flag > config file > built-in default` is preserved.
   CheckCommand({
     required CheckPackagesUsecase checkUseCase,
     required CheckPresenter presenter,
     List<String> ignoredPackages = const [],
+    int defaultMinScore = 70,
+    bool defaultFailOnVulnerable = true,
+    bool defaultFailOnDiscontinued = true,
   })  : _checkUseCase = checkUseCase,
         _presenter = presenter,
         _ignoredPackages = ignoredPackages {
@@ -109,20 +115,20 @@ class CheckCommand extends Command<int> {
         'min-score',
         help: 'Minimum acceptable health score (0–100). '
             'Packages below this threshold are flagged in the report.',
-        defaultsTo: '70',
+        defaultsTo: '$defaultMinScore',
         valueHelp: 'SCORE',
       )
       ..addFlag(
         'fail-on-vulnerable',
         help:
             'Exit with code 1 if any package has known security vulnerabilities.',
-        defaultsTo: true,
+        defaultsTo: defaultFailOnVulnerable,
       )
       ..addFlag(
         'fail-on-discontinued',
         help:
             'Exit with code 1 if any package is marked as discontinued on pub.dev.',
-        defaultsTo: true,
+        defaultsTo: defaultFailOnDiscontinued,
       )
       ..addFlag(
         'quiet',
@@ -159,12 +165,16 @@ class CheckCommand extends Command<int> {
     final includeDevDeps = argResults!['dev-dependencies'] as bool;
     final jsonOutput = argResults!['json'] as bool;
 
-    // --min-score, --fail-on-vulnerable, --fail-on-discontinued, and --quiet
-    // are registered here so they appear in `cura check --help`.
-    // Their runtime values are currently supplied via constructor injection from
-    // the composition root (bin/cura.dart), which reads the resolved config.
-    // TODO(#42): forward these flag values to CheckPackagesUsecase at runtime
-    // so that per-invocation overrides take precedence over the config file.
+    // Runtime overrides — CLI flags take precedence over the config file.
+    final minScore =
+        int.tryParse(argResults!['min-score'] as String? ?? '') ?? 70;
+    if (minScore < 0 || minScore > 100) {
+      _presenter
+          .showError('--min-score must be between 0 and 100 (got $minScore)');
+      return 1;
+    }
+    final failOnVulnerable = argResults!['fail-on-vulnerable'] as bool;
+    final failOnDiscontinued = argResults!['fail-on-discontinued'] as bool;
 
     _stopwatch.start();
 
@@ -188,6 +198,7 @@ class CheckCommand extends Command<int> {
 
     var processedCount = 0;
     var failureCount = 0;
+    var auditFailureCount = 0;
 
     final progress = _presenter.showProgress();
 
@@ -204,6 +215,10 @@ class CheckCommand extends Command<int> {
       switch (result) {
         case Success<PackageAuditResult>(:final value):
           _presenter.collectPackageResult(value);
+          // Apply runtime flag overrides to determine CI exit code.
+          if (value.score.total < minScore) auditFailureCount++;
+          if (failOnVulnerable && value.hasVulnerabilities) auditFailureCount++;
+          if (failOnDiscontinued && value.isDiscontinued) auditFailureCount++;
         case Failure<PackageAuditResult>(:final error):
           failureCount++;
           _presenter.showPackageError(error, progress);
@@ -221,16 +236,17 @@ class CheckCommand extends Command<int> {
 
     // Stage 5 — Render the final report.
     if (jsonOutput) {
-      _presenter.showJsonOutput([]);
+      _presenter.showJsonOutput(_stopwatch);
     } else {
       _presenter.showSummary(
         total: packagesToAudit.length,
         failures: failureCount,
         stopwatch: _stopwatch,
+        passed: failureCount == 0 && auditFailureCount == 0,
       );
     }
 
-    return failureCount > 0 ? 1 : 0;
+    return (failureCount > 0 || auditFailureCount > 0) ? 1 : 0;
   }
 
   /// Parses the `pubspec.yaml` at [path] and returns the names of all

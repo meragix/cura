@@ -106,9 +106,6 @@ Future<void> main(List<String> arguments) async {
   final checkUseCase = CheckPackagesUsecase(
     aggregator: aggregator,
     scoreCalculator: scoreCalculator,
-    minScore: config.minScore,
-    failOnVulnerable: config.failOnVulnerable,
-    failOnDiscontinued: config.failOnDiscontinued,
   );
 
   final viewUseCase = ViewPackageDetails(
@@ -120,7 +117,16 @@ Future<void> main(List<String> arguments) async {
   // PHASE 4 : PRESENTATION LAYER (CLI)
   // ===========================================================================
 
-  final logger = LoggerFactory.fromConfig(config);
+  // Auto-detect CI environments ($CI is set by GitHub Actions, GitLab CI,
+  // CircleCI, Bitrise, and most other CI platforms). In CI mode: no colors,
+  // no emojis, no spinners — plain text output for log readability.
+  final isCI = Platform.environment['CI']?.isNotEmpty == true;
+  final isQuiet = arguments.contains('--quiet') || arguments.contains('-q');
+  final logger = isCI
+      ? LoggerFactory.minimal()
+      : isQuiet
+          ? LoggerFactory.quiet()
+          : LoggerFactory.fromConfig(config);
 
   // ErrorHandler wraps the runner so every unhandled exception is formatted
   // with context-aware suggestions before the process exits.
@@ -153,6 +159,9 @@ Future<void> main(List<String> arguments) async {
     checkUseCase: checkUseCase,
     presenter: checkPresenter,
     ignoredPackages: config.ignoredPackages,
+    defaultMinScore: config.minScore,
+    defaultFailOnVulnerable: config.failOnVulnerable,
+    defaultFailOnDiscontinued: config.failOnDiscontinued,
   );
 
   final viewCommand = ViewCommand(
