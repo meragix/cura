@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.11] - 2026-03-08
+
 ### Added
 
 - **Strategy pattern for scoring**: `CalculateScore` is now a pure orchestrator delegating to `VitalityDimension`, `TechnicalHealthDimension`, `TrustDimension`, `MaintenanceDimension`, `PenaltyEvaluator`, `RedFlagDetector`, and `RecommendationEngine` — each independently testable via the `ScoringInput` Dart record.
