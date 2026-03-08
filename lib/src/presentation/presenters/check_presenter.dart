@@ -1,4 +1,5 @@
 import 'package:cura/src/domain/entities/package_audit_result.dart';
+import 'package:cura/src/presentation/formatters/error_formatter.dart';
 import 'package:cura/src/presentation/loggers/console_logger.dart';
 import 'package:cura/src/presentation/renderers/table_renderer.dart';
 
@@ -22,6 +23,7 @@ import 'package:mason_logger/mason_logger.dart';
 /// 5. [showSummary] / [showJsonOutput] — renders the final report.
 class CheckPresenter {
   final ConsoleLogger _logger;
+  final ErrorFormatter _errorFormatter;
   final TableRenderer _tableRenderer;
   final bool _showSuggestions;
 
@@ -32,7 +34,8 @@ class CheckPresenter {
   /// Number of packages whose data was served from the local JSON file cache.
   int _cacheHits = 0;
 
-  /// Number of packages whose data required a live API round-trip.
+  /// Total number of HTTP requests issued to external APIs across all
+  /// non-cached packages. Accumulated from [PackageAuditResult.requestCount].
   int _apiCalls = 0;
 
   /// Creates a [CheckPresenter].
@@ -44,6 +47,7 @@ class CheckPresenter {
     required ConsoleLogger logger,
     bool showSuggestions = true,
   })  : _logger = logger,
+        _errorFormatter = ErrorFormatter(logger),
         _tableRenderer = TableRenderer(),
         _showSuggestions = showSuggestions;
 
@@ -108,7 +112,7 @@ class CheckPresenter {
     if (audit.fromCache) {
       _cacheHits++;
     } else {
-      _apiCalls++;
+      _apiCalls += audit.requestCount;
     }
   }
 
@@ -116,7 +120,7 @@ class CheckPresenter {
   /// progress animation so the error message is readable.
   void showPackageError(dynamic error, Progress progress) {
     progress.cancel();
-    _logger.error(error.toString());
+    _errorFormatter.format(error);
   }
 
   // --------------------------------------------------------------------------
@@ -224,7 +228,7 @@ class CheckPresenter {
     final elapsed = _getElapsedSeconds(stopwatch);
     _logger.info(
       darkGray.wrap('⏱️  Total time: ${elapsed}s '
-          '($_cacheHits cached, $_apiCalls API calls)')!,
+          '($_cacheHits from cache, $_apiCalls HTTP requests)')!,
     );
 
     // ------------------------------------------------------------------

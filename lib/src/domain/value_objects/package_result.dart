@@ -21,10 +21,12 @@ import 'package:cura/src/domain/value_objects/result.dart';
 sealed class PackageResult {
   const PackageResult();
 
-  /// Creates a successful result carrying [data] and its cache provenance.
+  /// Creates a successful result carrying [data], its cache provenance, and
+  /// the number of HTTP requests issued to external APIs.
   const factory PackageResult.success({
     required AggregatedPackageData data,
     required bool fromCache,
+    int requestCount,
   }) = PackageSuccess;
 
   /// Creates a failed result carrying a [PackageProviderError].
@@ -44,8 +46,20 @@ final class PackageSuccess extends PackageResult {
   /// a cache indicator.
   final bool fromCache;
 
-  /// Creates a [PackageSuccess] with the provided [data] and [fromCache] flag.
-  const PackageSuccess({required this.data, required this.fromCache});
+  /// Number of HTTP requests issued to external APIs for this package.
+  ///
+  /// `0` when [fromCache] is `true`. When fetched live, reflects the sum of
+  /// pub.dev, GitHub (if a repository URL is present), and OSV.dev calls
+  /// that were attempted. Computed by [MultiApiAggregator], the only layer
+  /// with knowledge of the per-package request topology.
+  final int requestCount;
+
+  /// Creates a [PackageSuccess] with the provided fields.
+  const PackageSuccess({
+    required this.data,
+    required this.fromCache,
+    this.requestCount = 0,
+  });
 }
 
 /// The failure variant of [PackageResult].
@@ -68,12 +82,13 @@ extension PackageResultExtensions on PackageResult {
   /// When `this` is a [PackageFailure] the error is forwarded as
   /// `Result.failure` and [mapper] is never called.
   Future<Result<R>> mapAsync<R>(
-    Future<Result<R>> Function(AggregatedPackageData data, bool fromCache)
+    Future<Result<R>> Function(
+            AggregatedPackageData data, bool fromCache, int requestCount)
         mapper,
   ) async {
     return switch (this) {
-      PackageSuccess(:final data, :final fromCache) =>
-        await mapper(data, fromCache),
+      PackageSuccess(:final data, :final fromCache, :final requestCount) =>
+        await mapper(data, fromCache, requestCount),
       PackageFailure(:final error) => Result.failure(error),
     };
   }
@@ -84,11 +99,12 @@ extension PackageResultExtensions on PackageResult {
   /// When `this` is a [PackageFailure] the error is forwarded and [mapper]
   /// is never called.
   Result<R> mapValue<R>(
-    R Function(AggregatedPackageData data, bool fromCache) mapper,
+    R Function(AggregatedPackageData data, bool fromCache, int requestCount)
+        mapper,
   ) {
     return switch (this) {
-      PackageSuccess(:final data, :final fromCache) =>
-        Result.success(mapper(data, fromCache)),
+      PackageSuccess(:final data, :final fromCache, :final requestCount) =>
+        Result.success(mapper(data, fromCache, requestCount)),
       PackageFailure(:final error) => Result.failure(error),
     };
   }

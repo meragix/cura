@@ -90,9 +90,17 @@ class MultiApiAggregator implements PackageDataAggregator {
   Future<PackageResult> _fetchSingle(String packageName) async {
     try {
       // 1. pub.dev is mandatory — propagate any failure immediately.
+      //    Two HTTP calls: GET /packages/{name} + GET /packages/{name}/metrics.
       final packageInfo = await _pubDevClient.getPackageInfo(packageName);
+      var requestCount = 2;
 
       // 2. GitHub and OSV are optional — fetch concurrently.
+      //    GitHub: 2 calls (repo + commits) when a repository URL is present.
+      //    OSV:    1 call unconditionally.
+      final hasGithubUrl = packageInfo.repositoryUrl?.isNotEmpty ?? false;
+      if (hasGithubUrl) requestCount += 2;
+      requestCount += 1; // OSV.dev
+
       final (githubMetrics, vulnerabilities) = await Future.wait([
         _fetchGitHubSafe(packageInfo.repositoryUrl),
         _fetchOsvSafe(packageInfo.name),
@@ -105,7 +113,11 @@ class MultiApiAggregator implements PackageDataAggregator {
         vulnerabilities: vulnerabilities,
       );
 
-      return PackageResult.success(data: aggregated, fromCache: false);
+      return PackageResult.success(
+        data: aggregated,
+        fromCache: false,
+        requestCount: requestCount,
+      );
     } on PackageNotFoundException {
       return PackageResult.failure(PackageProviderError.notFound(packageName));
     } on TimeoutException {

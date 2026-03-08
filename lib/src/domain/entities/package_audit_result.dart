@@ -32,6 +32,12 @@ class PackageAuditResult {
   /// Whether this result was served from the local JSON file cache.
   final bool fromCache;
 
+  /// Number of HTTP requests issued to external APIs for this package.
+  ///
+  /// `0` when [fromCache] is `true`. Propagated from [PackageSuccess.requestCount]
+  /// without modification.
+  final int requestCount;
+
   /// Known CVEs / OSV advisories affecting this package version.
   ///
   /// An empty list means either no vulnerabilities were found or the OSV
@@ -52,6 +58,7 @@ class PackageAuditResult {
     this.githubMetrics,
     required this.score,
     required this.fromCache,
+    this.requestCount = 0,
     required this.vulnerabilities,
     required this.issues,
     required this.suggestions,

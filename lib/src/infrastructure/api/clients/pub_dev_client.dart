@@ -45,13 +45,14 @@ class PubDevApiClient {
     final baseUrl = '${ApiConstants.pubDevApiUrl}/packages';
 
     try {
-      final (infoJson, scoreJson) = await (
-        _dio.fetchJson('$baseUrl/$packageName', packageName: packageName),
-        _dio.fetchJson(
-          '$baseUrl/$packageName/score',
-          packageName: packageName,
-        ),
-      ).wait;
+      final infoJson = await _dio.fetchJson(
+        '$baseUrl/$packageName',
+        packageName: packageName,
+      );
+      final scoreJson = await _dio.fetchJson(
+        '$baseUrl/$packageName/score',
+        packageName: packageName,
+      );
 
       try {
         return PackageInfo.fromPubDevJson(
@@ -65,6 +66,14 @@ class PubDevApiClient {
           originalError: e,
         );
       }
+    } on PackageNotFoundException {
+      rethrow;
+    } on RateLimitException {
+      rethrow;
+    } on NetworkException {
+      rethrow;
+    } on ParseException {
+      rethrow;
     } on DioException catch (e) {
       final url = '$baseUrl/$packageName';
       if (e.type == DioExceptionType.connectionTimeout ||
@@ -105,28 +114,46 @@ extension PubDevClientX on Dio {
     String url, {
     required String packageName,
   }) async {
-    final response = await get(url);
+    try {
+      final response = await get(url);
 
-    if (response.statusCode == 404) {
-      throw PackageNotFoundException(packageName);
-    }
+      if (response.statusCode == 404) {
+        throw PackageNotFoundException(packageName);
+      }
 
-    if (response.statusCode == 429) {
-      throw RateLimitException(
-        'pub.dev',
-        retryAfter: _parseRetryAfter(response.headers),
-      );
-    }
+      if (response.statusCode == 429) {
+        throw RateLimitException(
+          'pub.dev',
+          retryAfter: _parseRetryAfter(response.headers),
+        );
+      }
 
-    if (response.statusCode != 200) {
+      if (response.statusCode != 200) {
+        throw NetworkException(
+          'pub.dev returned HTTP ${response.statusCode}',
+          url: url,
+          statusCode: response.statusCode,
+        );
+      }
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw PackageNotFoundException(packageName);
+      }
+      if (e.response?.statusCode == 429) {
+        throw RateLimitException(
+          'pub.dev',
+          retryAfter: _parseRetryAfter(e.response!.headers),
+        );
+      }
       throw NetworkException(
-        'pub.dev returned HTTP ${response.statusCode}',
+        'pub.dev request failed',
         url: url,
-        statusCode: response.statusCode,
+        statusCode: e.response?.statusCode,
+        originalError: e,
       );
     }
-
-    return response.data as Map<String, dynamic>;
   }
 
   /// Parses the `Retry-After` response header as a [Duration].

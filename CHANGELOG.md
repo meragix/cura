@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`PackageSuccess.requestCount`**: tracks exact HTTP requests per package (0 from cache).
+- **`PackageAuditResult.requestCount`**: propagated from `PackageSuccess` through `mapAsync`.
+
+### Changed
+
+- **`PackageResultExtensions.mapAsync` / `mapValue`**: mapper signature extended with `int requestCount`.
+- **`CheckPresenter`**: `_apiCalls` now accumulates `audit.requestCount`; label updated to `"HTTP requests"`.
+- **`ErrorFormatter`**: refactored around a single `_renderBlock` primitive — all formatters now delegate to it, eliminating rendering duplication. `_verbose` made private. `_getSuggestions` converted to exhaustive switch.
+- **`PubDevApiClient`**: pub.dev requests are now sequential to avoid `ParallelWaitError` swallowing typed exceptions. `fetchJson` catches `DioException` and maps 404 → `PackageNotFoundException`, 429 → `RateLimitException`.
+- **`ViewCommand` / `CheckPresenter`**: `PackageProviderError` now routed through `ErrorFormatter` instead of raw `toString()`.
+- **`CheckCommand`**: aborts on first `NetworkError` instead of continuing to remaining packages.
+
 ## [0.8.0] - 2026-03-08
 
 ### Added

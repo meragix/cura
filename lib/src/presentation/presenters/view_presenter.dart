@@ -1,7 +1,9 @@
+import 'package:cura/src/domain/value_objects/errors.dart';
 import 'package:cura/src/domain/entities/github_metrics.dart';
 import 'package:cura/src/domain/entities/package_audit_result.dart';
 import 'package:cura/src/domain/entities/score.dart';
 import 'package:cura/src/presentation/formatters/date_formatter.dart';
+import 'package:cura/src/presentation/formatters/error_formatter.dart';
 import 'package:cura/src/presentation/formatters/number_formatter.dart';
 import 'package:cura/src/presentation/loggers/console_logger.dart';
 import 'package:cura/src/presentation/renderers/bar_renderer.dart';
@@ -28,6 +30,7 @@ import 'package:mason_logger/mason_logger.dart';
 /// 7. **Recommendation** — a single-line verdict based on the overall score.
 class ViewPresenter {
   final ConsoleLogger _logger;
+  final ErrorFormatter _errorFormatter;
   final BarRenderer _barRenderer;
 
   /// Creates a [ViewPresenter].
@@ -35,6 +38,7 @@ class ViewPresenter {
   /// [logger] is the active output logger (normal, verbose, quiet, or JSON).
   ViewPresenter({required ConsoleLogger logger})
       : _logger = logger,
+        _errorFormatter = ErrorFormatter(logger),
         _barRenderer = BarRenderer();
 
   // --------------------------------------------------------------------------
@@ -100,6 +104,11 @@ class ViewPresenter {
     _logger.spacer();
     _logger.error(message);
     _logger.spacer();
+  }
+
+  /// Formats and displays a [PackageProviderError] using [ErrorFormatter].
+  void showProviderError(PackageProviderError error) {
+    _errorFormatter.format(error);
   }
 
   /// Displays the correct command invocation when a required argument is

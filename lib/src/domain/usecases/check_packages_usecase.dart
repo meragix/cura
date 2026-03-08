@@ -71,7 +71,7 @@ class CheckPackagesUsecase {
     await for (final packageResult in _aggregator.fetchMany(packageNames)) {
       // Transform PackageResult → Result<PackageAuditResult>
       yield await packageResult.mapAsync<PackageAuditResult>(
-        (aggregated, fromCache) async {
+        (aggregated, fromCache, requestCount) async {
           final score = _scoreCalculator.execute(
             aggregated.packageInfo,
             githubMetrics: aggregated.githubMetrics,
@@ -89,6 +89,7 @@ class CheckPackagesUsecase {
                 aggregated.packageInfo, score, aggregated.vulnerabilities),
             suggestions: [], // TODO(#44): implement suggestion engine
             fromCache: fromCache,
+            requestCount: requestCount,
           );
           return Result.success(audit);
         },

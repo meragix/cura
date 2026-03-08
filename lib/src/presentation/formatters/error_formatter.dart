@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cura/src/domain/value_objects/errors.dart';
 import 'package:cura/src/domain/value_objects/exception.dart';
 import 'package:cura/src/presentation/loggers/console_logger.dart';
 import 'package:dio/dio.dart';
@@ -8,34 +9,38 @@ import 'package:mason_logger/mason_logger.dart';
 /// Formats domain and infrastructure exceptions into structured, human-readable
 /// CLI output.
 ///
-/// Each exception type is dispatched to a dedicated private method that emits:
-/// - A colour-coded header with an appropriate symbol
-/// - The primary error message in bold
-/// - Contextual metadata (error code, URL, host, etc.)
-/// - Actionable suggestions tailored to the error category
-/// - Stack-trace detail when verbose mode is active
+/// All rendering funnels through [_renderBlock], a single primitive that
+/// handles the consistent header / separator / message / metadata /
+/// suggestions / verbose-detail layout. Each `_formatXxx` method is
+/// responsible only for extracting the data; it never touches the logger
+/// directly.
 ///
-/// This class is an internal collaborator of [ErrorHandler] — callers should
-/// not invoke [format] directly.
+/// Adding support for a new error type requires:
+/// 1. A `_formatXxx` method that calls [_renderBlock].
+/// 2. A new branch in [format].
+///
+/// This class is an internal collaborator of [ErrorHandler] and the two CLI
+/// presenters — callers should not invoke [format] directly.
 class ErrorFormatter {
-  /// Underlying mason_logger used for raw ANSI-formatted output.
   final Logger _logger;
+  final bool _verbose;
 
-  /// When `true`, prints original errors and stack traces.
-  /// Derived automatically from the injected [ConsoleLogger.isVerbose].
-  final bool verbose;
+  static const _kSeparator =
+      '────────────────────────────────────────────────────────────';
 
   ErrorFormatter(ConsoleLogger logger)
       : _logger = logger.raw,
-        verbose = logger.isVerbose;
+        _verbose = logger.isVerbose;
 
   // ===========================================================================
   // Public API
   // ===========================================================================
 
-  /// Dispatches [error] to the appropriate formatter and writes to stderr/stdout.
+  /// Dispatches [error] to the appropriate formatter and writes to the console.
   void format(dynamic error, {StackTrace? stackTrace}) {
-    if (error is CuraException) {
+    if (error is PackageProviderError) {
+      _formatProviderError(error);
+    } else if (error is CuraException) {
       _formatCuraException(error);
     } else if (error is DioException) {
       _formatDioException(error);
@@ -49,27 +54,169 @@ class ErrorFormatter {
   }
 
   // ===========================================================================
-  // CuraException hierarchy
+  // Error-specific formatters — data extraction only, no direct logger calls
   // ===========================================================================
 
+  void _formatProviderError(PackageProviderError error) {
+    final (emoji, title, message, suggestions) = switch (error) {
+      NetworkError(:final message) => (
+          '🌐',
+          'Network Error',
+          message,
+          <String>[
+            'Check your internet connection',
+            'Verify pub.dev is accessible',
+            "Try using ${cyan.wrap('--offline')} mode with cached data",
+          ],
+        ),
+      NotFoundError(:final packageName) => (
+          '📦',
+          'Package Not Found',
+          'Package "$packageName" not found on pub.dev',
+          <String>[
+            'Verify the package name is spelled correctly',
+            'Check if the package exists on pub.dev',
+          ],
+        ),
+      RateLimitError(:final retryAfter) => (
+          '⏱️',
+          'Rate Limit Exceeded',
+          'The upstream API enforced a rate limit',
+          <String>[
+            'Wait ${retryAfter.inSeconds}s before retrying',
+            "Use ${cyan.wrap('--use-cache')} to reduce API calls",
+            'Consider adding a GitHub token for higher rate limits',
+          ],
+        ),
+      TimeoutError(:final packageName) => (
+          '⏳',
+          'Request Timeout',
+          'Timeout while fetching "$packageName"',
+          <String>[
+            'Check your internet connection',
+            'Try again in a few moments',
+          ],
+        ),
+    };
+
+    _renderBlock(
+      header: '$emoji  $title',
+      message: message,
+      suggestions: suggestions,
+    );
+  }
+
   void _formatCuraException(CuraException error) {
+    _renderBlock(
+      header: '${_getErrorEmoji(error.code ?? 'ERROR')}  Error',
+      message: error.message,
+      metadata: {
+        if (error.code != null) 'Code': error.code!,
+        if (error.context != null) 'Context': error.context!,
+      },
+      suggestions: _getSuggestions(error),
+      verboseLines: [
+        if (error.originalError != null) ...[
+          'Original error:',
+          '  ${error.originalError}',
+        ],
+        if (error.stackTrace != null) ...[
+          'Stack trace:',
+          ...error.stackTrace.toString().split('\n').take(5).map((l) => '  $l'),
+        ],
+      ],
+    );
+  }
+
+  void _formatDioException(DioException error) {
+    _renderBlock(
+      header: '🌐  Network Error',
+      message: 'Failed to reach the server',
+      metadata: {
+        if (error.response?.statusCode != null)
+          'Status': '${error.response!.statusCode}',
+        if (error.message != null) 'Details': error.message!,
+      },
+      suggestions: [
+        'Check your internet connection',
+        'Verify the API endpoint is accessible',
+        'Try again in a few moments',
+      ],
+    );
+  }
+
+  void _formatSocketException(SocketException error) {
+    _renderBlock(
+      header: '🔌  Connection Error',
+      message: 'Unable to connect to the network',
+      metadata: {
+        'Host': error.address?.host ?? 'unknown',
+        'Port': '${error.port ?? 'unknown'}',
+      },
+      suggestions: [
+        'Check your internet connection',
+        'Verify DNS resolution is working',
+        "Check if you're behind a proxy or firewall",
+      ],
+    );
+  }
+
+  void _formatFormatException(FormatException error) {
+    _renderBlock(
+      header: '📄  Format Error',
+      message: 'Invalid data format received',
+      metadata: {
+        'Message': error.message,
+        if (error.source != null) 'Source': '${error.source}',
+      },
+    );
+  }
+
+  void _formatGenericException(dynamic error, StackTrace? stackTrace) {
+    _renderBlock(
+      header: '⚠️   Unexpected Error',
+      message: error.toString(),
+      suggestions: [
+        "This might be a bug — please report it: ${cyan.wrap('https://github.com/meragix/cura/issues')}",
+      ],
+      verboseLines: [
+        if (stackTrace != null) ...[
+          'Stack trace:',
+          ...stackTrace.toString().split('\n').take(10).map((l) => '  $l'),
+        ],
+      ],
+    );
+  }
+
+  // ===========================================================================
+  // Shared rendering primitive
+  // ===========================================================================
+
+  /// Renders a consistent error block: header, separator, message, optional
+  /// metadata, optional suggestions, optional verbose lines, closing separator.
+  ///
+  /// This is the single source of truth for the visual layout — all
+  /// `_formatXxx` methods delegate here.
+  void _renderBlock({
+    required String header,
+    required String message,
+    Map<String, String> metadata = const {},
+    List<String> suggestions = const [],
+    List<String> verboseLines = const [],
+  }) {
     _logger.info('');
-    final emoji = _getErrorEmoji(error.code ?? 'ERROR');
-    _logger.err('${styleBold.wrap('$emoji Error')}');
-    _logger.err(red.wrap('─' * 60));
+    _logger.err('${styleBold.wrap(header)}');
+    _logger.err(red.wrap(_kSeparator));
     _logger.err('');
-    _logger.err(styleBold.wrap(error.message));
+    _logger.err(styleBold.wrap(message));
 
-    if (error.code != null) {
+    if (metadata.isNotEmpty) {
       _logger.info('');
-      _logger.info('${darkGray.wrap('Code:')} ${error.code}');
+      for (final MapEntry(:key, :value) in metadata.entries) {
+        _logger.info('${darkGray.wrap('$key:')} $value');
+      }
     }
 
-    if (error.context != null) {
-      _logger.info('${darkGray.wrap('Context:')} ${error.context}');
-    }
-
-    final suggestions = _getSuggestions(error);
     if (suggestions.isNotEmpty) {
       _logger.info('');
       _logger.info(yellow.wrap('💡 Suggestions:'));
@@ -78,103 +225,14 @@ class ErrorFormatter {
       }
     }
 
-    if (verbose && error.originalError != null) {
+    if (_verbose && verboseLines.isNotEmpty) {
       _logger.info('');
-      _logger.info(darkGray.wrap('Original error:'));
-      _logger.info(darkGray.wrap('  ${error.originalError}'));
-    }
-
-    if (verbose && error.stackTrace != null) {
-      _logger.info('');
-      _logger.info(darkGray.wrap('Stack trace:'));
-      for (final line in error.stackTrace.toString().split('\n').take(5)) {
-        _logger.info(darkGray.wrap('  $line'));
+      for (final line in verboseLines) {
+        _logger.info(darkGray.wrap(line));
       }
     }
 
-    _logger.err(red.wrap('─' * 60));
-    _logger.info('');
-  }
-
-  // ===========================================================================
-  // Infrastructure exceptions
-  // ===========================================================================
-
-  void _formatDioException(DioException error) {
-    _logger.info('');
-    _logger.err('${styleBold.wrap('🌐 Network Error')}');
-    _logger.err(red.wrap('─' * 60));
-    _logger.err('');
-    _logger.err('Failed to reach the server');
-    _logger.info('');
-    if (error.response?.statusCode != null) {
-      _logger.info('${darkGray.wrap('Status:')} ${error.response!.statusCode}');
-    }
-    _logger.info('${darkGray.wrap('Details:')} ${error.message}');
-    _logger.info('');
-    _logger.info(yellow.wrap('💡 Suggestions:'));
-    _logger.info('   ${darkGray.wrap('•')} Check your internet connection');
-    _logger
-        .info('   ${darkGray.wrap('•')} Verify the API endpoint is accessible');
-    _logger.info('   ${darkGray.wrap('•')} Try again in a few moments');
-    _logger.err(red.wrap('─' * 60));
-    _logger.info('');
-  }
-
-  void _formatSocketException(SocketException error) {
-    _logger.info('');
-    _logger.err('${styleBold.wrap('🔌 Connection Error')}');
-    _logger.err(red.wrap('─' * 60));
-    _logger.err('');
-    _logger.err('Unable to connect to the network');
-    _logger.info('');
-    _logger
-        .info('${darkGray.wrap('Host:')} ${error.address?.host ?? 'unknown'}');
-    _logger.info('${darkGray.wrap('Port:')} ${error.port ?? 'unknown'}');
-    _logger.info('');
-    _logger.info(yellow.wrap('💡 Suggestions:'));
-    _logger.info('   ${darkGray.wrap('•')} Check your internet connection');
-    _logger.info('   ${darkGray.wrap('•')} Verify DNS resolution is working');
-    _logger.info(
-        "   ${darkGray.wrap('•')} Check if you're behind a proxy or firewall");
-    _logger.err(red.wrap('─' * 60));
-    _logger.info('');
-  }
-
-  void _formatFormatException(FormatException error) {
-    _logger.info('');
-    _logger.err('${styleBold.wrap('📄 Format Error')}');
-    _logger.err(red.wrap('─' * 60));
-    _logger.err('');
-    _logger.err('Invalid data format received');
-    _logger.info('');
-    _logger.info('${darkGray.wrap('Message:')} ${error.message}');
-    if (error.source != null) {
-      _logger.info('${darkGray.wrap('Source:')} ${error.source}');
-    }
-    _logger.err(red.wrap('─' * 60));
-    _logger.info('');
-  }
-
-  void _formatGenericException(dynamic error, StackTrace? stackTrace) {
-    _logger.info('');
-    _logger.err('${styleBold.wrap('⚠️  Unexpected Error')}');
-    _logger.err(red.wrap('─' * 60));
-    _logger.err('');
-    _logger.err(error.toString());
-
-    if (verbose && stackTrace != null) {
-      _logger.info('');
-      _logger.info(darkGray.wrap('Stack trace:'));
-      for (final line in stackTrace.toString().split('\n').take(10)) {
-        _logger.info(darkGray.wrap('  $line'));
-      }
-    }
-
-    _logger.info('');
-    _logger.info(yellow.wrap('💡 This might be a bug. Please report it:'));
-    _logger.info('   ${cyan.wrap('https://github.com/meragix/cura/issues')}');
-    _logger.err(red.wrap('─' * 60));
+    _logger.err(red.wrap(_kSeparator));
     _logger.info('');
   }
 
@@ -195,43 +253,29 @@ class ErrorFormatter {
   }
 
   List<String> _getSuggestions(CuraException error) {
-    if (error is PackageNotFoundException) {
-      return [
-        'Verify the package name is spelled correctly',
-        'Check if the package exists on pub.dev',
-        "Use ${cyan.wrap('cura search <keyword>')} to find similar packages",
-      ];
-    }
-
-    if (error is RateLimitException) {
-      return [
-        if (error.retryAfter != null)
-          'Wait ${error.retryAfter} before retrying',
-        "Use ${cyan.wrap('--use-cache')} to reduce API calls",
-        'Consider adding a GitHub token for higher rate limits',
-      ];
-    }
-
-    if (error is NetworkException) {
-      return [
-        'Check your internet connection',
-        'Verify pub.dev is accessible',
-        "Try using ${cyan.wrap('--offline')} mode with cached data",
-      ];
-    }
-
-    if (error is ParseException) {
-      return [
-        'This might be a temporary API issue',
-        'Try again in a few moments',
-        'Report this if it persists',
-      ];
-    }
-
-    if (error is ValidationException) {
-      return error.validationErrors;
-    }
-
-    return const [];
+    return switch (error) {
+      PackageNotFoundException() => [
+          'Verify the package name is spelled correctly',
+          'Check if the package exists on pub.dev',
+          "Use ${cyan.wrap('cura search <keyword>')} to find similar packages",
+        ],
+      RateLimitException(:final retryAfter) => [
+          if (retryAfter != null) 'Wait $retryAfter before retrying',
+          "Use ${cyan.wrap('--use-cache')} to reduce API calls",
+          'Consider adding a GitHub token for higher rate limits',
+        ],
+      NetworkException() => [
+          'Check your internet connection',
+          'Verify pub.dev is accessible',
+          "Try using ${cyan.wrap('--offline')} mode with cached data",
+        ],
+      ParseException() => [
+          'This might be a temporary API issue',
+          'Try again in a few moments',
+          'Report this if it persists',
+        ],
+      ValidationException(:final validationErrors) => validationErrors,
+      _ => const [],
+    };
   }
 }

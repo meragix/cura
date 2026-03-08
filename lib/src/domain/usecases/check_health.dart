@@ -36,7 +36,7 @@ class CheckHealth {
       if (result is PackageFailure) continue;
 
       result.mapValue(
-        (aggregated, fromCache) {
+        (aggregated, _, __) {
           final score = _scoreCalculator.execute(
             aggregated.packageInfo,
             githubMetrics: aggregated.githubMetrics,

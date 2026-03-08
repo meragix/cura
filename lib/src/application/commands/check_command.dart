@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:cura/src/domain/entities/package_audit_result.dart';
 import 'package:cura/src/domain/usecases/check_packages_usecase.dart';
+import 'package:cura/src/domain/value_objects/errors.dart';
 import 'package:cura/src/domain/value_objects/result.dart';
 import 'package:cura/src/presentation/presenters/check_presenter.dart';
 import 'package:cura/src/shared/utils/pubspec_parser.dart';
@@ -206,6 +207,9 @@ class CheckCommand extends Command<int> {
         case Failure<PackageAuditResult>(:final error):
           failureCount++;
           _presenter.showPackageError(error, progress);
+          if (error is NetworkError) {
+            return 1;
+          }
       }
     }
 

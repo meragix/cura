@@ -48,7 +48,7 @@ class ViewPackageDetails {
   Future<Result<PackageAuditResult>> execute(String packageName) async {
     final result = await _aggregator.fetchAll(packageName);
 
-    return result.mapAsync<PackageAuditResult>((aggregated, fromCache) async {
+    return result.mapAsync<PackageAuditResult>((aggregated, fromCache, _) async {
       final score = _scoreCalculator.execute(
         aggregated.packageInfo,
         githubMetrics: aggregated.githubMetrics,
