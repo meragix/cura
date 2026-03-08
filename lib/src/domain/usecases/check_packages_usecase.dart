@@ -36,19 +36,13 @@ class CheckPackagesUsecase {
   ///
   /// - [aggregator] provides aggregated package data from all external APIs.
   /// - [scoreCalculator] computes the composite health score for each package.
-  /// - [minScore], [failOnVulnerable], and [failOnDiscontinued] are acceptance
-  ///   criteria that will be used by the command layer to determine the final
-  ///   exit code.
   ///
-  /// > **Note:** `minScore`, `failOnVulnerable`, and `failOnDiscontinued` are
-  /// > currently consumed by the composition root and not yet forwarded to this
-  /// > use case at runtime. See TODO(#42) in [CheckCommand].
+  /// Acceptance criteria (`minScore`, `failOnVulnerable`, `failOnDiscontinued`)
+  /// are read from CLI flags at runtime by [CheckCommand] and applied to the
+  /// exit-code logic — they are not part of this use case's contract.
   CheckPackagesUsecase({
     required PackageDataAggregator aggregator,
     required ScoreCalculator scoreCalculator,
-    int minScore = 70,
-    bool failOnVulnerable = false,
-    bool failOnDiscontinued = false,
   })  : _aggregator = aggregator,
         _scoreCalculator = scoreCalculator;
 
@@ -87,7 +81,6 @@ class CheckPackagesUsecase {
             vulnerabilities: aggregated.vulnerabilities,
             issues: _identifyIssues(
                 aggregated.packageInfo, score, aggregated.vulnerabilities),
-            suggestions: [], // TODO(#44): implement suggestion engine
             fromCache: fromCache,
             requestCount: requestCount,
           );
