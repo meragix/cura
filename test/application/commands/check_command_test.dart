@@ -115,11 +115,11 @@ Vulnerability _makeCriticalVuln() => Vulnerability(
 // ---------------------------------------------------------------------------
 
 /// Minimal valid pubspec.yaml with the given package names under [dependencies].
-String _pubspecWith(List<String> packages, {List<String> devPackages = const []}) {
+String _pubspecWith(List<String> packages,
+    {List<String> devPackages = const []}) {
   final deps = packages.map((p) => '  $p: ^1.0.0').join('\n');
   final devDeps = devPackages.map((p) => '  $p: ^1.0.0').join('\n');
-  final devSection =
-      devPackages.isEmpty ? '' : '\ndev_dependencies:\n$devDeps';
+  final devSection = devPackages.isEmpty ? '' : '\ndev_dependencies:\n$devDeps';
   return 'name: test_app\ndependencies:\n$deps$devSection\n';
 }
 
@@ -201,8 +201,7 @@ void main() {
       await pubspecFile.writeAsString('name: test_app\ndependencies:\n');
 
       final runner = _makeRunner(usecase, presenter);
-      final exitCode =
-          await runner.run(['check', '--path', pubspecFile.path]);
+      final exitCode = await runner.run(['check', '--path', pubspecFile.path]);
 
       expect(exitCode, 1);
       verify(() => presenter.showError(any())).called(1);
@@ -217,10 +216,8 @@ void main() {
         ]),
       );
 
-      final runner =
-          _makeRunner(usecase, presenter, ignoredPackages: ['dio']);
-      final exitCode =
-          await runner.run(['check', '--path', pubspecFile.path]);
+      final runner = _makeRunner(usecase, presenter, ignoredPackages: ['dio']);
+      final exitCode = await runner.run(['check', '--path', pubspecFile.path]);
 
       expect(exitCode, 0);
       verify(() => usecase.execute(['provider'])).called(1);
@@ -239,8 +236,8 @@ void main() {
       );
 
       final runner = _makeRunner(usecase, presenter);
-      final exitCode = await runner.run(
-          ['check', '--path', pubspecFile.path, '--dev-dependencies']);
+      final exitCode = await runner
+          .run(['check', '--path', pubspecFile.path, '--dev-dependencies']);
 
       expect(exitCode, 0);
       verify(() => usecase.execute(['dio', 'build_runner'])).called(1);
@@ -262,8 +259,8 @@ void main() {
       );
 
       final runner = _makeRunner(usecase, presenter);
-      final exitCode = await runner.run(
-          ['check', '--path', pubspecFile.path, '--min-score', '70']);
+      final exitCode = await runner
+          .run(['check', '--path', pubspecFile.path, '--min-score', '70']);
 
       expect(exitCode, 0);
     });
@@ -278,8 +275,8 @@ void main() {
       );
 
       final runner = _makeRunner(usecase, presenter);
-      final exitCode = await runner.run(
-          ['check', '--path', pubspecFile.path, '--min-score', '70']);
+      final exitCode = await runner
+          .run(['check', '--path', pubspecFile.path, '--min-score', '70']);
 
       expect(exitCode, 0);
     });
@@ -300,13 +297,14 @@ void main() {
       );
 
       final runner = _makeRunner(usecase, presenter);
-      final exitCode = await runner.run(
-          ['check', '--path', pubspecFile.path, '--min-score', '80']);
+      final exitCode = await runner
+          .run(['check', '--path', pubspecFile.path, '--min-score', '80']);
 
       expect(exitCode, 1);
     });
 
-    test('returns 0 when score is below default min-score but flag overrides it',
+    test(
+        'returns 0 when score is below default min-score but flag overrides it',
         () async {
       await pubspecFile.writeAsString(_pubspecWith(['old_pkg']));
 
@@ -318,8 +316,8 @@ void main() {
 
       final runner = _makeRunner(usecase, presenter);
       // Explicitly set min-score to 40 — score 50 should pass.
-      final exitCode = await runner.run(
-          ['check', '--path', pubspecFile.path, '--min-score', '40']);
+      final exitCode = await runner
+          .run(['check', '--path', pubspecFile.path, '--min-score', '40']);
 
       expect(exitCode, 0);
     });
@@ -356,8 +354,7 @@ void main() {
       expect(exitCode, 1);
     });
 
-    test('returns 0 when discontinued but --no-fail-on-discontinued',
-        () async {
+    test('returns 0 when discontinued but --no-fail-on-discontinued', () async {
       await pubspecFile.writeAsString(_pubspecWith(['old_pkg']));
 
       when(() => usecase.execute(['old_pkg'])).thenAnswer(
@@ -462,8 +459,7 @@ void main() {
       );
 
       final runner = _makeRunner(usecase, presenter);
-      final exitCode =
-          await runner.run(['check', '--path', pubspecFile.path]);
+      final exitCode = await runner.run(['check', '--path', pubspecFile.path]);
 
       expect(exitCode, 1);
     });
@@ -479,8 +475,7 @@ void main() {
       );
 
       final runner = _makeRunner(usecase, presenter);
-      final exitCode =
-          await runner.run(['check', '--path', pubspecFile.path]);
+      final exitCode = await runner.run(['check', '--path', pubspecFile.path]);
 
       expect(exitCode, 1);
       // Summary must NOT be shown on early abort.
@@ -502,8 +497,7 @@ void main() {
       );
 
       final runner = _makeRunner(usecase, presenter);
-      final exitCode =
-          await runner.run(['check', '--path', pubspecFile.path]);
+      final exitCode = await runner.run(['check', '--path', pubspecFile.path]);
 
       expect(exitCode, 1);
       // good_pkg result was still collected.
@@ -575,8 +569,7 @@ void main() {
 
       // Simulate config with min_score: 80.
       final runner = _makeRunner(usecase, presenter, defaultMinScore: 80);
-      final exitCode =
-          await runner.run(['check', '--path', pubspecFile.path]);
+      final exitCode = await runner.run(['check', '--path', pubspecFile.path]);
 
       expect(exitCode, 1);
     });
@@ -592,8 +585,8 @@ void main() {
       );
 
       final runner = _makeRunner(usecase, presenter, defaultMinScore: 80);
-      final exitCode = await runner.run(
-          ['check', '--path', pubspecFile.path, '--min-score', '60']);
+      final exitCode = await runner
+          .run(['check', '--path', pubspecFile.path, '--min-score', '60']);
 
       expect(exitCode, 0);
     });
@@ -614,8 +607,7 @@ void main() {
       // Simulate config with fail_on_discontinued: false.
       final runner = _makeRunner(usecase, presenter,
           defaultFailOnDiscontinued: false, defaultMinScore: 0);
-      final exitCode =
-          await runner.run(['check', '--path', pubspecFile.path]);
+      final exitCode = await runner.run(['check', '--path', pubspecFile.path]);
 
       expect(exitCode, 0);
     });

@@ -230,7 +230,8 @@ void main() {
     });
 
     test('empty package list produces empty stream', () async {
-      when(() => aggregator.fetchMany([])).thenAnswer((_) => const Stream.empty());
+      when(() => aggregator.fetchMany([]))
+          .thenAnswer((_) => const Stream.empty());
 
       final usecase =
           _makeUsecase(aggregator: aggregator, calculator: calculator);
@@ -278,8 +279,8 @@ void main() {
       final results = await usecase.execute(['flaky_pkg']).toList();
 
       expect(results.first, isA<Failure<PackageAuditResult>>());
-      expect(
-          (results.first as Failure<PackageAuditResult>).error, isA<NetworkError>());
+      expect((results.first as Failure<PackageAuditResult>).error,
+          isA<NetworkError>());
     });
 
     test('emits Failure when aggregator returns rate limit error', () async {
@@ -306,8 +307,7 @@ void main() {
 
       when(() => aggregator.fetchMany(['bad_pkg', 'good_pkg'])).thenAnswer(
         (_) => Stream.fromIterable([
-          PackageResult.failure(
-              const PackageProviderError.notFound('bad_pkg')),
+          PackageResult.failure(const PackageProviderError.notFound('bad_pkg')),
           PackageResult.success(data: goodData, fromCache: false),
         ]),
       );
@@ -319,8 +319,7 @@ void main() {
 
       final usecase =
           _makeUsecase(aggregator: aggregator, calculator: calculator);
-      final results =
-          await usecase.execute(['bad_pkg', 'good_pkg']).toList();
+      final results = await usecase.execute(['bad_pkg', 'good_pkg']).toList();
 
       expect(results, hasLength(2));
       expect(results[0], isA<Failure<PackageAuditResult>>());
@@ -351,10 +350,11 @@ void main() {
 
       final usecase =
           _makeUsecase(aggregator: aggregator, calculator: calculator);
-      final audit = (await usecase.execute(['test_pkg']).toList())
-          .first as Success<PackageAuditResult>;
+      final audit = (await usecase.execute(['test_pkg']).toList()).first
+          as Success<PackageAuditResult>;
 
-      expect(audit.value.issues.any((i) => i.type == AuditIssueType.discontinued),
+      expect(
+          audit.value.issues.any((i) => i.type == AuditIssueType.discontinued),
           isTrue);
       expect(
         audit.value.issues
@@ -384,8 +384,8 @@ void main() {
               as Success<PackageAuditResult>)
           .value;
 
-      expect(
-          audit.issues.any((i) => i.type == AuditIssueType.discontinued), isFalse);
+      expect(audit.issues.any((i) => i.type == AuditIssueType.discontinued),
+          isFalse);
     });
   });
 
@@ -416,15 +416,16 @@ void main() {
               as Success<PackageAuditResult>)
           .value;
 
-      expect(
-          audit.issues.any((i) => i.type == AuditIssueType.vulnerability), isTrue);
-      final issue =
-          audit.issues.firstWhere((i) => i.type == AuditIssueType.vulnerability);
+      expect(audit.issues.any((i) => i.type == AuditIssueType.vulnerability),
+          isTrue);
+      final issue = audit.issues
+          .firstWhere((i) => i.type == AuditIssueType.vulnerability);
       expect(issue.severity, AuditIssueSeverity.critical);
       expect(issue.message, contains('CVE-2024-9999'));
     });
 
-    test('no vulnerability issue when only non-critical CVEs present', () async {
+    test('no vulnerability issue when only non-critical CVEs present',
+        () async {
       final vuln = Vulnerability(
         id: 'CVE-2024-LOW',
         summary: 'Low severity',
@@ -453,8 +454,8 @@ void main() {
               as Success<PackageAuditResult>)
           .value;
 
-      expect(
-          audit.issues.any((i) => i.type == AuditIssueType.vulnerability), isFalse);
+      expect(audit.issues.any((i) => i.type == AuditIssueType.vulnerability),
+          isFalse);
     });
   });
 
@@ -483,7 +484,8 @@ void main() {
               as Success<PackageAuditResult>)
           .value;
 
-      expect(audit.issues.any((i) => i.type == AuditIssueType.lowScore), isTrue);
+      expect(
+          audit.issues.any((i) => i.type == AuditIssueType.lowScore), isTrue);
       expect(
         audit.issues
             .firstWhere((i) => i.type == AuditIssueType.lowScore)
@@ -546,7 +548,8 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('_identifyIssues — stale', () {
-    test('adds stale warning issue when lastPublished > 730 days ago', () async {
+    test('adds stale warning issue when lastPublished > 730 days ago',
+        () async {
       final staleDate = DateTime.now().subtract(const Duration(days: 800));
       final info = _makePackageInfo(lastPublished: staleDate);
       final aggregated = _makeAggregated(packageInfo: info);
