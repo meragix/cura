@@ -1,5 +1,5 @@
+import 'package:cura/src/domain/value_objects/score_weights.dart';
 import 'package:cura/src/infrastructure/config/models/cura_config.dart';
-import 'package:cura/src/infrastructure/config/models/score_weights.dart';
 
 /// Compile-time constants and baseline values for the Cura configuration.
 ///

@@ -6,14 +6,14 @@
 
 - [Scoring algorithm](scoring.md) — how 0–100 scores are calculated
 - [Configuration reference](configuration.md) — all config keys and the hierarchy
-- [Caching](caching.md) — SQLite cache internals, TTL strategy, and management commands
+- [Caching](caching.md) — JSON file cache internals, TTL strategy, and management commands
 
 ---
 
 ## Commands
 
 - [check](../README.md#check-command) — audit all dependencies in `pubspec.yaml`
-- [view](../README.md#view-command) — deep-dive into a single package
+- [view](../README.md#view-command) — full health report for a single package
 - [config](../README.md#config-command) — read and write configuration
 - [cache](../README.md#cache-command) — manage the local cache
 

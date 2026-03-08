@@ -1,4 +1,4 @@
-import 'package:cura/src/infrastructure/config/models/score_weights.dart';
+import 'package:cura/src/domain/value_objects/score_weights.dart';
 import 'package:yaml/yaml.dart';
 
 /// Fully-resolved, non-nullable configuration for a Cura session.
@@ -132,8 +132,7 @@ class CuraConfig {
       minScore: minScore ?? this.minScore,
       scoreWeights: scoreWeights ?? this.scoreWeights,
       showSuggestions: showSuggestions ?? this.showSuggestions,
-      maxSuggestionsPerPackage:
-          maxSuggestionsPerPackage ?? this.maxSuggestionsPerPackage,
+      maxSuggestionsPerPackage: maxSuggestionsPerPackage ?? this.maxSuggestionsPerPackage,
       failOnVulnerable: failOnVulnerable ?? this.failOnVulnerable,
       failOnDiscontinued: failOnDiscontinued ?? this.failOnDiscontinued,
       ignoredPackages: ignoredPackages ?? this.ignoredPackages,
@@ -200,14 +199,8 @@ class CuraConfig {
       maxSuggestionsPerPackage: json['maxSuggestionsPerPackage'] as int? ?? 3,
       failOnVulnerable: json['failOnVulnerable'] as bool? ?? true,
       failOnDiscontinued: json['failOnDiscontinued'] as bool? ?? true,
-      ignoredPackages: (json['ignoredPackages'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          const [],
-      trustedPublishers: (json['trustedPublishers'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          const [],
+      ignoredPackages: (json['ignoredPackages'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      trustedPublishers: (json['trustedPublishers'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       verboseLogging: json['verboseLogging'] as bool? ?? false,
       quiet: json['quiet'] as bool? ?? false,
       githubToken: json['githubToken'] as String?,
@@ -254,15 +247,13 @@ class CuraConfig {
       );
     }
 
-    List<String> _list(dynamic raw) =>
-        (raw is YamlList) ? raw.map((e) => e.toString()).toList() : const [];
+    List<String> _list(dynamic raw) => (raw is YamlList) ? raw.map((e) => e.toString()).toList() : const [];
 
     return CuraConfig(
       theme: yaml['theme'] as String? ?? 'dark',
       useColors: yaml['use_colors'] as bool? ?? true,
       useEmojis: yaml['use_emojis'] as bool? ?? true,
-      cacheMaxAgeHours:
-          (yaml['cache_max_age_hours'] ?? yaml['cache_max_age']) as int? ?? 24,
+      cacheMaxAgeHours: (yaml['cache_max_age_hours'] ?? yaml['cache_max_age']) as int? ?? 24,
       enableCache: yaml['enable_cache'] as bool? ?? true,
       maxConcurrency: yaml['max_concurrency'] as int? ?? 5,
       timeoutSeconds: yaml['timeout_seconds'] as int? ?? 10,
@@ -272,16 +263,13 @@ class CuraConfig {
       scoreWeights: weightsMap != null
           ? ScoreWeights(
               vitality: weightsMap['vitality'] as int? ?? 40,
-              technicalHealth: (weightsMap['technical_health'] ??
-                      weightsMap['technicalHealth']) as int? ??
-                  30,
+              technicalHealth: (weightsMap['technical_health'] ?? weightsMap['technicalHealth']) as int? ?? 30,
               trust: weightsMap['trust'] as int? ?? 20,
               maintenance: weightsMap['maintenance'] as int? ?? 10,
             )
           : const ScoreWeights(),
       showSuggestions: yaml['show_suggestions'] as bool? ?? true,
-      maxSuggestionsPerPackage:
-          yaml['max_suggestions_per_package'] as int? ?? 3,
+      maxSuggestionsPerPackage: yaml['max_suggestions_per_package'] as int? ?? 3,
       failOnVulnerable: yaml['fail_on_vulnerable'] as bool? ?? true,
       failOnDiscontinued: yaml['fail_on_discontinued'] as bool? ?? true,
       ignoredPackages: _list(yaml['ignore_packages']),
@@ -302,17 +290,14 @@ class CuraConfig {
   }
 
   String _toGlobalYaml() {
-    final ignorePkgLines = ignoredPackages.isEmpty
-        ? '  # - example_package'
-        : ignoredPackages.map((p) => '  - $p').join('\n');
+    final ignorePkgLines =
+        ignoredPackages.isEmpty ? '  # - example_package' : ignoredPackages.map((p) => '  - $p').join('\n');
 
     final trustedPubLines = trustedPublishers.isEmpty
         ? '  # - dart.dev\n  # - flutter.dev'
         : trustedPublishers.map((p) => '  - $p').join('\n');
 
-    final tokenLine = githubToken != null
-        ? 'github_token: $githubToken'
-        : '# github_token: ghp_your_token_here';
+    final tokenLine = githubToken != null ? 'github_token: $githubToken' : '# github_token: ghp_your_token_here';
 
     return '''
 # Cura Configuration File
