@@ -46,7 +46,8 @@ import 'package:path/path.dart' as p;
 class JsonFileSystemCache {
   static const int _schemaVersion = 1;
   static const String _jsonExt = '.json';
-  static const String _tmpExt = '.tmp'; // appended to the full .json path → <key>.json.tmp
+  static const String _tmpExt =
+      '.tmp'; // appended to the full .json path → <key>.json.tmp
 
   /// Well-known namespace for [AggregatedPackageData] entries.
   static const String aggregatedNamespace = 'aggregated';
@@ -94,7 +95,8 @@ class JsonFileSystemCache {
       final file = _fileFor(namespace, key);
       if (!await file.exists()) return null;
 
-      final envelope = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      final envelope =
+          jsonDecode(await file.readAsString()) as Map<String, dynamic>;
       final expiresAt = DateTime.parse(envelope['expiresAt'] as String);
 
       if (DateTime.now().isAfter(expiresAt)) {

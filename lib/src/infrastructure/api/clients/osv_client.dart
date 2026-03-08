@@ -64,9 +64,7 @@ class OsvApiClient {
       final data = response.data as Map<String, dynamic>;
       final vulns = data['vulns'] as List<dynamic>? ?? [];
 
-      return vulns
-          .map((v) => _mapToEntity(v as Map<String, dynamic>))
-          .toList();
+      return vulns.map((v) => _mapToEntity(v as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       throw NetworkException(
         'OSV request failed: ${e.message}',

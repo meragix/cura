@@ -140,7 +140,9 @@ class Score {
         trustDetails: '',
         maintenanceDetails: '',
       ),
-      redFlags: const [NoNullSafetyFlag()], // placeholder — actual CVE flags live in AuditIssue
+      redFlags: const [
+        NoNullSafetyFlag()
+      ], // placeholder — actual CVE flags live in AuditIssue
       recommendations: const [
         Recommendation(
           level: RecommendationLevel.critical,

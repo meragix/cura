@@ -129,7 +129,10 @@ Future<void> main(List<String> arguments) async {
   // Warn about missing GitHub token only for commands that call the GitHub API
   // and only when output is not suppressed.
   const apiCommands = {'check', 'view'};
-  if (config.githubToken == null && !logger.isQuiet && arguments.isNotEmpty && apiCommands.contains(arguments.first)) {
+  if (config.githubToken == null &&
+      !logger.isQuiet &&
+      arguments.isNotEmpty &&
+      apiCommands.contains(arguments.first)) {
     logger.warn('GitHub token not set — rate limited to 60 req/h');
     logger.muted('  Add one: cura config set github_token YOUR_TOKEN');
     logger.spacer();
@@ -244,7 +247,8 @@ Future<void> _cleanup({
 /// environment), so the failure is explicit rather than silently using a
 /// wrong path.
 String _homeDir() {
-  final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+  final home =
+      Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
   if (home == null) throw StateError('Cannot resolve HOME directory');
   return home;
 }

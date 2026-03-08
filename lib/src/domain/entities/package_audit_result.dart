@@ -133,7 +133,8 @@ class PackageAuditResult {
   int get hashCode => name.hashCode ^ version.hashCode;
 
   @override
-  String toString() => 'PackageAuditResult($name@$version, score: ${score.total})';
+  String toString() =>
+      'PackageAuditResult($name@$version, score: ${score.total})';
 }
 
 // =============================================================================

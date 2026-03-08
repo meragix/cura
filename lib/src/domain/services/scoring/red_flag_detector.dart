@@ -34,7 +34,8 @@ final class RedFlagDetector {
 
     // Limited cross-platform support.
     if (pkg.supportedPlatforms.length < _minPlatformsThreshold) {
-      flags.add(LimitedPlatformSupportFlag(count: pkg.supportedPlatforms.length));
+      flags.add(
+          LimitedPlatformSupportFlag(count: pkg.supportedPlatforms.length));
     }
 
     // Unverified publisher.

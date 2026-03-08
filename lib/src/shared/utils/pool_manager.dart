@@ -100,7 +100,8 @@ class PoolStats {
   }
 
   /// Whether all pool slots are occupied **and** tasks are waiting in the queue.
-  bool get isSaturated => activeRequests >= maxConcurrency && queuedRequests > 0;
+  bool get isSaturated =>
+      activeRequests >= maxConcurrency && queuedRequests > 0;
 
   @override
   String toString() {

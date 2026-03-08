@@ -159,17 +159,21 @@ class CheckPresenter {
     // ------------------------------------------------------------------
 
     final healthy = _results.where((r) => r.score.total >= 70).length;
-    final warning = _results.where((r) => r.score.total >= 50 && r.score.total < 70).length;
+    final warning =
+        _results.where((r) => r.score.total >= 50 && r.score.total < 70).length;
     final critical = _results.where((r) => r.score.total < 50).length;
 
-    final avgScore =
-        _results.isEmpty ? 0 : _results.map((r) => r.score.total).reduce((a, b) => a + b) ~/ _results.length;
+    final avgScore = _results.isEmpty
+        ? 0
+        : _results.map((r) => r.score.total).reduce((a, b) => a + b) ~/
+            _results.length;
 
     _logger.info('');
     _logger.info(styleBold.wrap('SUMMARY')!);
 
     if (healthy > 0) {
-      _logger.info('  ${green.wrap("Healthy:")}  $healthy/$total (${(healthy / total * 100).round()}%)');
+      _logger.info(
+          '  ${green.wrap("Healthy:")}  $healthy/$total (${(healthy / total * 100).round()}%)');
     }
     if (warning > 0) {
       _logger.info('  ${yellow.wrap("Warning:")}  $warning');
@@ -198,7 +202,8 @@ class CheckPresenter {
       _logger.error('CRITICAL ISSUES (require action):');
 
       for (final result in criticalResults) {
-        _logger.error('  ${red.wrap('✗')} ${red.wrap(styleBold.wrap(result.name))} (score: ${result.score.total})');
+        _logger.error(
+            '  ${red.wrap('✗')} ${red.wrap(styleBold.wrap(result.name))} (score: ${result.score.total})');
 
         for (final issue in result.issues) {
           _logger.info('    └─ ${issue.message}');

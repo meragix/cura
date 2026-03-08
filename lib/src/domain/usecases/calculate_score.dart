@@ -73,7 +73,8 @@ class CalculateScore implements ScoreCalculator {
   ///
   /// [weights] must sum to 100; an invalid configuration throws [ArgumentError]
   /// at construction time — not at scoring time.
-  CalculateScore({ScoreWeights weights = const ScoreWeights()}) : this._(
+  CalculateScore({ScoreWeights weights = const ScoreWeights()})
+      : this._(
           vitality: VitalityDimension(weight: weights.vitality),
           technicalHealth:
               TechnicalHealthDimension(weight: weights.technicalHealth),
@@ -171,8 +172,11 @@ class CalculateScore implements ScoreCalculator {
 
     // Penalties applied after dimension totals.
     final penalty = _penalties.calculate(input);
-    final rawTotal =
-        vitalityScore + technicalHealthScore + trustScore + maintenanceScore + penalty;
+    final rawTotal = vitalityScore +
+        technicalHealthScore +
+        trustScore +
+        maintenanceScore +
+        penalty;
 
     // Trusted publisher floor: guaranteed minimum, not an automatic perfect score.
     final total = packageInfo.isTrustedPublisher
@@ -201,5 +205,4 @@ class CalculateScore implements ScoreCalculator {
       recommendations: recommendations,
     );
   }
-
 }

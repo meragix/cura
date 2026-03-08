@@ -36,11 +36,13 @@ final class RecommendationEngine {
       return const [
         Recommendation(
           level: RecommendationLevel.critical,
-          message: 'AVOID: Multiple risk factors detected on an unverified package',
+          message:
+              'AVOID: Multiple risk factors detected on an unverified package',
         ),
         Recommendation(
           level: RecommendationLevel.action,
-          message: 'Search for a maintained alternative from a verified publisher',
+          message:
+              'Search for a maintained alternative from a verified publisher',
         ),
       ];
     }
@@ -52,7 +54,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is MissingLicenseFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.critical,
-        message: 'No license detected — legal review required before commercial use',
+        message:
+            'No license detected — legal review required before commercial use',
       ));
     }
 
@@ -60,7 +63,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is StalePackageFlag) && !isConsideredStable(pkg)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.warning,
-        message: 'WARNING: Active maintenance not detected — seek modern alternatives',
+        message:
+            'WARNING: Active maintenance not detected — seek modern alternatives',
       ));
     }
 
@@ -68,7 +72,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is UnverifiedPublisherFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.action,
-        message: 'ACTION: Verify author reputation and repository activity on GitHub',
+        message:
+            'ACTION: Verify author reputation and repository activity on GitHub',
       ));
     }
 
@@ -76,7 +81,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is MissingRepositoryFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.critical,
-        message: 'CRITICAL: Cannot audit source code — avoid in professional projects',
+        message:
+            'CRITICAL: Cannot audit source code — avoid in professional projects',
       ));
     }
 
@@ -97,7 +103,8 @@ final class RecommendationEngine {
       if (total < _earlyStageScoreThreshold) {
         recs.add(const Recommendation(
           level: RecommendationLevel.warning,
-          message: 'ADVISORY: Early-stage package — use only for non-critical features',
+          message:
+              'ADVISORY: Early-stage package — use only for non-critical features',
         ));
       }
     }

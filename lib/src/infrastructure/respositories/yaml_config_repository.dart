@@ -151,9 +151,13 @@ class YamlConfigRepository implements ConfigRepository {
       'max_retries' || 'maxRetries' => config.maxRetries,
       // Behaviour
       'fail_on_vulnerable' || 'failOnVulnerable' => config.failOnVulnerable,
-      'fail_on_discontinued' || 'failOnDiscontinued' => config.failOnDiscontinued,
+      'fail_on_discontinued' ||
+      'failOnDiscontinued' =>
+        config.failOnDiscontinued,
       'show_suggestions' || 'showSuggestions' => config.showSuggestions,
-      'max_suggestions_per_package' || 'maxSuggestionsPerPackage' => config.maxSuggestionsPerPackage,
+      'max_suggestions_per_package' ||
+      'maxSuggestionsPerPackage' =>
+        config.maxSuggestionsPerPackage,
       // Logging
       'verbose_logging' || 'verboseLogging' => config.verboseLogging,
       'quiet' => config.quiet,
@@ -175,27 +179,49 @@ class YamlConfigRepository implements ConfigRepository {
       'use_colors' || 'useColors' => config.copyWith(useColors: value as bool),
       'use_emojis' || 'useEmojis' => config.copyWith(useEmojis: value as bool),
       // Cache
-      'cache_max_age_hours' || 'cacheMaxAgeHours' => config.copyWith(cacheMaxAgeHours: value as int),
-      'enable_cache' || 'enableCache' => config.copyWith(enableCache: value as bool),
-      'auto_update' || 'autoUpdate' => config.copyWith(autoUpdate: value as bool),
+      'cache_max_age_hours' ||
+      'cacheMaxAgeHours' =>
+        config.copyWith(cacheMaxAgeHours: value as int),
+      'enable_cache' ||
+      'enableCache' =>
+        config.copyWith(enableCache: value as bool),
+      'auto_update' ||
+      'autoUpdate' =>
+        config.copyWith(autoUpdate: value as bool),
       // Scoring
       'min_score' || 'minScore' => config.copyWith(minScore: value as int),
       // Performance
-      'max_concurrency' || 'maxConcurrency' => config.copyWith(maxConcurrency: value as int),
-      'timeout_seconds' || 'timeoutSeconds' => config.copyWith(timeoutSeconds: value as int),
-      'max_retries' || 'maxRetries' => config.copyWith(maxRetries: value as int),
+      'max_concurrency' ||
+      'maxConcurrency' =>
+        config.copyWith(maxConcurrency: value as int),
+      'timeout_seconds' ||
+      'timeoutSeconds' =>
+        config.copyWith(timeoutSeconds: value as int),
+      'max_retries' ||
+      'maxRetries' =>
+        config.copyWith(maxRetries: value as int),
       // Behaviour
-      'fail_on_vulnerable' || 'failOnVulnerable' => config.copyWith(failOnVulnerable: value as bool),
-      'fail_on_discontinued' || 'failOnDiscontinued' => config.copyWith(failOnDiscontinued: value as bool),
-      'show_suggestions' || 'showSuggestions' => config.copyWith(showSuggestions: value as bool),
+      'fail_on_vulnerable' ||
+      'failOnVulnerable' =>
+        config.copyWith(failOnVulnerable: value as bool),
+      'fail_on_discontinued' ||
+      'failOnDiscontinued' =>
+        config.copyWith(failOnDiscontinued: value as bool),
+      'show_suggestions' ||
+      'showSuggestions' =>
+        config.copyWith(showSuggestions: value as bool),
       'max_suggestions_per_package' ||
       'maxSuggestionsPerPackage' =>
         config.copyWith(maxSuggestionsPerPackage: value as int),
       // Logging
-      'verbose_logging' || 'verboseLogging' => config.copyWith(verboseLogging: value as bool),
+      'verbose_logging' ||
+      'verboseLogging' =>
+        config.copyWith(verboseLogging: value as bool),
       'quiet' => config.copyWith(quiet: value as bool),
       // API
-      'github_token' || 'githubToken' => config.copyWith(githubToken: value as String),
+      'github_token' ||
+      'githubToken' =>
+        config.copyWith(githubToken: value as String),
       _ => config,
     };
   }
@@ -224,7 +250,7 @@ class YamlConfigRepository implements ConfigRepository {
       await _globalConfigFile.writeAsString(editor.toString());
 
       // On sécurise immédiatement après l'écriture
-    await _ensureSecurePermissions(_globalConfigFile);
+      await _ensureSecurePermissions(_globalConfigFile);
     } catch (e) {
       throw StateError("Impossible de modifier la clé $key : $e");
     }
@@ -233,10 +259,8 @@ class YamlConfigRepository implements ConfigRepository {
   //todo: refactor this in the future
   String _uncommentKey(String content, String key) {
     // Regex : cherche une ligne commençant par #, optionnellement des espaces, puis la clé
-    final pattern = RegExp(
-      r'^#\s*(' + RegExp.escape(key) + r':.*)$', 
-      multiLine: true
-    );
+    final pattern =
+        RegExp(r'^#\s*(' + RegExp.escape(key) + r':.*)$', multiLine: true);
 
     if (content.contains(pattern)) {
       // On retire le caractère '#' au début de la ligne trouvée
@@ -252,7 +276,7 @@ class YamlConfigRepository implements ConfigRepository {
     try {
       // chmod 600 : Lecture/Écriture pour le propriétaire uniquement
       final result = await Process.run('chmod', ['600', _configFile.path]);
-      
+
       if (result.exitCode != 0) {
         // On log en silencieux ou on ignore, pour ne pas bloquer l'usage
         // mais un Senior mettrait un log de debug ici.

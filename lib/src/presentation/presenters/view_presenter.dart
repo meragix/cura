@@ -152,19 +152,24 @@ class ViewPresenter {
 
     final publisherIcon = info.isTrustedPublisher ? '✓' : '';
     final publisherText = info.publisherId ?? 'None (unverified)';
-    final publisherColored = info.isTrustedPublisher ? green.wrap(publisherText) : lightGray.wrap(publisherText);
+    final publisherColored = info.isTrustedPublisher
+        ? green.wrap(publisherText)
+        : lightGray.wrap(publisherText);
 
     _logger.info('  Publisher:   $publisherColored $publisherIcon');
 
-    final pubScoreIndicator = _barRenderer.renderPubScoreIndicator(info.panaScore);
-    _logger.info('  Pub Score:   ${info.panaScore}/${info.maxPoints} $pubScoreIndicator');
+    final pubScoreIndicator =
+        _barRenderer.renderPubScoreIndicator(info.panaScore);
+    _logger.info(
+        '  Pub Score:   ${info.panaScore}/${info.maxPoints} $pubScoreIndicator');
 
     final popularityDots = _barRenderer.renderPopularityDots(info.popularity);
     _logger.info('  Popularity:  ${info.popularity}% $popularityDots');
 
     _logger.info('  Likes:       ${NumberFormatter.formatGrouped(info.likes)}');
 
-    final updateStatus = _barRenderer.renderUpdateStatus(info.daysSinceLastUpdate);
+    final updateStatus =
+        _barRenderer.renderUpdateStatus(info.daysSinceLastUpdate);
     final updateText = DateFormatter.formatWithRelative(info.lastPublished);
     _logger.info('  Last Update: $updateText $updateStatus');
 
@@ -193,19 +198,24 @@ class ViewPresenter {
     final starsFormatted = NumberFormatter.formatCompact(githubMetrics.stars);
     _logger.info('  Stars:       ⭐ $starsFormatted');
 
-    _logger.info('  Forks:       ${NumberFormatter.formatGrouped(githubMetrics.forks)}');
+    _logger.info(
+        '  Forks:       ${NumberFormatter.formatGrouped(githubMetrics.forks)}');
 
     final issuesColor = githubMetrics.openIssues > 100 ? yellow : green;
-    final issuesFormatted = NumberFormatter.formatGrouped(githubMetrics.openIssues);
-    _logger.info('  Open Issues: ${issuesColor.wrap(issuesFormatted.toString())!}');
+    final issuesFormatted =
+        NumberFormatter.formatGrouped(githubMetrics.openIssues);
+    _logger.info(
+        '  Open Issues: ${issuesColor.wrap(issuesFormatted.toString())!}');
 
     if (githubMetrics.commitCountLast90Days > 0) {
-      final commitsFormatted = NumberFormatter.formatGrouped(githubMetrics.commitCountLast90Days);
+      final commitsFormatted =
+          NumberFormatter.formatGrouped(githubMetrics.commitCountLast90Days);
       _logger.info('  Activity:    $commitsFormatted commits (90d)');
     }
 
     if (githubMetrics.lastCommitDate != null) {
-      final lastCommit = DateFormatter.formatWithRelative(githubMetrics.lastCommitDate!);
+      final lastCommit =
+          DateFormatter.formatWithRelative(githubMetrics.lastCommitDate!);
       _logger.info('  Last Commit: $lastCommit');
     }
   }
@@ -237,11 +247,15 @@ class ViewPresenter {
     final score = audit.score.total;
 
     if (score >= 80) {
-      _logger.alert('Recommended - High-quality, actively maintained package', level: AlertLevel.success);
+      _logger.alert('Recommended - High-quality, actively maintained package',
+          level: AlertLevel.success);
     } else if (score >= 60) {
-      _logger.alert('Use with caution - Some concerns, review before using', level: AlertLevel.warning);
+      _logger.alert('Use with caution - Some concerns, review before using',
+          level: AlertLevel.warning);
     } else {
-      _logger.alert('Not Recommended - Appears abandoned, high risk for production use', level: AlertLevel.error);
+      _logger.alert(
+          'Not Recommended - Appears abandoned, high risk for production use',
+          level: AlertLevel.error);
     }
   }
 

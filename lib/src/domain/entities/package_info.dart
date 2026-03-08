@@ -181,10 +181,8 @@ class PackageInfo {
     final latest = infoJson['latest'] as Map<String, dynamic>;
     final pubspec = latest['pubspec'] as Map<String, dynamic>;
 
-    final tags =
-        (scoreJson['tags'] as List<dynamic>?)?.cast<String>() ?? [];
-    final downloads30Days =
-        scoreJson['downloadCount30Days'] as int? ?? 0;
+    final tags = (scoreJson['tags'] as List<dynamic>?)?.cast<String>() ?? [];
+    final downloads30Days = scoreJson['downloadCount30Days'] as int? ?? 0;
 
     return PackageInfo(
       name: infoJson['name'] as String,
@@ -318,9 +316,7 @@ class PackageInfo {
   static String? _extractLicense(List<String> tags) {
     final tag = tags.firstWhere(
       (t) =>
-          t.startsWith('license:') &&
-          !t.contains('fsf') &&
-          !t.contains('osi'),
+          t.startsWith('license:') && !t.contains('fsf') && !t.contains('osi'),
       orElse: () => '',
     );
     return tag.isEmpty ? null : tag.replaceFirst('license:', '');

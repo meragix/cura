@@ -59,7 +59,8 @@ class RateLimiter {
     final elapsed = now.difference(_lastRefill);
 
     if (elapsed >= _refillInterval) {
-      final intervalsElapsed = elapsed.inMilliseconds / _refillInterval.inMilliseconds;
+      final intervalsElapsed =
+          elapsed.inMilliseconds / _refillInterval.inMilliseconds;
 
       final tokensToAdd = intervalsElapsed * _refillRate;
       _tokens = (_tokens + tokensToAdd).clamp(0, _maxTokens.toDouble());
@@ -73,7 +74,8 @@ class RateLimiter {
     final tokensShort = tokensNeeded - _tokens;
     final intervalsNeeded = tokensShort / _refillRate;
 
-    final millisToWait = (intervalsNeeded * _refillInterval.inMilliseconds).ceil();
+    final millisToWait =
+        (intervalsNeeded * _refillInterval.inMilliseconds).ceil();
 
     return Duration(milliseconds: millisToWait);
   }

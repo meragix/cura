@@ -85,7 +85,8 @@ class ScoreWeights {
   factory ScoreWeights.fromJson(Map<String, dynamic> json) {
     return ScoreWeights(
       vitality: json['vitality'] as int? ?? defaultVitality,
-      technicalHealth: json['technicalHealth'] as int? ?? defaultTechnicalHealth,
+      technicalHealth:
+          json['technicalHealth'] as int? ?? defaultTechnicalHealth,
       trust: json['trust'] as int? ?? defaultTrust,
       maintenance: json['maintenance'] as int? ?? defaultMaintenance,
     );

@@ -134,8 +134,7 @@ class RateLimitException extends CuraException {
   }) : super(
           'Rate limit exceeded for $apiName API',
           code: 'RATE_LIMIT',
-          context:
-              retryAfter != null ? 'Retry after $retryAfter' : null,
+          context: retryAfter != null ? 'Retry after $retryAfter' : null,
         );
 }
 

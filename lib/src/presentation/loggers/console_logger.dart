@@ -136,7 +136,8 @@ class ConsoleLogger {
     final filled = (percentage * width).round();
     final empty = width - filled;
 
-    final bar = '${theme.success.wrap(theme.barFilled * filled) ?? (theme.barFilled * filled)}'
+    final bar =
+        '${theme.success.wrap(theme.barFilled * filled) ?? (theme.barFilled * filled)}'
         '${theme.muted.wrap(theme.barEmpty * empty) ?? (theme.barEmpty * empty)}';
 
     _logger.info(bar);
