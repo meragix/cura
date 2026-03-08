@@ -169,8 +169,8 @@ class CheckCommand extends Command<int> {
     final minScore =
         int.tryParse(argResults!['min-score'] as String? ?? '') ?? 70;
     if (minScore < 0 || minScore > 100) {
-      _presenter.showError(
-          '--min-score must be between 0 and 100 (got $minScore)');
+      _presenter
+          .showError('--min-score must be between 0 and 100 (got $minScore)');
       return 1;
     }
     final failOnVulnerable = argResults!['fail-on-vulnerable'] as bool;
