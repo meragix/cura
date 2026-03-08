@@ -170,7 +170,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operational local cache.
 - ScoreCalculator unit tests (>80% coverage)
 
-[unreleased]: https://github.com/meragix/cura/compare/cura-0.8.0...HEAD
+[unreleased]: https://github.com/meragix/cura/compare/cura-0.9.0...HEAD
+[0.9.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.8.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.7.0]: https://github.com/meragix/cura/releases/tag/cura-0.7.0
 [0.6.1]: https://github.com/meragix/cura/releases/tag/cura-0.6.1
