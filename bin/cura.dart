@@ -155,6 +155,9 @@ Future<void> main(List<String> arguments) async {
     checkUseCase: checkUseCase,
     presenter: checkPresenter,
     ignoredPackages: config.ignoredPackages,
+    defaultMinScore: config.minScore,
+    defaultFailOnVulnerable: config.failOnVulnerable,
+    defaultFailOnDiscontinued: config.failOnDiscontinued,
   );
 
   final viewCommand = ViewCommand(

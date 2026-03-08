@@ -129,11 +129,17 @@ CommandRunner<int> _makeRunner(
   MockCheckPackagesUsecase usecase,
   MockCheckPresenter presenter, {
   List<String> ignoredPackages = const [],
+  int defaultMinScore = 70,
+  bool defaultFailOnVulnerable = true,
+  bool defaultFailOnDiscontinued = true,
 }) {
   final command = CheckCommand(
     checkUseCase: usecase,
     presenter: presenter,
     ignoredPackages: ignoredPackages,
+    defaultMinScore: defaultMinScore,
+    defaultFailOnVulnerable: defaultFailOnVulnerable,
+    defaultFailOnDiscontinued: defaultFailOnDiscontinued,
   );
   return CommandRunner<int>('cura', 'test')..addCommand(command);
 }
@@ -548,6 +554,96 @@ void main() {
             stopwatch: any(named: 'stopwatch'),
           )).called(1);
       verifyNever(() => presenter.showJsonOutput(any()));
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Config hierarchy: CLI flag > config default > built-in default
+  // -------------------------------------------------------------------------
+
+  group('config hierarchy', () {
+    test('config min-score is used as default when no CLI flag is given',
+        () async {
+      await pubspecFile.writeAsString(_pubspecWith(['pkg']));
+
+      // Score 75 — would pass built-in default (70) but fail config default (80).
+      when(() => usecase.execute(['pkg'])).thenAnswer(
+        (_) => Stream.fromIterable([
+          Result.success(_makeAuditResult(score: 75)),
+        ]),
+      );
+
+      // Simulate config with min_score: 80.
+      final runner = _makeRunner(usecase, presenter, defaultMinScore: 80);
+      final exitCode =
+          await runner.run(['check', '--path', pubspecFile.path]);
+
+      expect(exitCode, 1);
+    });
+
+    test('CLI --min-score overrides config default', () async {
+      await pubspecFile.writeAsString(_pubspecWith(['pkg']));
+
+      // Score 75 — config default would fail (80) but CLI flag allows (60).
+      when(() => usecase.execute(['pkg'])).thenAnswer(
+        (_) => Stream.fromIterable([
+          Result.success(_makeAuditResult(score: 75)),
+        ]),
+      );
+
+      final runner = _makeRunner(usecase, presenter, defaultMinScore: 80);
+      final exitCode = await runner.run(
+          ['check', '--path', pubspecFile.path, '--min-score', '60']);
+
+      expect(exitCode, 0);
+    });
+
+    test('config fail-on-discontinued=false is used as default', () async {
+      await pubspecFile.writeAsString(_pubspecWith(['old_pkg']));
+
+      when(() => usecase.execute(['old_pkg'])).thenAnswer(
+        (_) => Stream.fromIterable([
+          Result.success(_makeAuditResult(
+            name: 'old_pkg',
+            isDiscontinued: true,
+            score: 80,
+          )),
+        ]),
+      );
+
+      // Simulate config with fail_on_discontinued: false.
+      final runner = _makeRunner(usecase, presenter,
+          defaultFailOnDiscontinued: false, defaultMinScore: 0);
+      final exitCode =
+          await runner.run(['check', '--path', pubspecFile.path]);
+
+      expect(exitCode, 0);
+    });
+
+    test('CLI --fail-on-discontinued overrides config false default', () async {
+      await pubspecFile.writeAsString(_pubspecWith(['old_pkg']));
+
+      when(() => usecase.execute(['old_pkg'])).thenAnswer(
+        (_) => Stream.fromIterable([
+          Result.success(_makeAuditResult(
+            name: 'old_pkg',
+            isDiscontinued: true,
+            score: 80,
+          )),
+        ]),
+      );
+
+      // Config says false, CLI overrides to true.
+      final runner = _makeRunner(usecase, presenter,
+          defaultFailOnDiscontinued: false, defaultMinScore: 0);
+      final exitCode = await runner.run([
+        'check',
+        '--path',
+        pubspecFile.path,
+        '--fail-on-discontinued',
+      ]);
+
+      expect(exitCode, 1);
     });
   });
 }

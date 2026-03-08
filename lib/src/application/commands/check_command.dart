@@ -84,10 +84,16 @@ class CheckCommand extends Command<int> {
   /// - [checkUseCase] orchestrates data fetching and scoring for each package.
   /// - [presenter] renders all output (progress bar, results table, summary).
   /// - [ignoredPackages] lists package names to skip; defaults to an empty list.
+  /// - [defaultMinScore], [defaultFailOnVulnerable], [defaultFailOnDiscontinued]
+  ///   seed the argParser defaults from the resolved config so that the
+  ///   hierarchy `CLI flag > config file > built-in default` is preserved.
   CheckCommand({
     required CheckPackagesUsecase checkUseCase,
     required CheckPresenter presenter,
     List<String> ignoredPackages = const [],
+    int defaultMinScore = 70,
+    bool defaultFailOnVulnerable = true,
+    bool defaultFailOnDiscontinued = true,
   })  : _checkUseCase = checkUseCase,
         _presenter = presenter,
         _ignoredPackages = ignoredPackages {
@@ -109,20 +115,20 @@ class CheckCommand extends Command<int> {
         'min-score',
         help: 'Minimum acceptable health score (0–100). '
             'Packages below this threshold are flagged in the report.',
-        defaultsTo: '70',
+        defaultsTo: '$defaultMinScore',
         valueHelp: 'SCORE',
       )
       ..addFlag(
         'fail-on-vulnerable',
         help:
             'Exit with code 1 if any package has known security vulnerabilities.',
-        defaultsTo: true,
+        defaultsTo: defaultFailOnVulnerable,
       )
       ..addFlag(
         'fail-on-discontinued',
         help:
             'Exit with code 1 if any package is marked as discontinued on pub.dev.',
-        defaultsTo: true,
+        defaultsTo: defaultFailOnDiscontinued,
       )
       ..addFlag(
         'quiet',
