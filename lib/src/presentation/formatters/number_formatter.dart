@@ -11,7 +11,7 @@ class NumberFormatter {
   }
 
   /// Format: "3425" → "3,425"
-  static formatGrouped(int value) {
+  static String formatGrouped(int value) {
     final s = value.toString();
     final buffer = StringBuffer();
 

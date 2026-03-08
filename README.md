@@ -3,9 +3,9 @@
 <p align="center">
   <a href="https://pub.dev/packages/cura"><img src="https://img.shields.io/pub/v/cura.svg" alt="Pub Version"></a>
   <a href="https://pub.dev/packages/cura/score"><img src="https://img.shields.io/pub/points/cura" alt="Pub Points"></a>
-  <a href="https://pub.dev/packages/cura"><img src="https://img.shields.io/pub/popularity/cura" alt="Popularity"></a>
+  <!-- <a href="https://pub.dev/packages/cura"><img src="https://img.shields.io/pub/popularity/cura" alt="Popularity"></a> -->
   <a href="https://github.com/meragix/cura/actions"><img src="https://github.com/meragix/cura/workflows/CI/badge.svg" alt="CI Status"></a>
-  <a href="https://codecov.io/gh/meragix/cura"><img src="https://codecov.io/gh/meragix/cura/branch/main/graph/badge.svg" alt="Coverage"></a>
+  <!-- <a href="https://codecov.io/gh/meragix/cura"><img src="https://codecov.io/gh/meragix/cura/branch/main/graph/badge.svg" alt="Coverage"></a> -->
   <a href="https://github.com/meragix/cura/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
   <a href="https://github.com/meragix/cura"><img src="https://img.shields.io/github/stars/meragix/cura?style=social" alt="GitHub Stars"></a>
 </p>

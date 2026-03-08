@@ -3,21 +3,17 @@
 /// Symbols are grouped by semantic category so renderers can swap entire sets
 /// (e.g. swap [StatusSymbols] for [AsciiStatusSymbols] in CI mode) without
 /// touching business logic.
-
-// ── Spinner frames ───────────────────────────────────────────────────────────
-
 class SpinnerSymbols {
   const SpinnerSymbols._();
 
-  static List<String> get braille =>
-      ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  static List<String> get braille => ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
   static List<String> get dots => ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'];
 
   static List<String> get arc => ['◜', '◠', '◝', '◞', '◡', '◟'];
 }
 
-// ── Status symbols ────────────────────────────────────────────────────────────
+// ── Status symbols ───────────────────────────────────────────────────────────
 
 /// Unicode status indicators (U+2713 range — single-width, widely supported).
 abstract class StatusSymbols {
@@ -39,7 +35,7 @@ abstract class AsciiStatusSymbols {
   String get skipped => '-';
 }
 
-// ── Badge / priority symbols ──────────────────────────────────────────────────
+// ── Badge / priority symbols ─────────────────────────────────────────────────
 
 abstract class BadgeSymbols {
   String get star => '☆'; // U+2606 White Star (avoid emoji ⭐)
@@ -55,7 +51,7 @@ abstract class BadgeSymbols {
   String get dot => '●'; // U+25CF Black Circle
 }
 
-// ── List / tree symbols ───────────────────────────────────────────────────────
+// ── List / tree symbols ──────────────────────────────────────────────────────
 
 abstract class ListSymbols {
   String get bullet => '•'; // U+2022 Bullet
@@ -71,7 +67,7 @@ abstract class ListSymbols {
   String get treeSpace => '  ';
 }
 
-// ── Box-drawing symbols ───────────────────────────────────────────────────────
+// ── Box-drawing symbols ──────────────────────────────────────────────────────
 
 abstract class BoxSymbols {
   // Single-line
