@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`PackageSuccess.requestCount`**: tracks exact HTTP requests per package (0 from cache).
 - **`PackageAuditResult.requestCount`**: propagated from `PackageSuccess` through `mapAsync`.
+- **`check --json` structured output**: `--json` now emits a full JSON report with `timestamp`, `total_packages`, `overall_health`, `status` (`PASSED` / `WARNING` / `FAILED`), `summary`, `packages` (with `red_flags` when present), `critical_packages`, and `performance` metrics.
+- **`check` runtime flag overrides**: `--min-score`, `--fail-on-vulnerable`, and `--fail-on-discontinued` now take effect at runtime and override config-file values.
+- **`CheckPackagesUsecase` unit tests**: 19 tests covering success path, all failure variants, and all 4 issue-detection rules (discontinued, critical CVE, low score, stale) including boundary conditions.
 
 ### Changed
 
@@ -20,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`PubDevApiClient`**: pub.dev requests are now sequential to avoid `ParallelWaitError` swallowing typed exceptions. `fetchJson` catches `DioException` and maps 404 → `PackageNotFoundException`, 429 → `RateLimitException`.
 - **`ViewCommand` / `CheckPresenter`**: `PackageProviderError` now routed through `ErrorFormatter` instead of raw `toString()`.
 - **`CheckCommand`**: aborts on first `NetworkError` instead of continuing to remaining packages.
+- **`CheckPackagesUsecase`**: `scoreCalculator` parameter type changed from `CalculateScore` to `ScoreCalculator` port — domain layer no longer depends on a concrete adapter.
 
 ## [0.8.0] - 2026-03-08
 

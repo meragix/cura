@@ -159,12 +159,11 @@ class CheckCommand extends Command<int> {
     final includeDevDeps = argResults!['dev-dependencies'] as bool;
     final jsonOutput = argResults!['json'] as bool;
 
-    // --min-score, --fail-on-vulnerable, --fail-on-discontinued, and --quiet
-    // are registered here so they appear in `cura check --help`.
-    // Their runtime values are currently supplied via constructor injection from
-    // the composition root (bin/cura.dart), which reads the resolved config.
-    // TODO(#42): forward these flag values to CheckPackagesUsecase at runtime
-    // so that per-invocation overrides take precedence over the config file.
+    // Runtime overrides — CLI flags take precedence over the config file.
+    final minScore =
+        int.tryParse(argResults!['min-score'] as String? ?? '') ?? 70;
+    final failOnVulnerable = argResults!['fail-on-vulnerable'] as bool;
+    final failOnDiscontinued = argResults!['fail-on-discontinued'] as bool;
 
     _stopwatch.start();
 
@@ -188,6 +187,7 @@ class CheckCommand extends Command<int> {
 
     var processedCount = 0;
     var failureCount = 0;
+    var auditFailureCount = 0;
 
     final progress = _presenter.showProgress();
 
@@ -204,6 +204,10 @@ class CheckCommand extends Command<int> {
       switch (result) {
         case Success<PackageAuditResult>(:final value):
           _presenter.collectPackageResult(value);
+          // Apply runtime flag overrides to determine CI exit code.
+          if (value.score.total < minScore) auditFailureCount++;
+          if (failOnVulnerable && value.hasVulnerabilities) auditFailureCount++;
+          if (failOnDiscontinued && value.isDiscontinued) auditFailureCount++;
         case Failure<PackageAuditResult>(:final error):
           failureCount++;
           _presenter.showPackageError(error, progress);
@@ -221,7 +225,7 @@ class CheckCommand extends Command<int> {
 
     // Stage 5 — Render the final report.
     if (jsonOutput) {
-      _presenter.showJsonOutput([]);
+      _presenter.showJsonOutput(_stopwatch);
     } else {
       _presenter.showSummary(
         total: packagesToAudit.length,
@@ -230,7 +234,7 @@ class CheckCommand extends Command<int> {
       );
     }
 
-    return failureCount > 0 ? 1 : 0;
+    return (failureCount > 0 || auditFailureCount > 0) ? 1 : 0;
   }
 
   /// Parses the `pubspec.yaml` at [path] and returns the names of all

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cura/src/domain/entities/package_audit_result.dart';
 import 'package:cura/src/presentation/formatters/error_formatter.dart';
 import 'package:cura/src/presentation/loggers/console_logger.dart';
@@ -240,11 +242,84 @@ class CheckPresenter {
     _logger.spacer();
   }
 
-  /// Emits a machine-readable JSON representation of [results].
+  /// Emits a machine-readable JSON audit report.
   ///
-  /// TODO(#43): implement full JSON serialization using `package:json_serializable`.
-  void showJsonOutput(List<dynamic> results) {
-    _logger.info('[JSON OUTPUT]');
+  /// Schema:
+  /// ```json
+  /// {
+  ///   "timestamp":       "<ISO-8601 UTC>",
+  ///   "total_packages":  N,
+  ///   "overall_health":  0-100,
+  ///   "status":          "PASSED" | "WARNING" | "FAILED",
+  ///   "summary":         { "healthy": X, "warning": Y, "critical": Z },
+  ///   "packages":        [ { name, version, score, grade, last_update_days,
+  ///                          "red_flags": [...] } ],
+  ///   "critical_packages": [ { name, score } ],
+  ///   "performance":     { "time_ms": N, "api_calls": N, "cache_hits": N }
+  /// }
+  /// ```
+  ///
+  /// `red_flags` is omitted from a package entry when there are none.
+  /// `status` is:
+  /// - `"PASSED"` — no warning or critical packages
+  /// - `"WARNING"` — some warning/critical packages but overall_health ≥ 50
+  /// - `"FAILED"` — overall_health < 50
+  void showJsonOutput(Stopwatch stopwatch) {
+    final healthy = _results.where((r) => r.score.total >= 70).length;
+    final warning =
+        _results.where((r) => r.score.total >= 50 && r.score.total < 70).length;
+    final critical = _results.where((r) => r.score.total < 50).length;
+
+    final overallHealth = _results.isEmpty
+        ? 0
+        : _results.map((r) => r.score.total).reduce((a, b) => a + b) ~/
+            _results.length;
+
+    final status = overallHealth < 50
+        ? 'FAILED'
+        : (critical > 0 || warning > 0)
+            ? 'WARNING'
+            : 'PASSED';
+
+    final packages = _results.map((r) {
+      final entry = <String, dynamic>{
+        'name': r.name,
+        'version': r.version,
+        'score': r.score.total,
+        'grade': r.score.grade.label,
+        'last_update_days': r.packageInfo.daysSinceLastUpdate,
+      };
+      if (r.score.redFlags.isNotEmpty) {
+        entry['red_flags'] = r.score.redFlags.map((f) => f.message).toList();
+      }
+      return entry;
+    }).toList();
+
+    final criticalPackages = _results
+        .where((r) => r.score.total < 50)
+        .map((r) => {'name': r.name, 'score': r.score.total})
+        .toList();
+
+    final output = {
+      'timestamp': DateTime.now().toUtc().toIso8601String(),
+      'total_packages': _results.length,
+      'overall_health': overallHealth,
+      'status': status,
+      'summary': {
+        'healthy': healthy,
+        'warning': warning,
+        'critical': critical,
+      },
+      'packages': packages,
+      if (criticalPackages.isNotEmpty) 'critical_packages': criticalPackages,
+      'performance': {
+        'time_ms': stopwatch.elapsedMilliseconds,
+        'api_calls': _apiCalls,
+        'cache_hits': _cacheHits,
+      },
+    };
+
+    _logger.info(const JsonEncoder.withIndent('  ').convert(output));
   }
 
   /// Displays a top-level error message (e.g. "no packages found").

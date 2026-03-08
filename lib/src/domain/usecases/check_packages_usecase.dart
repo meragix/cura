@@ -3,7 +3,7 @@ import 'package:cura/src/domain/entities/package_info.dart';
 import 'package:cura/src/domain/entities/score.dart';
 import 'package:cura/src/domain/entities/vulnerability.dart';
 import 'package:cura/src/domain/ports/package_data_aggregator.dart';
-import 'package:cura/src/domain/usecases/calculate_score.dart';
+import 'package:cura/src/domain/ports/score_calculator.dart';
 import 'package:cura/src/domain/value_objects/package_result.dart';
 import 'package:cura/src/domain/value_objects/result.dart';
 
@@ -14,7 +14,7 @@ import 'package:cura/src/domain/value_objects/result.dart';
 ///
 /// 1. Delegates data fetching to [PackageDataAggregator], which fans out
 ///    requests to pub.dev, GitHub, and OSV.dev APIs (with optional caching).
-/// 2. Computes a composite health [Score] via [CalculateScore].
+/// 2. Computes a composite health [Score] via [ScoreCalculator].
 /// 3. Identifies [AuditIssue]s (discontinued status, critical CVEs, low score,
 ///    staleness).
 /// 4. Yields a [Result]<[PackageAuditResult]> for each package so the caller
@@ -30,7 +30,7 @@ import 'package:cura/src/domain/value_objects/result.dart';
 /// conservative to avoid false positives on stable, mature packages.
 class CheckPackagesUsecase {
   final PackageDataAggregator _aggregator;
-  final CalculateScore _scoreCalculator;
+  final ScoreCalculator _scoreCalculator;
 
   /// Creates a [CheckPackagesUsecase].
   ///
@@ -45,7 +45,7 @@ class CheckPackagesUsecase {
   /// > use case at runtime. See TODO(#42) in [CheckCommand].
   CheckPackagesUsecase({
     required PackageDataAggregator aggregator,
-    required CalculateScore scoreCalculator,
+    required ScoreCalculator scoreCalculator,
     int minScore = 70,
     bool failOnVulnerable = false,
     bool failOnDiscontinued = false,
