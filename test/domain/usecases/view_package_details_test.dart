@@ -570,7 +570,7 @@ void main() {
   // Suggestions — delegated to score.recommendations
   // -------------------------------------------------------------------------
 
-  group('suggestions', () {
+  group('recommendations', () {
     test('is empty when score has no recommendations', () async {
       _stubSuccess(
         aggregator: aggregator,
@@ -584,10 +584,10 @@ void main() {
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
 
-      expect(audit.suggestions, isEmpty);
+      expect(audit.recommendations, isEmpty);
     });
 
-    test('maps score.recommendations messages in order', () async {
+    test('propagates score.recommendations in order', () async {
       const recs = [
         Recommendation(level: RecommendationLevel.critical, message: 'AVOID this package'),
         Recommendation(level: RecommendationLevel.action, message: 'Search for an alternative'),
@@ -605,7 +605,7 @@ void main() {
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
 
-      expect(audit.suggestions, ['AVOID this package', 'Search for an alternative']);
+      expect(audit.recommendations, recs);
     });
   });
 }

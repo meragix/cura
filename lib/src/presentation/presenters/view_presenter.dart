@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cura/src/domain/value_objects/errors.dart';
+import 'package:cura/src/domain/value_objects/recommendation.dart';
 import 'package:cura/src/domain/value_objects/red_flag.dart';
 import 'package:cura/src/domain/entities/github_metrics.dart';
 import 'package:cura/src/domain/entities/package_audit_result.dart';
@@ -118,7 +119,7 @@ class ViewPresenter {
     }
 
     // Section 8: Verdict & actionable recommendations from RecommendationEngine
-    _showRecommendations(audit.suggestions);
+    _showRecommendations(audit.recommendations);
     _logger.spacer();
 
     // Section 9: Timing — verbose only
@@ -176,9 +177,7 @@ class ViewPresenter {
           'maintenance': score.maintenance,
           if (score.penalty != 0) 'penalty': score.penalty,
           if (score.penaltyItems.isNotEmpty)
-            'penalty_items': score.penaltyItems
-                .map((p) => {'label': p.label, 'points': p.points})
-                .toList(),
+            'penalty_items': score.penaltyItems.map((p) => {'label': p.label, 'points': p.points}).toList(),
         },
         'publisher': info.publisherId,
         'pub_score': info.panaScore,
@@ -191,24 +190,26 @@ class ViewPresenter {
         'is_flutter_favorite': info.isFlutterFavorite,
         'is_null_safe': info.isNullSafe,
         'is_dart3_compatible': info.isDart3Compatible,
-        if (audit.githubMetrics != null) 'github': {
-          'stars': audit.githubMetrics!.stars,
-          'forks': audit.githubMetrics!.forks,
-          'open_issues': audit.githubMetrics!.openIssues,
-          'commits_90d': audit.githubMetrics!.commitCountLast90Days,
-          if (audit.githubMetrics!.lastCommitDate != null)
-            'last_commit': audit.githubMetrics!.lastCommitDate!.toUtc().toIso8601String(),
-        },
+        if (audit.githubMetrics != null)
+          'github': {
+            'stars': audit.githubMetrics!.stars,
+            'forks': audit.githubMetrics!.forks,
+            'open_issues': audit.githubMetrics!.openIssues,
+            'commits_90d': audit.githubMetrics!.commitCountLast90Days,
+            if (audit.githubMetrics!.lastCommitDate != null)
+              'last_commit': audit.githubMetrics!.lastCommitDate!.toUtc().toIso8601String(),
+          },
         if (score.redFlags.isNotEmpty)
-          'red_flags': score.redFlags.map((f) => {
-            'severity': f.severity.name,
-            'message': f.message,
-          }).toList(),
-        if (audit.vulnerabilities.isNotEmpty)
-          'vulnerabilities': audit.vulnerabilities.map((v) => v.toJson()).toList(),
-        if (audit.issues.isNotEmpty)
-          'issues': audit.issues.map((i) => i.toJson()).toList(),
-        if (audit.suggestions.isNotEmpty) 'recommendations': audit.suggestions,
+          'red_flags': score.redFlags
+              .map((f) => {
+                    'severity': f.severity.name,
+                    'message': f.message,
+                  })
+              .toList(),
+        if (audit.vulnerabilities.isNotEmpty) 'vulnerabilities': audit.vulnerabilities.map((v) => v.toJson()).toList(),
+        if (audit.issues.isNotEmpty) 'issues': audit.issues.map((i) => i.toJson()).toList(),
+        if (audit.recommendations.isNotEmpty)
+          'recommendations': audit.recommendations.map((r) => {'level': r.level.name, 'message': r.message}).toList(),
       },
       'performance': {
         'time_ms': elapsed.inMilliseconds,
@@ -248,9 +249,6 @@ class ViewPresenter {
 
   /// Renders a detailed score table for each dimension — verbose mode only.
   void _showVerboseScoreBreakdown(Score score) {
-    _showScoreBreakdown(score);
-    _logger.spacer();
-
     _logger.info('Score Breakdown');
 
     _printDimensionRow('Vitality', score.vitality, 40, score.breakdown.vitalityDetails);
@@ -259,21 +257,43 @@ class ViewPresenter {
     _printDimensionRow('Maintenance', score.maintenance, 10, score.breakdown.maintenanceDetails);
 
     if (score.penaltyItems.isNotEmpty) {
-      for (final item in score.penaltyItems) {
-        final pts = lightGray.wrap('${item.points}');
-        _logger.info('  ${red.wrap('⚠')} ${item.label.padRight(20)} $pts');
-      }
+      _showPenalties(score.penalty, score.penaltyItems);
     }
 
-    final totalStr = _formatScore(score.total);
-    _logger.info('  ${'─' * 38}');
-    _logger.info('  ${'Total'.padRight(22)} $totalStr');
+    _logger.info('  ${'─' * 42}');
+    _logger.info('  ${'Total'.padRight(13)} ${''.padRight(7)} ${_formatScore(score.total)}');
   }
 
   void _printDimensionRow(String label, int value, int max, String detail) {
-    final ratio = lightGray.wrap('$value/$max');
-    final detailStr = detail.isNotEmpty ? lightGray.wrap('  $detail') : '';
-    _logger.info('  ${label.padRight(22)} $ratio$detailStr');
+    final pct = value / max;
+    final icon = pct >= 0.75
+        ? green.wrap('✓')!
+        : pct >= 0.50
+            ? yellow.wrap('!')!
+            : red.wrap('✗')!;
+    final ratio = '${value.toString().padLeft(2)}/$max'.padRight(6);
+    final detailStr = detail.isNotEmpty ? lightGray.wrap('  $detail')! : '';
+    _logger.info('  ${label.padRight(13)} $ratio  $icon$detailStr');
+  }
+
+  /// Renders the penalty block with tree connectors and a clamp note if needed.
+  void _showPenalties(int appliedPenalty, List<PenaltyItem> items) {
+    final itemsSum = items.fold(0, (sum, item) => sum + item.points);
+    final isClamped = itemsSum < appliedPenalty; // items sum to more negative
+
+    final ratio = '$appliedPenalty/0'.padRight(6);
+    _logger.info('  ${'Penalties'.padRight(13)} $ratio  ${red.wrap('✗')!}');
+
+    for (var i = 0; i < items.length; i++) {
+      final isLast = i == items.length - 1 && !isClamped;
+      final connector = isLast ? '└─' : '├─';
+      final label = '${items[i].label}:'.padRight(22);
+      _logger.info('    $connector $label${red.wrap('${items[i].points}')!}');
+    }
+
+    if (isClamped) {
+      _logger.info('    └─ ${lightGray.wrap('(clamped to $appliedPenalty)')}');
+    }
   }
 
   /// Renders publisher info, pub score, popularity, likes, last update,
@@ -283,7 +303,7 @@ class ViewPresenter {
 
     _logger.info('Key Metrics');
 
-    final publisherIcon = info.isTrustedPublisher ? '✓' : '';
+    final publisherIcon = info.isTrustedPublisher ? green.wrap('✓') : '';
     final publisherText = info.publisherId ?? 'None (unverified)';
     final publisherColored = info.isTrustedPublisher ? green.wrap(publisherText) : lightGray.wrap(publisherText);
 
@@ -363,7 +383,7 @@ class ViewPresenter {
     _logger.alert('Issues Detected', level: AlertLevel.warning);
 
     for (final issue in issues) {
-      _logger.info('  → ${issue.message}');
+      _logger.info('  ● ${issue.message}');
     }
   }
 
@@ -375,47 +395,59 @@ class ViewPresenter {
     _logger.alert('Risk Signals', level: AlertLevel.error);
     for (final flag in flags) {
       final icon = switch (flag.severity) {
-        RedFlagSeverity.critical => red.wrap('🔴')!,
-        RedFlagSeverity.warning => yellow.wrap('⚠')!,
-        RedFlagSeverity.info => lightGray.wrap('ℹ')!,
+        RedFlagSeverity.critical => red.wrap('●')!,
+        RedFlagSeverity.warning => yellow.wrap('●')!,
+        RedFlagSeverity.info => lightGray.wrap('●')!,
       };
       _logger.info('  $icon ${flag.message}');
     }
   }
 
   /// Renders actionable improvement recommendations from [RecommendationEngine].
-  void _showRecommendations(List<String> suggestions) {
-    _logger.alert('Recommendations', level: AlertLevel.success);
-    for (final suggestion in suggestions) {
-      _logger.info('  → $suggestion');
+  ///
+  /// Icon and colour are driven by [RecommendationLevel]:
+  /// - critical → red ✗
+  /// - warning  → yellow !
+  /// - action   → cyan →
+  /// - advisory → gray →
+  void _showRecommendations(List<Recommendation> recs) {
+    _logger.info(green.wrap('Recommendations')!);
+    for (final rec in recs) {
+      final icon = switch (rec.level) {
+        RecommendationLevel.critical => red.wrap('✗')!,
+        RecommendationLevel.warning => yellow.wrap('!')!,
+        RecommendationLevel.action => cyan.wrap('→')!,
+        RecommendationLevel.advisory => lightGray.wrap('→')!,
+      };
+      _logger.info('  $icon ${rec.message}');
     }
   }
 
   /// Renders cache provenance — verbose mode only.
   ///
-  /// Hit:  `[CACHE] ✅ Hit (2h 15m old, valid)`
-  /// Miss: `[CACHE] ❌ Miss, fetching...`
+  /// Hit:  `Cache: ✓ Hit (2h 15m old, valid)`
+  /// Miss: `Cache: ✗ Miss, fetching...`
   void _showCacheStatus(PackageAuditResult audit) {
     if (audit.fromCache && audit.cachedAt != null) {
       final age = DateTime.now().toUtc().difference(audit.cachedAt!.toUtc());
       final ageStr = _formatAge(age);
-      final label = lightGray.wrap('[CACHE]');
-      _logger.info('$label ${green.wrap('✅ Hit')} ($ageStr old, valid)');
+      final label = lightGray.wrap('Cache:')!;
+      _logger.info('$label ${green.wrap('✓ Hit')} ($ageStr old, valid)');
     } else {
-      final label = lightGray.wrap('[CACHE]');
-      _logger.info('$label ${red.wrap('❌ Miss')}, fetching...');
+      final label = lightGray.wrap('Cache:')!;
+      _logger.info('$label ${red.wrap('✗ Miss')}, fetching...');
     }
   }
 
   /// Renders elapsed time and API call count — verbose mode only.
   ///
-  /// Example: `⏱  342ms (5 API calls)`
+  /// Example: `⏱️  342ms (5 API calls)`
   void _showTiming(Duration elapsed, int requestCount) {
     final ms = elapsed.inMilliseconds;
-    final timeStr = lightGray.wrap('⏱  ${ms}ms');
+    final timeStr = darkGray.wrap('⏱️  ${ms}ms');
     final callsStr = requestCount > 0
-        ? lightGray.wrap('($requestCount API call${requestCount == 1 ? '' : 's'})')
-        : lightGray.wrap('(cached — 0 API calls)');
+        ? darkGray.wrap('($requestCount API call${requestCount == 1 ? '' : 's'})')
+        : darkGray.wrap('(cached — 0 API calls)');
     _logger.info('$timeStr $callsStr');
   }
 

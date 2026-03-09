@@ -2,6 +2,7 @@ import 'package:cura/src/domain/entities/github_metrics.dart';
 import 'package:cura/src/domain/entities/package_info.dart';
 import 'package:cura/src/domain/entities/score.dart';
 import 'package:cura/src/domain/entities/vulnerability.dart';
+import 'package:cura/src/domain/value_objects/recommendation.dart';
 
 /// The fully scored output of a single package audit.
 ///
@@ -50,11 +51,11 @@ class PackageAuditResult {
   /// Structured issues detected during the audit (e.g. low score, stale).
   final List<AuditIssue> issues;
 
-  /// Human-readable improvement suggestions derived from the score and issues.
+  /// Typed improvement recommendations derived from [Score.recommendations].
   ///
-  /// Populated by the future `suggest` command. For programmatic access to
-  /// scored improvement guidance use [score.recommendations] instead.
-  final List<String> suggestions;
+  /// Propagated directly from the domain score — use [Recommendation.level]
+  /// to drive icon/colour rendering in the presentation layer.
+  final List<Recommendation> recommendations;
 
   /// Creates a [PackageAuditResult] with all required fields.
   const PackageAuditResult({
@@ -68,7 +69,7 @@ class PackageAuditResult {
     this.requestCount = 0,
     required this.vulnerabilities,
     required this.issues,
-    this.suggestions = const [],
+    this.recommendations = const <Recommendation>[],
   });
 
   // ---------------------------------------------------------------------------
@@ -126,7 +127,9 @@ class PackageAuditResult {
       'status': status.name,
       'issues': issues.map((i) => i.toJson()).toList(),
       'vulnerabilities': vulnerabilities.map((v) => v.toJson()).toList(),
-      'suggestions': suggestions,
+      'recommendations': recommendations
+          .map((r) => {'level': r.level.name, 'message': r.message})
+          .toList(),
       'from_cache': fromCache,
     };
   }

@@ -86,7 +86,7 @@ class ViewPackageDetails {
       score: score,
       vulnerabilities: aggregated.vulnerabilities,
       issues: issues,
-      suggestions: score.recommendations.map((r) => r.message).toList(),
+      recommendations: score.recommendations,
       fromCache: fromCache,
       cachedAt: cachedAt,
       requestCount: requestCount,
