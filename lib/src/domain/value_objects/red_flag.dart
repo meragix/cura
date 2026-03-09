@@ -46,7 +46,7 @@ final class StalePackageFlag extends RedFlag {
   RedFlagSeverity get severity => RedFlagSeverity.warning;
 
   @override
-  String get message => 'No release for $months months';
+  String get message => 'Inactive for $months months. No releases detected.';
 }
 
 final class LimitedPlatformSupportFlag extends RedFlag {
@@ -58,7 +58,8 @@ final class LimitedPlatformSupportFlag extends RedFlag {
   RedFlagSeverity get severity => RedFlagSeverity.info;
 
   @override
-  String get message => 'Limited platform support ($count platform(s))';
+  String get message =>
+      'Supports $count platform(s) only. Coverage is insufficient.';
 }
 
 final class UnverifiedPublisherFlag extends RedFlag {
@@ -68,7 +69,7 @@ final class UnverifiedPublisherFlag extends RedFlag {
   RedFlagSeverity get severity => RedFlagSeverity.warning;
 
   @override
-  String get message => 'Unverified publisher';
+  String get message => 'Publisher identity is unverified.';
 }
 
 final class MissingRepositoryFlag extends RedFlag {
@@ -78,7 +79,7 @@ final class MissingRepositoryFlag extends RedFlag {
   RedFlagSeverity get severity => RedFlagSeverity.critical;
 
   @override
-  String get message => 'Source code repository missing';
+  String get message => 'No source repository linked. Code is unauditable.';
 }
 
 final class SuboptimalPanaScoreFlag extends RedFlag {
@@ -91,7 +92,8 @@ final class SuboptimalPanaScoreFlag extends RedFlag {
   RedFlagSeverity get severity => RedFlagSeverity.info;
 
   @override
-  String get message => 'Suboptimal static analysis score ($score/$maxScore)';
+  String get message =>
+      'Static analysis score is $score/$maxScore. Below the acceptable threshold.';
 }
 
 final class ExperimentalVersionFlag extends RedFlag {
@@ -103,7 +105,8 @@ final class ExperimentalVersionFlag extends RedFlag {
   RedFlagSeverity get severity => RedFlagSeverity.warning;
 
   @override
-  String get message => 'Experimental version ($version)';
+  String get message =>
+      'Version $version is pre-stable. API stability is not guaranteed.';
 }
 
 final class NoNullSafetyFlag extends RedFlag {
@@ -113,7 +116,7 @@ final class NoNullSafetyFlag extends RedFlag {
   RedFlagSeverity get severity => RedFlagSeverity.critical;
 
   @override
-  String get message => 'Sound null safety disabled';
+  String get message => 'Sound null safety is disabled.';
 }
 
 final class NewPackageFlag extends RedFlag {
@@ -123,7 +126,8 @@ final class NewPackageFlag extends RedFlag {
   RedFlagSeverity get severity => RedFlagSeverity.info;
 
   @override
-  String get message => 'New package — limited track record';
+  String get message =>
+      'Package is recently published. Track record is insufficient.';
 }
 
 final class NotDart3CompatibleFlag extends RedFlag {
@@ -133,7 +137,7 @@ final class NotDart3CompatibleFlag extends RedFlag {
   RedFlagSeverity get severity => RedFlagSeverity.warning;
 
   @override
-  String get message => 'Not Dart 3 compatible';
+  String get message => 'Not compatible with Dart 3.';
 }
 
 final class NotWasmReadyFlag extends RedFlag {
@@ -144,7 +148,7 @@ final class NotWasmReadyFlag extends RedFlag {
 
   @override
   String get message =>
-      'Not WASM ready — degraded performance on modern Flutter Web';
+      'Not WASM ready. Performance will degrade on modern Flutter Web targets.';
 }
 
 /// Missing or unknown license — priority legal risk flag.
@@ -158,7 +162,8 @@ final class MissingLicenseFlag extends RedFlag {
   RedFlagSeverity get severity => RedFlagSeverity.critical;
 
   @override
-  String get message => 'No license detected — legal risk for commercial use';
+  String get message =>
+      'No license detected. Use in commercial projects requires legal review.';
 }
 
 /// Composite suspicious-package signal: multiple risk factors on an
@@ -173,5 +178,5 @@ final class MultipleRisksFlag extends RedFlag {
 
   @override
   String get message =>
-      'SUSPICIOUS: $riskCount risk factors on an unverified package';
+      '$riskCount risk factors detected on an unverified publisher.';
 }

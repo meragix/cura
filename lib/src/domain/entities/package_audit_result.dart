@@ -2,6 +2,7 @@ import 'package:cura/src/domain/entities/github_metrics.dart';
 import 'package:cura/src/domain/entities/package_info.dart';
 import 'package:cura/src/domain/entities/score.dart';
 import 'package:cura/src/domain/entities/vulnerability.dart';
+import 'package:cura/src/domain/value_objects/recommendation.dart';
 
 /// The fully scored output of a single package audit.
 ///
@@ -32,6 +33,9 @@ class PackageAuditResult {
   /// Whether this result was served from the local JSON file cache.
   final bool fromCache;
 
+  /// UTC timestamp at which the cache entry was written, or `null` for live fetches.
+  final DateTime? cachedAt;
+
   /// Number of HTTP requests issued to external APIs for this package.
   ///
   /// `0` when [fromCache] is `true`. Propagated from [PackageSuccess.requestCount]
@@ -47,11 +51,11 @@ class PackageAuditResult {
   /// Structured issues detected during the audit (e.g. low score, stale).
   final List<AuditIssue> issues;
 
-  /// Human-readable improvement suggestions derived from the score and issues.
+  /// Typed improvement recommendations derived from [Score.recommendations].
   ///
-  /// Populated by the future `suggest` command. For programmatic access to
-  /// scored improvement guidance use [score.recommendations] instead.
-  final List<String> suggestions;
+  /// Propagated directly from the domain score — use [Recommendation.level]
+  /// to drive icon/colour rendering in the presentation layer.
+  final List<Recommendation> recommendations;
 
   /// Creates a [PackageAuditResult] with all required fields.
   const PackageAuditResult({
@@ -61,10 +65,11 @@ class PackageAuditResult {
     this.githubMetrics,
     required this.score,
     required this.fromCache,
+    this.cachedAt,
     this.requestCount = 0,
     required this.vulnerabilities,
     required this.issues,
-    this.suggestions = const [],
+    this.recommendations = const <Recommendation>[],
   });
 
   // ---------------------------------------------------------------------------
@@ -122,7 +127,9 @@ class PackageAuditResult {
       'status': status.name,
       'issues': issues.map((i) => i.toJson()).toList(),
       'vulnerabilities': vulnerabilities.map((v) => v.toJson()).toList(),
-      'suggestions': suggestions,
+      'recommendations': recommendations
+          .map((r) => {'level': r.level.name, 'message': r.message})
+          .toList(),
       'from_cache': fromCache,
     };
   }
@@ -203,7 +210,8 @@ class AuditIssue {
   factory AuditIssue.discontinued(String packageName) {
     return AuditIssue(
       type: AuditIssueType.discontinued,
-      message: 'Package $packageName is discontinued',
+      message:
+          'Package $packageName is discontinued. Do not adopt in new projects.',
       severity: AuditIssueSeverity.critical,
     );
   }
@@ -218,7 +226,7 @@ class AuditIssue {
   }) {
     return AuditIssue(
       type: AuditIssueType.vulnerability,
-      message: '$count critical vulnerabilities found: ${cveIds.join(", ")}',
+      message: '$count critical CVE(s) detected: ${cveIds.join(", ")}.',
       severity: AuditIssueSeverity.critical,
     );
   }
@@ -231,7 +239,7 @@ class AuditIssue {
   }) {
     return AuditIssue(
       type: AuditIssueType.lowScore,
-      message: 'Score $score is below threshold $threshold',
+      message: 'Score $score is below the minimum threshold of $threshold.',
       severity: AuditIssueSeverity.warning,
     );
   }
@@ -240,7 +248,8 @@ class AuditIssue {
   factory AuditIssue.stale({required int daysSinceUpdate}) {
     return AuditIssue(
       type: AuditIssueType.stale,
-      message: 'No updates for $daysSinceUpdate days',
+      message:
+          'No release in $daysSinceUpdate days. Package maintenance is uncertain.',
       severity: AuditIssueSeverity.warning,
     );
   }

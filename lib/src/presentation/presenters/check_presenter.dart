@@ -27,7 +27,6 @@ class CheckPresenter {
   final ConsoleLogger _logger;
   final ErrorFormatter _errorFormatter;
   final TableRenderer _tableRenderer;
-  final bool _showSuggestions;
 
   /// Accumulated audit results; populated during the streaming phase and
   /// consumed when [showSummary] is called.
@@ -43,15 +42,13 @@ class CheckPresenter {
   /// Creates a [CheckPresenter].
   ///
   /// - [logger] is the active output logger (normal, verbose, quiet, or JSON).
-  /// - [showSuggestions] controls whether alternative package suggestions are
   ///   included in the critical-issues section of the summary.
   CheckPresenter({
     required ConsoleLogger logger,
     bool showSuggestions = true,
   })  : _logger = logger,
         _errorFormatter = ErrorFormatter(logger),
-        _tableRenderer = TableRenderer(),
-        _showSuggestions = showSuggestions;
+        _tableRenderer = TableRenderer();
 
   // --------------------------------------------------------------------------
   // Stage 1: Header
@@ -232,8 +229,9 @@ class CheckPresenter {
           _logger.info('    └─ ${issue.message}');
         }
 
-        if (result.suggestions.isNotEmpty && _showSuggestions) {
-          _logger.info('    └─ Suggestion: ${result.suggestions.first}');
+        if (result.recommendations.isNotEmpty) {
+          _logger.info(
+              '    └─ Recommendation: ${result.recommendations.first.message}');
         }
       }
     }

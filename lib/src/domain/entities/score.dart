@@ -3,6 +3,10 @@ import 'package:cura/src/domain/value_objects/grade.dart';
 import 'package:cura/src/domain/value_objects/recommendation.dart';
 import 'package:cura/src/domain/value_objects/red_flag.dart';
 
+/// A single penalty deduction with its human-readable [label] and negative
+/// [points] value (e.g. `(label: 'No source repository', points: -30)`).
+typedef PenaltyItem = ({String label, int points});
+
 /// Semantic health tier derived from a package's [Score.total].
 ///
 /// | Status     | Condition        |
@@ -57,6 +61,12 @@ class Score {
   /// Defaults to `0` when no penalty applies.
   final int penalty;
 
+  /// Individual penalty deductions that compose [penalty].
+  ///
+  /// Each [PenaltyItem] carries a human-readable [label] and its negative
+  /// [points] value. Empty when no penalties were applied.
+  final List<PenaltyItem> penaltyItems;
+
   /// Typed letter grade derived from [total].
   ///
   /// Use [Grade.label] for display (e.g. `score.grade.label` → `'A+'`).
@@ -84,6 +94,7 @@ class Score {
     required this.trust,
     required this.maintenance,
     this.penalty = 0,
+    this.penaltyItems = const [],
     required this.grade,
     required this.breakdown,
     this.redFlags = const [],

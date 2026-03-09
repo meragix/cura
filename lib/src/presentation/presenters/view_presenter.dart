@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:cura/src/domain/value_objects/errors.dart';
+import 'package:cura/src/domain/value_objects/recommendation.dart';
+import 'package:cura/src/domain/value_objects/red_flag.dart';
 import 'package:cura/src/domain/entities/github_metrics.dart';
 import 'package:cura/src/domain/entities/package_audit_result.dart';
 import 'package:cura/src/domain/entities/score.dart';
@@ -39,7 +43,7 @@ class ViewPresenter {
   ViewPresenter({required ConsoleLogger logger})
       : _logger = logger,
         _errorFormatter = ErrorFormatter(logger),
-        _barRenderer = BarRenderer();
+        _barRenderer = BarRenderer(useColors: logger.useColors);
 
   // --------------------------------------------------------------------------
   // Public API
@@ -61,42 +65,68 @@ class ViewPresenter {
   ///
   /// Sections are rendered conditionally: issues, GitHub metrics, and
   /// vulnerabilities are only shown when the corresponding data is present.
-  void showPackageDetails(PackageAuditResult audit, {bool verbose = false}) {
+  void showPackageDetails(
+    PackageAuditResult audit, {
+    bool verbose = false,
+    Duration elapsed = Duration.zero,
+  }) {
     _logger.spacer();
+
+    // Section 0: Cache status — verbose only
+    if (verbose) {
+      _showCacheStatus(audit);
+      _logger.spacer();
+    }
 
     // Section 1: Header
     _showHeader(audit);
     _logger.spacer();
 
     // Section 2: Score breakdown
-    _showScoreBreakdown(audit.score);
+    if (verbose) {
+      _showVerboseScoreBreakdown(audit.score);
+    } else {
+      _showScoreBreakdown(audit.score);
+    }
     _logger.spacer();
 
-    // Section 3: Issues (conditional)
-    if (audit.issues.isNotEmpty) {
-      _showIssues(audit.issues);
-      _logger.spacer();
-    }
-
-    // Section 4: Key metrics
+    // Section 3: Key metrics
     _showKeyMetrics(audit);
     _logger.spacer();
 
-    // Section 5: GitHub metrics (conditional)
+    // Section 4: GitHub metrics (conditional)
     if (audit.githubMetrics != null) {
       _showGitHubMetrics(audit.githubMetrics!);
       _logger.spacer();
     }
 
-    // Section 6: Vulnerabilities (conditional)
+    // Section 5: Vulnerabilities (conditional)
     if (audit.vulnerabilities.isNotEmpty) {
       _showVulnerabilities(audit.vulnerabilities);
       _logger.spacer();
     }
 
-    // Section 7: Recommendation
-    _showRecommendation(audit);
+    // Section 6: Issues (conditional)
+    if (audit.issues.isNotEmpty) {
+      _showIssues(audit.issues);
+      _logger.spacer();
+    }
+
+    // Section 7: Risk signals — verbose only (conditional)
+    if (verbose && audit.score.redFlags.isNotEmpty) {
+      _showRedFlags(audit.score.redFlags);
+      _logger.spacer();
+    }
+
+    // Section 8: Verdict & actionable recommendations from RecommendationEngine
+    _showRecommendations(audit.recommendations);
     _logger.spacer();
+
+    // Section 9: Timing — verbose only
+    if (verbose) {
+      _showTiming(elapsed, audit.requestCount);
+      _logger.spacer();
+    }
   }
 
   /// Displays a top-level error message (e.g. package not found).
@@ -116,6 +146,90 @@ class ViewPresenter {
   void showUsage(String invocation) {
     _logger.info('');
     _logger.info('Usage: $invocation');
+  }
+
+  /// Emits a machine-readable JSON audit report for the package.
+  ///
+  /// Schema:
+  /// ```json
+  /// {
+  ///   "timestamp":   "<ISO-8601 UTC>",
+  ///   "package":     { ...audit fields, score breakdown, GitHub, vulns },
+  ///   "performance": { "time_ms": N, "api_calls": N, "from_cache": bool }
+  /// }
+  /// ```
+  void showJsonOutput(PackageAuditResult audit,
+      {Duration elapsed = Duration.zero}) {
+    final score = audit.score;
+    final info = audit.packageInfo;
+
+    final output = <String, dynamic>{
+      'timestamp': DateTime.now().toUtc().toIso8601String(),
+      'package': {
+        'name': audit.name,
+        'version': audit.version,
+        'status': audit.status.name,
+        'score': {
+          'total': score.total,
+          'grade': score.grade.label,
+          'vitality': score.vitality,
+          'technical_health': score.technicalHealth,
+          'trust': score.trust,
+          'maintenance': score.maintenance,
+          if (score.penalty != 0) 'penalty': score.penalty,
+          if (score.penaltyItems.isNotEmpty)
+            'penalty_items': score.penaltyItems
+                .map((p) => {'label': p.label, 'points': p.points})
+                .toList(),
+        },
+        'publisher': info.publisherId,
+        'pub_score': info.panaScore,
+        'max_points': info.maxPoints,
+        'popularity': info.popularity,
+        'likes': info.likes,
+        'last_published': info.lastPublished.toUtc().toIso8601String(),
+        'repository': info.repositoryUrl,
+        'platforms': info.supportedPlatforms,
+        'is_flutter_favorite': info.isFlutterFavorite,
+        'is_null_safe': info.isNullSafe,
+        'is_dart3_compatible': info.isDart3Compatible,
+        if (audit.githubMetrics != null)
+          'github': {
+            'stars': audit.githubMetrics!.stars,
+            'forks': audit.githubMetrics!.forks,
+            'open_issues': audit.githubMetrics!.openIssues,
+            'commits_90d': audit.githubMetrics!.commitCountLast90Days,
+            if (audit.githubMetrics!.lastCommitDate != null)
+              'last_commit': audit.githubMetrics!.lastCommitDate!
+                  .toUtc()
+                  .toIso8601String(),
+          },
+        if (score.redFlags.isNotEmpty)
+          'red_flags': score.redFlags
+              .map((f) => {
+                    'severity': f.severity.name,
+                    'message': f.message,
+                  })
+              .toList(),
+        if (audit.vulnerabilities.isNotEmpty)
+          'vulnerabilities':
+              audit.vulnerabilities.map((v) => v.toJson()).toList(),
+        if (audit.issues.isNotEmpty)
+          'issues': audit.issues.map((i) => i.toJson()).toList(),
+        if (audit.recommendations.isNotEmpty)
+          'recommendations': audit.recommendations
+              .map((r) => {'level': r.level.name, 'message': r.message})
+              .toList(),
+      },
+      'performance': {
+        'time_ms': elapsed.inMilliseconds,
+        'api_calls': audit.requestCount,
+        'from_cache': audit.fromCache,
+      },
+    };
+
+    // write() bypasses quiet mode so JSON is always emitted.
+    _logger.write('${const JsonEncoder.withIndent('  ').convert(output)}\n');
   }
 
   // --------------------------------------------------------------------------
@@ -143,12 +257,56 @@ class ViewPresenter {
     _logger.info(' $breakdown');
   }
 
-  /// Renders the list of audit [issues] with their messages.
-  void _showIssues(List<dynamic> issues) {
-    _logger.warn('Issues Detected');
+  /// Renders a detailed score table for each dimension — verbose mode only.
+  void _showVerboseScoreBreakdown(Score score) {
+    _logger.info('Score Breakdown');
 
-    for (final issue in issues) {
-      _logger.warn('  ● ${issue.message}');
+    _printDimensionRow(
+        'Vitality', score.vitality, 40, score.breakdown.vitalityDetails);
+    _printDimensionRow('Tech Health', score.technicalHealth, 30,
+        score.breakdown.technicalHealthDetails);
+    _printDimensionRow('Trust', score.trust, 20, score.breakdown.trustDetails);
+    _printDimensionRow('Maintenance', score.maintenance, 10,
+        score.breakdown.maintenanceDetails);
+
+    if (score.penaltyItems.isNotEmpty) {
+      _showPenalties(score.penalty, score.penaltyItems);
+    }
+
+    _logger.info('  ${'─' * 42}');
+    _logger.info(
+        '  ${'Total'.padRight(13)} ${''.padRight(7)} ${_formatScore(score.total)}');
+  }
+
+  void _printDimensionRow(String label, int value, int max, String detail) {
+    final pct = value / max;
+    final icon = pct >= 0.75
+        ? green.wrap('✓')!
+        : pct >= 0.50
+            ? yellow.wrap('!')!
+            : red.wrap('✗')!;
+    final ratio = '${value.toString().padLeft(2)}/$max'.padRight(6);
+    final detailStr = detail.isNotEmpty ? lightGray.wrap('  $detail')! : '';
+    _logger.info('  ${label.padRight(13)} $ratio  $icon$detailStr');
+  }
+
+  /// Renders the penalty block with tree connectors and a clamp note if needed.
+  void _showPenalties(int appliedPenalty, List<PenaltyItem> items) {
+    final itemsSum = items.fold(0, (sum, item) => sum + item.points);
+    final isClamped = itemsSum < appliedPenalty; // items sum to more negative
+
+    final ratio = '$appliedPenalty/0'.padRight(6);
+    _logger.info('  ${'Penalties'.padRight(13)} $ratio  ${red.wrap('✗')!}');
+
+    for (var i = 0; i < items.length; i++) {
+      final isLast = i == items.length - 1 && !isClamped;
+      final connector = isLast ? '└─' : '├─';
+      final label = '${items[i].label}:'.padRight(22);
+      _logger.info('    $connector $label${red.wrap('${items[i].points}')!}');
+    }
+
+    if (isClamped) {
+      _logger.info('    └─ ${lightGray.wrap('(clamped to $appliedPenalty)')}');
     }
   }
 
@@ -159,7 +317,7 @@ class ViewPresenter {
 
     _logger.info('Key Metrics');
 
-    final publisherIcon = info.isTrustedPublisher ? '✓' : '';
+    final publisherIcon = info.isTrustedPublisher ? green.wrap('✓') : '';
     final publisherText = info.publisherId ?? 'None (unverified)';
     final publisherColored = info.isTrustedPublisher
         ? green.wrap(publisherText)
@@ -244,28 +402,86 @@ class ViewPresenter {
     }
   }
 
-  /// Renders a single-line verdict: Recommended, Use with caution, or
-  /// Not Recommended — determined by the overall score.
-  ///
-  /// | Score range | Verdict                 |
-  /// |-------------|-------------------------|
-  /// | ≥ 80        | Recommended             |
-  /// | 60 – 79     | Use with caution        |
-  /// | < 60        | Not Recommended         |
-  void _showRecommendation(PackageAuditResult audit) {
-    final score = audit.score.total;
+  /// Renders the list of audit [issues] with their messages.
+  void _showIssues(List<dynamic> issues) {
+    _logger.alert('Issues Detected', level: AlertLevel.warning);
 
-    if (score >= 80) {
-      _logger.alert('Recommended - High-quality, actively maintained package',
-          level: AlertLevel.success);
-    } else if (score >= 60) {
-      _logger.alert('Use with caution - Some concerns, review before using',
-          level: AlertLevel.warning);
-    } else {
-      _logger.alert(
-          'Not Recommended - Appears abandoned, high risk for production use',
-          level: AlertLevel.error);
+    for (final issue in issues) {
+      _logger.info('  ● ${issue.message}');
     }
+  }
+
+  /// Renders raw risk signals from the scoring engine — verbose mode only.
+  ///
+  /// Each flag is colour-coded by [RedFlagSeverity]:
+  /// critical → red, warning → yellow, info → gray.
+  void _showRedFlags(List<RedFlag> flags) {
+    _logger.alert('Risk Signals', level: AlertLevel.error);
+    for (final flag in flags) {
+      final icon = switch (flag.severity) {
+        RedFlagSeverity.critical => red.wrap('●')!,
+        RedFlagSeverity.warning => yellow.wrap('●')!,
+        RedFlagSeverity.info => lightGray.wrap('●')!,
+      };
+      _logger.info('  $icon ${flag.message}');
+    }
+  }
+
+  /// Renders actionable improvement recommendations from [RecommendationEngine].
+  ///
+  /// Icon and colour are driven by [RecommendationLevel]:
+  /// - critical → red ✗
+  /// - warning  → yellow !
+  /// - action   → cyan →
+  /// - advisory → gray →
+  void _showRecommendations(List<Recommendation> recs) {
+    _logger.info(green.wrap('Recommendations')!);
+    for (final rec in recs) {
+      final icon = switch (rec.level) {
+        RecommendationLevel.critical => red.wrap('✗')!,
+        RecommendationLevel.warning => yellow.wrap('!')!,
+        RecommendationLevel.action => cyan.wrap('→')!,
+        RecommendationLevel.advisory => lightGray.wrap('→')!,
+      };
+      _logger.info('  $icon ${rec.message}');
+    }
+  }
+
+  /// Renders cache provenance — verbose mode only.
+  ///
+  /// Hit:  `Cache: ✓ Hit (2h 15m old, valid)`
+  /// Miss: `Cache: ✗ Miss, fetching...`
+  void _showCacheStatus(PackageAuditResult audit) {
+    if (audit.fromCache && audit.cachedAt != null) {
+      final age = DateTime.now().toUtc().difference(audit.cachedAt!.toUtc());
+      final ageStr = _formatAge(age);
+      final label = lightGray.wrap('Cache:')!;
+      _logger.info('$label ${green.wrap('✓ Hit')} ($ageStr old, valid)');
+    } else {
+      final label = lightGray.wrap('Cache:')!;
+      _logger.info('$label ${red.wrap('✗ Miss')}, fetching...');
+    }
+  }
+
+  /// Renders elapsed time and API call count — verbose mode only.
+  ///
+  /// Example: `⏱️  342ms (5 API calls)`
+  void _showTiming(Duration elapsed, int requestCount) {
+    final ms = elapsed.inMilliseconds;
+    final timeStr = darkGray.wrap('⏱️  ${ms}ms');
+    final callsStr = requestCount > 0
+        ? darkGray
+            .wrap('($requestCount API call${requestCount == 1 ? '' : 's'})')
+        : darkGray.wrap('(cached — 0 API calls)');
+    _logger.info('$timeStr $callsStr');
+  }
+
+  /// Formats a [Duration] as a human-readable age string (e.g. `2h 15m`).
+  String _formatAge(Duration d) {
+    if (d.inDays > 0) return '${d.inDays}d ${d.inHours.remainder(24)}h';
+    if (d.inHours > 0) return '${d.inHours}h ${d.inMinutes.remainder(60)}m';
+    if (d.inMinutes > 0) return '${d.inMinutes}m';
+    return '${d.inSeconds}s';
   }
 
   // --------------------------------------------------------------------------

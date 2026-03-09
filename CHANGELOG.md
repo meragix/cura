@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-03-09
+
+### Added
+
+- **`cura view` command**: Full implementation with issue detection, `RecommendationEngine`, risk signals (`--verbose`), and verbose score breakdown with penalty line items.
+- **`view --verbose` cache and timing footer**: Cache hit/miss status at top; elapsed time and API call count at bottom.
+- **`view --json`**: Machine-readable JSON output (`timestamp`, `package`, `score`, `github`, `red_flags`, `vulnerabilities`, `issues`, `recommendations`, `performance`).
+- **`PenaltyEvaluator` line items**: `calculate()` returns `PenaltyResult = ({int total, List<PenaltyItem> items})`. Individual deductions are now exposed for verbose rendering.
+- **`JsonFileSystemCache.getEntry()`**: Returns `({data, cachedAt})` alongside the cached payload. Used by `CachedAggregator` to surface cache age in the UI.
+- **`PackageSuccess.cachedAt`**: UTC write timestamp propagated from the cache layer to `PackageAuditResult`.
+- **`RecommendationEngine` flag coverage**: Added handlers for `NoNullSafetyFlag` (critical), `NotDart3CompatibleFlag` (warning), and `LimitedPlatformSupportFlag` (advisory).
+
+### Changed
+
+- **`PackageAuditResult.recommendations`**: Renamed from `suggestions`. Type changed from `List<String>` to `List<Recommendation>` so the presenter can drive icon and color rendering from `RecommendationLevel`.
+- **`ViewPackageDetails.execute`**: Switched from `mapAsync` to a direct `switch` to capture `requestCount` and `cachedAt` from `PackageSuccess`.
+- **`ViewCommand`**: Added `Stopwatch` and `--json` flag.
+- **`ViewPresenter._showVerboseScoreBreakdown`**: Redesigned with aligned columns (`label.padRight(13)`, `ratio.padRight(6)`), status icons (green `✓` / yellow `!` / red `✗`) at percentage thresholds (75% / 50%), and tree connectors (`├─` / `└─`) for penalty line items. Clamped penalty totals are annotated.
+- **`ViewPresenter._showRecommendations`**: Now receives `List<Recommendation>` and renders level-based icons: `✗` critical, `!` warning, `→` action, `→` advisory.
+- **`RecommendationEngine` messages**: All messages rewritten to senior tone. Declarative, no em dashes, no incises.
+- **`RedFlag` messages**: All `message` getters rewritten to senior tone.
+- **`AuditIssue` factory messages**: All four factory constructors rewritten to senior tone.
+
 ## [0.9.0] - 2026-03-08
 
 ### Added

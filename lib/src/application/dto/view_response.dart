@@ -10,11 +10,6 @@ class ViewResponse {
     // this.suggestions,
   });
 
-  /// Convert to JSON
-  Map<String, dynamic> toJson() {
-    return {
-      //'package': audit.toJson(),
-      //'suggestions': suggestions?.map((s) => s.toJson()).toList(),
-    };
-  }
+  /// Serialises this response to a JSON-compatible map.
+  Map<String, dynamic> toJson() => audit.toJson();
 }

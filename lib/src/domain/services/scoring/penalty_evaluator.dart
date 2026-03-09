@@ -1,4 +1,9 @@
+import 'package:cura/src/domain/entities/score.dart';
 import 'package:cura/src/domain/services/scoring/scoring_input.dart';
+
+/// Result of [PenaltyEvaluator.calculate]: the summed [total] and the
+/// individual [items] that compose it.
+typedef PenaltyResult = ({int total, List<PenaltyItem> items});
 
 /// Computes penalty points subtracted from the raw dimension total.
 ///
@@ -16,20 +21,26 @@ final class PenaltyEvaluator {
   static const int _experimentalStalePenalty = -20;
   static const int _experimentalStaleThresholdDays = 365;
 
-  /// Returns the total penalty (≤ 0) for [input].
-  int calculate(ScoringInput input) {
+  /// Returns the penalty [total] and the individual [items] for [input].
+  PenaltyResult calculate(ScoringInput input) {
     final pkg = input.package;
-    var penalty = 0;
+    final items = <PenaltyItem>[];
 
     // No source repository: code cannot be independently audited.
-    if (!pkg.hasRepository) penalty += _missingRepoPenalty;
+    if (!pkg.hasRepository) {
+      items.add((label: 'No source repository', points: _missingRepoPenalty));
+    }
 
     // Experimental versioning (0.0.x) stalled for over a year.
     if (pkg.version.startsWith('0.0.') &&
         pkg.daysSinceLastUpdate > _experimentalStaleThresholdDays) {
-      penalty += _experimentalStalePenalty;
+      items.add((
+        label: 'v${pkg.version} (${pkg.daysSinceLastUpdate}d stalled)',
+        points: _experimentalStalePenalty,
+      ));
     }
 
-    return penalty;
+    final total = items.fold(0, (sum, item) => sum + item.points);
+    return (total: total, items: items);
   }
 }

@@ -54,11 +54,18 @@ final class PackageSuccess extends PackageResult {
   /// with knowledge of the per-package request topology.
   final int requestCount;
 
+  /// The UTC timestamp at which this entry was written to the local cache.
+  ///
+  /// `null` when [fromCache] is `false` (live fetch). Use this to compute
+  /// cache age for display purposes (e.g. "2h old").
+  final DateTime? cachedAt;
+
   /// Creates a [PackageSuccess] with the provided fields.
   const PackageSuccess({
     required this.data,
     required this.fromCache,
     this.requestCount = 0,
+    this.cachedAt,
   });
 }
 
