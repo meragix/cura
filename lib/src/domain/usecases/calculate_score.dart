@@ -171,12 +171,12 @@ class CalculateScore implements ScoreCalculator {
     final maintenanceScore = _maintenance.calculate(input);
 
     // Penalties applied after dimension totals.
-    final penalty = _penalties.calculate(input);
+    final penaltyResult = _penalties.calculate(input);
     final rawTotal = vitalityScore +
         technicalHealthScore +
         trustScore +
         maintenanceScore +
-        penalty;
+        penaltyResult.total;
 
     // Trusted publisher floor: guaranteed minimum, not an automatic perfect score.
     final total = packageInfo.isTrustedPublisher
@@ -193,7 +193,8 @@ class CalculateScore implements ScoreCalculator {
       technicalHealth: technicalHealthScore,
       trust: trustScore,
       maintenance: maintenanceScore,
-      penalty: penalty,
+      penalty: penaltyResult.total,
+      penaltyItems: penaltyResult.items,
       grade: Grade.fromScore(total),
       breakdown: ScoreBreakdown(
         vitalityDetails: _vitality.describe(input),

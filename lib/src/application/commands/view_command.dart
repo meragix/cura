@@ -14,9 +14,10 @@ import 'package:cura/src/presentation/presenters/view_presenter.dart';
 ///
 /// ## Options
 ///
-/// | Flag        | Short | Default | Description                                         |
-/// |-------------|-------|---------|-----------------------------------------------------|
-/// | `--verbose` | `-v`  | `false` | Show extended score breakdown and additional details.|
+/// | Flag        | Short | Default | Description                                          |
+/// |-------------|-------|---------|------------------------------------------------------|
+/// | `--verbose` | `-v`  | `false` | Show extended score breakdown and additional details. |
+/// | `--json`    |       | `false` | Emit a machine-readable JSON report instead of text. |
 ///
 /// ## Exit codes
 ///
@@ -33,6 +34,9 @@ import 'package:cura/src/presentation/presenters/view_presenter.dart';
 ///
 /// # Show the full score breakdown for provider
 /// cura view provider --verbose
+///
+/// # Emit JSON for CI/CD or scripting
+/// cura view dio --json
 /// ```
 class ViewCommand extends Command<int> {
   /// Use case that fetches, scores, and returns a [PackageAuditResult] for a
@@ -41,6 +45,9 @@ class ViewCommand extends Command<int> {
 
   /// Presenter that renders the package report to the terminal.
   final ViewPresenter _presenter;
+
+  /// Measures wall-clock time from fetch start to report rendered.
+  final Stopwatch _stopwatch = Stopwatch();
 
   /// The canonical CLI invocation shown in usage / help text.
   @override
@@ -62,12 +69,18 @@ class ViewCommand extends Command<int> {
     required ViewPresenter presenter,
   })  : _viewUseCase = viewUseCase,
         _presenter = presenter {
-    argParser.addFlag(
-      'verbose',
-      abbr: 'v',
-      help: 'Show an extended score breakdown and additional package details.',
-      defaultsTo: false,
-    );
+    argParser
+      ..addFlag(
+        'verbose',
+        abbr: 'v',
+        help: 'Show an extended score breakdown and additional package details.',
+        defaultsTo: false,
+      )
+      ..addFlag(
+        'json',
+        help: 'Emit a machine-readable JSON report instead of the default text output.',
+        defaultsTo: false,
+      );
   }
 
   /// Fetches package data and renders the health report.
@@ -93,10 +106,13 @@ class ViewCommand extends Command<int> {
 
     final packageName = argResults!.rest.first;
     final verbose = argResults!['verbose'] as bool;
+    final jsonOutput = argResults!['json'] as bool;
 
     final progress = _presenter.showProgressHeader(packageName);
 
+    _stopwatch.start();
     final auditResult = await _viewUseCase.execute(packageName);
+    _stopwatch.stop();
 
     if (auditResult.isFailure) {
       progress.cancel();
@@ -108,7 +124,15 @@ class ViewCommand extends Command<int> {
 
     progress.complete('Analysis complete');
 
-    _presenter.showPackageDetails(audit, verbose: verbose);
+    if (jsonOutput) {
+      _presenter.showJsonOutput(audit, elapsed: _stopwatch.elapsed);
+    } else {
+      _presenter.showPackageDetails(
+        audit,
+        verbose: verbose,
+        elapsed: _stopwatch.elapsed,
+      );
+    }
     return 0;
   }
 }

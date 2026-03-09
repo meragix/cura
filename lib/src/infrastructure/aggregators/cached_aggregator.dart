@@ -62,7 +62,7 @@ class CachedAggregator implements PackageDataAggregator {
     // 1. Check cache first.
     final cached = await _getFromCache(packageName);
     if (cached != null) {
-      return PackageSuccess(data: cached, fromCache: true);
+      return PackageSuccess(data: cached.data, fromCache: true, cachedAt: cached.cachedAt);
     }
 
     // 2. Cache miss — delegate to the underlying aggregator.
@@ -99,14 +99,18 @@ class CachedAggregator implements PackageDataAggregator {
   /// Reads [AggregatedPackageData] for [packageName] from the JSON cache.
   ///
   /// Returns `null` on a cache miss, expired entry, or any IO/parse failure.
-  Future<AggregatedPackageData?> _getFromCache(String packageName) async {
-    final raw = await _cache.get(
+  /// On a hit, also returns the [cachedAt] timestamp so callers can compute
+  /// how old the entry is for display purposes.
+  Future<({AggregatedPackageData data, DateTime cachedAt})?> _getFromCache(
+    String packageName,
+  ) async {
+    final entry = await _cache.getEntry(
       JsonFileSystemCache.aggregatedNamespace,
       packageName,
     );
-    if (raw == null) return null;
+    if (entry == null) return null;
     try {
-      return _deserialize(raw);
+      return (data: _deserialize(entry.data), cachedAt: entry.cachedAt);
     } catch (_) {
       return null;
     }

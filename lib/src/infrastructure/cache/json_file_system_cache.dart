@@ -91,6 +91,17 @@ class JsonFileSystemCache {
   ///
   /// Expired entries are deleted opportunistically before returning `null`.
   Future<Map<String, dynamic>?> get(String namespace, String key) async {
+    final entry = await getEntry(namespace, key);
+    return entry?.data;
+  }
+
+  /// Like [get] but also returns the [cachedAt] timestamp of the entry.
+  ///
+  /// Returns `null` on a cache miss, expired entry, or any IO/parse failure.
+  Future<({Map<String, dynamic> data, DateTime cachedAt})?> getEntry(
+    String namespace,
+    String key,
+  ) async {
     try {
       final file = _fileFor(namespace, key);
       if (!await file.exists()) return null;
@@ -104,7 +115,8 @@ class JsonFileSystemCache {
         return null;
       }
 
-      return envelope['data'] as Map<String, dynamic>;
+      final cachedAt = DateTime.parse(envelope['cachedAt'] as String);
+      return (data: envelope['data'] as Map<String, dynamic>, cachedAt: cachedAt);
     } catch (_) {
       return null; // corruption or IO error → cache miss
     }

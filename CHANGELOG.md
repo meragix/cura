@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`cura view` command**: Full implementation — issue detection, suggestion engine (via `RecommendationEngine`), risk signals (`--verbose`), and verbose score breakdown table with penalty line items.
+- **`view --verbose` cache & timing footer**: `[CACHE] ✅ Hit (Xh Ym old, valid)` / `[CACHE] ❌ Miss` line at top; `⏱ Nms (N API calls)` at bottom.
+- **`view --json`**: Machine-readable JSON output (`timestamp`, `package`, `score`, `github`, `red_flags`, `vulnerabilities`, `issues`, `suggestions`, `performance`).
+- **`PenaltyEvaluator` line items**: `calculate()` now returns `PenaltyResult = ({int total, List<PenaltyItem> items})` — individual deductions exposed for verbose rendering.
+- **`JsonFileSystemCache.getEntry()`**: Returns `({data, cachedAt})` alongside the cached payload; used by `CachedAggregator` to surface cache age in the UI.
+- **`PackageSuccess.cachedAt`**: UTC write timestamp propagated from the cache layer to `PackageAuditResult`.
+
+### Changed
+
+- **`ViewPackageDetails.execute`**: Switched from `mapAsync` to a direct `switch` to capture `requestCount` and `cachedAt` from `PackageSuccess`.
+- **`ViewCommand`**: Added `Stopwatch`; elapsed time passed to presenter. Added `--json` flag.
+
 ## [0.9.0] - 2026-03-08
 
 ### Added
