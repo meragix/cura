@@ -210,7 +210,8 @@ class AuditIssue {
   factory AuditIssue.discontinued(String packageName) {
     return AuditIssue(
       type: AuditIssueType.discontinued,
-      message: 'Package $packageName is discontinued. Do not adopt in new projects.',
+      message:
+          'Package $packageName is discontinued. Do not adopt in new projects.',
       severity: AuditIssueSeverity.critical,
     );
   }
@@ -247,7 +248,8 @@ class AuditIssue {
   factory AuditIssue.stale({required int daysSinceUpdate}) {
     return AuditIssue(
       type: AuditIssueType.stale,
-      message: 'No release in $daysSinceUpdate days. Package maintenance is uncertain.',
+      message:
+          'No release in $daysSinceUpdate days. Package maintenance is uncertain.',
       severity: AuditIssueSeverity.warning,
     );
   }

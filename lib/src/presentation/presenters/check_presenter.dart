@@ -142,7 +142,8 @@ class CheckPresenter {
     if (_logger.isQuiet) {
       _logger.write(passed ? 'PASS\n' : 'FAIL\n');
       if (!passed) {
-        final criticalResults = _results.where((r) => r.score.total < 50).toList();
+        final criticalResults =
+            _results.where((r) => r.score.total < 50).toList();
         if (criticalResults.isNotEmpty) {
           _logger.write('\nCRITICAL ISSUES (require action):\n');
           for (final r in criticalResults) {
@@ -178,17 +179,21 @@ class CheckPresenter {
     // ------------------------------------------------------------------
 
     final healthy = _results.where((r) => r.score.total >= 70).length;
-    final warning = _results.where((r) => r.score.total >= 50 && r.score.total < 70).length;
+    final warning =
+        _results.where((r) => r.score.total >= 50 && r.score.total < 70).length;
     final critical = _results.where((r) => r.score.total < 50).length;
 
-    final avgScore =
-        _results.isEmpty ? 0 : _results.map((r) => r.score.total).reduce((a, b) => a + b) ~/ _results.length;
+    final avgScore = _results.isEmpty
+        ? 0
+        : _results.map((r) => r.score.total).reduce((a, b) => a + b) ~/
+            _results.length;
 
     _logger.info('');
     _logger.info(styleBold.wrap('SUMMARY')!);
 
     if (healthy > 0) {
-      _logger.info('  ${green.wrap("Healthy:")}  $healthy/$total (${(healthy / total * 100).round()}%)');
+      _logger.info(
+          '  ${green.wrap("Healthy:")}  $healthy/$total (${(healthy / total * 100).round()}%)');
     }
     if (warning > 0) {
       _logger.info('  ${yellow.wrap("Warning:")}  $warning');
@@ -217,14 +222,16 @@ class CheckPresenter {
       _logger.error('CRITICAL ISSUES (require action):');
 
       for (final result in criticalResults) {
-        _logger.error('  ${red.wrap('✗')} ${red.wrap(styleBold.wrap(result.name))} (score: ${result.score.total})');
+        _logger.error(
+            '  ${red.wrap('✗')} ${red.wrap(styleBold.wrap(result.name))} (score: ${result.score.total})');
 
         for (final issue in result.issues) {
           _logger.info('    └─ ${issue.message}');
         }
 
         if (result.recommendations.isNotEmpty) {
-          _logger.info('    └─ Recommendation: ${result.recommendations.first.message}');
+          _logger.info(
+              '    └─ Recommendation: ${result.recommendations.first.message}');
         }
       }
     }
@@ -274,11 +281,14 @@ class CheckPresenter {
   /// - `"FAILED"` — overall_health < 50
   void showJsonOutput(Stopwatch stopwatch) {
     final healthy = _results.where((r) => r.score.total >= 70).length;
-    final warning = _results.where((r) => r.score.total >= 50 && r.score.total < 70).length;
+    final warning =
+        _results.where((r) => r.score.total >= 50 && r.score.total < 70).length;
     final critical = _results.where((r) => r.score.total < 50).length;
 
-    final overallHealth =
-        _results.isEmpty ? 0 : _results.map((r) => r.score.total).reduce((a, b) => a + b) ~/ _results.length;
+    final overallHealth = _results.isEmpty
+        ? 0
+        : _results.map((r) => r.score.total).reduce((a, b) => a + b) ~/
+            _results.length;
 
     final status = overallHealth < 50
         ? 'FAILED'
@@ -300,8 +310,10 @@ class CheckPresenter {
       return entry;
     }).toList();
 
-    final criticalPackages =
-        _results.where((r) => r.score.total < 50).map((r) => {'name': r.name, 'score': r.score.total}).toList();
+    final criticalPackages = _results
+        .where((r) => r.score.total < 50)
+        .map((r) => {'name': r.name, 'score': r.score.total})
+        .toList();
 
     final output = {
       'timestamp': DateTime.now().toUtc().toIso8601String(),

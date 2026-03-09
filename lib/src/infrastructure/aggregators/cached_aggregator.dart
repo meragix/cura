@@ -62,7 +62,8 @@ class CachedAggregator implements PackageDataAggregator {
     // 1. Check cache first.
     final cached = await _getFromCache(packageName);
     if (cached != null) {
-      return PackageSuccess(data: cached.data, fromCache: true, cachedAt: cached.cachedAt);
+      return PackageSuccess(
+          data: cached.data, fromCache: true, cachedAt: cached.cachedAt);
     }
 
     // 2. Cache miss — delegate to the underlying aggregator.

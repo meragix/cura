@@ -55,7 +55,12 @@ class ViewPackageDetails {
 
     return switch (result) {
       PackageFailure(:final error) => Result.failure(error),
-      PackageSuccess(:final data, :final fromCache, :final requestCount, :final cachedAt) =>
+      PackageSuccess(
+        :final data,
+        :final fromCache,
+        :final requestCount,
+        :final cachedAt
+      ) =>
         await _buildAuditResult(data, fromCache, requestCount, cachedAt),
     };
   }
@@ -145,5 +150,4 @@ class ViewPackageDetails {
 
     return issues;
   }
-
 }

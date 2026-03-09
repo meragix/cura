@@ -116,7 +116,10 @@ class JsonFileSystemCache {
       }
 
       final cachedAt = DateTime.parse(envelope['cachedAt'] as String);
-      return (data: envelope['data'] as Map<String, dynamic>, cachedAt: cachedAt);
+      return (
+        data: envelope['data'] as Map<String, dynamic>,
+        cachedAt: cachedAt
+      );
     } catch (_) {
       return null; // corruption or IO error → cache miss
     }

@@ -259,8 +259,8 @@ void main() {
   group('exit code — fetch failures', () {
     test('returns 1 when package is not found', () async {
       when(() => usecase.execute('missing_pkg')).thenAnswer(
-        (_) async => Result.failure(
-            const PackageProviderError.notFound('missing_pkg')),
+        (_) async =>
+            Result.failure(const PackageProviderError.notFound('missing_pkg')),
       );
 
       final runner = _makeRunner(usecase, presenter);
@@ -271,8 +271,8 @@ void main() {
 
     test('calls showProviderError on failure', () async {
       when(() => usecase.execute('missing_pkg')).thenAnswer(
-        (_) async => Result.failure(
-            const PackageProviderError.notFound('missing_pkg')),
+        (_) async =>
+            Result.failure(const PackageProviderError.notFound('missing_pkg')),
       );
 
       final runner = _makeRunner(usecase, presenter);
@@ -283,8 +283,8 @@ void main() {
 
     test('returns 1 on network error', () async {
       when(() => usecase.execute(any())).thenAnswer(
-        (_) async => Result.failure(
-            const PackageProviderError.network('timeout')),
+        (_) async =>
+            Result.failure(const PackageProviderError.network('timeout')),
       );
 
       final runner = _makeRunner(usecase, presenter);
@@ -296,8 +296,8 @@ void main() {
 
     test('does not call showPackageDetails on failure', () async {
       when(() => usecase.execute(any())).thenAnswer(
-        (_) async => Result.failure(
-            const PackageProviderError.notFound('bad_pkg')),
+        (_) async =>
+            Result.failure(const PackageProviderError.notFound('bad_pkg')),
       );
 
       final runner = _makeRunner(usecase, presenter);

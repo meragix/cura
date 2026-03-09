@@ -181,7 +181,8 @@ void main() {
         fromCache: false,
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final result = await usecase.execute('dio');
 
       expect(result, isA<Success<PackageAuditResult>>());
@@ -204,7 +205,8 @@ void main() {
             vulnerabilities: any(named: 'vulnerabilities'),
           )).thenReturn(_makeScore());
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -225,7 +227,8 @@ void main() {
             vulnerabilities: any(named: 'vulnerabilities'),
           )).thenReturn(_makeScore(total: 90));
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final result = await usecase.execute('provider');
 
       expect(result.isSuccess, isTrue);
@@ -248,7 +251,8 @@ void main() {
             const PackageProviderError.notFound('missing_pkg')),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final result = await usecase.execute('missing_pkg');
 
       expect(result, isA<Failure<PackageAuditResult>>());
@@ -263,11 +267,13 @@ void main() {
             const PackageProviderError.network('connection refused')),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final result = await usecase.execute('flaky_pkg');
 
       expect(result, isA<Failure<PackageAuditResult>>());
-      expect((result as Failure<PackageAuditResult>).error, isA<NetworkError>());
+      expect(
+          (result as Failure<PackageAuditResult>).error, isA<NetworkError>());
     });
 
     test('returns Failure on rate limit error', () async {
@@ -276,10 +282,12 @@ void main() {
             PackageProviderError.rateLimit(const Duration(seconds: 60))),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final result = await usecase.execute('any_pkg');
 
-      expect((result as Failure<PackageAuditResult>).error, isA<RateLimitError>());
+      expect(
+          (result as Failure<PackageAuditResult>).error, isA<RateLimitError>());
     });
   });
 
@@ -298,13 +306,14 @@ void main() {
         score: _makeScore(),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
 
-      expect(
-          audit.issues.any((i) => i.type == AuditIssueType.discontinued), isTrue);
+      expect(audit.issues.any((i) => i.type == AuditIssueType.discontinued),
+          isTrue);
       expect(
         audit.issues
             .firstWhere((i) => i.type == AuditIssueType.discontinued)
@@ -321,7 +330,8 @@ void main() {
         score: _makeScore(),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -345,20 +355,22 @@ void main() {
         score: _makeScore(),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
 
       expect(audit.issues.any((i) => i.type == AuditIssueType.vulnerability),
           isTrue);
-      final issue =
-          audit.issues.firstWhere((i) => i.type == AuditIssueType.vulnerability);
+      final issue = audit.issues
+          .firstWhere((i) => i.type == AuditIssueType.vulnerability);
       expect(issue.severity, AuditIssueSeverity.critical);
       expect(issue.message, contains('CVE-2024-9999'));
     });
 
-    test('no vulnerability issue when only non-critical CVEs present', () async {
+    test('no vulnerability issue when only non-critical CVEs present',
+        () async {
       final vuln = Vulnerability(
         id: 'CVE-2024-LOW',
         summary: 'Low severity',
@@ -375,7 +387,8 @@ void main() {
         score: _makeScore(total: 75),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -398,7 +411,8 @@ void main() {
         score: _makeScore(total: 30),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -421,7 +435,8 @@ void main() {
         score: _makeScore(total: 50),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -438,7 +453,8 @@ void main() {
         score: _makeScore(total: 80),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -453,7 +469,8 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('_identifyIssues — stale', () {
-    test('adds stale warning issue when lastPublished > 730 days ago', () async {
+    test('adds stale warning issue when lastPublished > 730 days ago',
+        () async {
       final staleDate = DateTime.now().subtract(const Duration(days: 800));
       final info = _makePackageInfo(lastPublished: staleDate);
       _stubSuccess(
@@ -463,7 +480,8 @@ void main() {
         score: _makeScore(total: 75),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -486,7 +504,8 @@ void main() {
         score: _makeScore(total: 75),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -504,7 +523,8 @@ void main() {
         score: _makeScore(total: 90),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -532,7 +552,8 @@ void main() {
         score: _makeScore(total: 0),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -557,7 +578,8 @@ void main() {
         score: _makeScore(total: 90),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -579,7 +601,8 @@ void main() {
         score: _makeScore(recommendations: []),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;
@@ -589,8 +612,11 @@ void main() {
 
     test('propagates score.recommendations in order', () async {
       const recs = [
-        Recommendation(level: RecommendationLevel.critical, message: 'AVOID this package'),
-        Recommendation(level: RecommendationLevel.action, message: 'Search for an alternative'),
+        Recommendation(
+            level: RecommendationLevel.critical, message: 'AVOID this package'),
+        Recommendation(
+            level: RecommendationLevel.action,
+            message: 'Search for an alternative'),
       ];
 
       _stubSuccess(
@@ -600,7 +626,8 @@ void main() {
         score: _makeScore(recommendations: recs),
       );
 
-      final usecase = _makeUsecase(aggregator: aggregator, calculator: calculator);
+      final usecase =
+          _makeUsecase(aggregator: aggregator, calculator: calculator);
       final audit =
           ((await usecase.execute('test_pkg')) as Success<PackageAuditResult>)
               .value;

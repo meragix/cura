@@ -73,12 +73,14 @@ class ViewCommand extends Command<int> {
       ..addFlag(
         'verbose',
         abbr: 'v',
-        help: 'Show an extended score breakdown and additional package details.',
+        help:
+            'Show an extended score breakdown and additional package details.',
         defaultsTo: false,
       )
       ..addFlag(
         'json',
-        help: 'Emit a machine-readable JSON report instead of the default text output.',
+        help:
+            'Emit a machine-readable JSON report instead of the default text output.',
         defaultsTo: false,
       );
   }

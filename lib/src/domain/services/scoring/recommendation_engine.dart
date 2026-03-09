@@ -53,11 +53,13 @@ final class RecommendationEngine {
       return const [
         Recommendation(
           level: RecommendationLevel.critical,
-          message: 'Do not use. Multiple critical risk factors detected on an unverified publisher.',
+          message:
+              'Do not use. Multiple critical risk factors detected on an unverified publisher.',
         ),
         Recommendation(
           level: RecommendationLevel.action,
-          message: 'Find a maintained alternative published by a verified publisher.',
+          message:
+              'Find a maintained alternative published by a verified publisher.',
         ),
       ];
     }
@@ -71,7 +73,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is MissingLicenseFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.critical,
-        message: 'No license detected. Legal review is mandatory before any commercial use.',
+        message:
+            'No license detected. Legal review is mandatory before any commercial use.',
       ));
     }
 
@@ -79,7 +82,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is MissingRepositoryFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.critical,
-        message: 'No source repository. Code cannot be audited. Avoid in professional projects.',
+        message:
+            'No source repository. Code cannot be audited. Avoid in professional projects.',
       ));
     }
 
@@ -87,7 +91,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is NoNullSafetyFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.critical,
-        message: 'Sound null safety is disabled. Production use carries null-related crash risk.',
+        message:
+            'Sound null safety is disabled. Production use carries null-related crash risk.',
       ));
     }
 
@@ -97,7 +102,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is StalePackageFlag) && !isConsideredStable(pkg)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.warning,
-        message: 'No maintenance activity detected. Migrate to an actively maintained alternative.',
+        message:
+            'No maintenance activity detected. Migrate to an actively maintained alternative.',
       ));
     }
 
@@ -105,7 +111,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is NotDart3CompatibleFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.warning,
-        message: 'Not Dart 3 compatible. Replace this dependency before any SDK upgrade.',
+        message:
+            'Not Dart 3 compatible. Replace this dependency before any SDK upgrade.',
       ));
     }
 
@@ -113,7 +120,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is ExperimentalVersionFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.warning,
-        message: 'Version is pre-stable. Do not ship in production before 1.0.0 is released.',
+        message:
+            'Version is pre-stable. Do not ship in production before 1.0.0 is released.',
       ));
     }
 
@@ -123,7 +131,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is UnverifiedPublisherFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.action,
-        message: 'Publisher is unverified. Audit author reputation and GitHub activity before adopting.',
+        message:
+            'Publisher is unverified. Audit author reputation and GitHub activity before adopting.',
       ));
     }
 
@@ -133,12 +142,14 @@ final class RecommendationEngine {
     if (flags.any((f) => f is NewPackageFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.advisory,
-        message: 'Package is recently published. Monitor for API breaking changes.',
+        message:
+            'Package is recently published. Monitor for API breaking changes.',
       ));
       if (total < _earlyStageScoreThreshold) {
         recs.add(const Recommendation(
           level: RecommendationLevel.warning,
-          message: 'Low score on an early-stage package. Restrict to non-critical, low-risk features.',
+          message:
+              'Low score on an early-stage package. Restrict to non-critical, low-risk features.',
         ));
       }
     }
@@ -147,7 +158,8 @@ final class RecommendationEngine {
     if (flags.any((f) => f is LimitedPlatformSupportFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.advisory,
-        message: 'Platform support is limited. Verify compatibility with all target platforms.',
+        message:
+            'Platform support is limited. Verify compatibility with all target platforms.',
       ));
     }
 
@@ -155,14 +167,16 @@ final class RecommendationEngine {
     if (flags.any((f) => f is NotWasmReadyFlag)) {
       recs.add(const Recommendation(
         level: RecommendationLevel.advisory,
-        message: 'Not WASM ready. Bundle will fall back to CanvasKit or HTML renderer, increasing size.',
+        message:
+            'Not WASM ready. Bundle will fall back to CanvasKit or HTML renderer, increasing size.',
       ));
     }
 
     if (recs.isEmpty) {
       recs.add(const Recommendation(
         level: RecommendationLevel.advisory,
-        message: 'Score is below healthy threshold. Conduct manual evaluation before production adoption.',
+        message:
+            'Score is below healthy threshold. Conduct manual evaluation before production adoption.',
       ));
     }
 

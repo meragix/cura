@@ -16,10 +16,14 @@ class BarRenderer {
   String renderScoreBreakdown(Score score) {
     final parts = <String>[];
 
-    parts.add(_renderBar(label: 'Vitality', value: score.vitality, max: 40, char: '█'));
-    parts.add(_renderBar(label: 'Tech', value: score.technicalHealth, max: 30, char: '▓'));
-    parts.add(_renderBar(label: 'Trust', value: score.trust, max: 20, char: '▒'));
-    parts.add(_renderBar(label: 'Maint', value: score.maintenance, max: 10, char: '░'));
+    parts.add(_renderBar(
+        label: 'Vitality', value: score.vitality, max: 40, char: '█'));
+    parts.add(_renderBar(
+        label: 'Tech', value: score.technicalHealth, max: 30, char: '▓'));
+    parts.add(
+        _renderBar(label: 'Trust', value: score.trust, max: 20, char: '▒'));
+    parts.add(_renderBar(
+        label: 'Maint', value: score.maintenance, max: 10, char: '░'));
 
     return parts.join('  ');
   }

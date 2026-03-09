@@ -158,7 +158,8 @@ class ViewPresenter {
   ///   "performance": { "time_ms": N, "api_calls": N, "from_cache": bool }
   /// }
   /// ```
-  void showJsonOutput(PackageAuditResult audit, {Duration elapsed = Duration.zero}) {
+  void showJsonOutput(PackageAuditResult audit,
+      {Duration elapsed = Duration.zero}) {
     final score = audit.score;
     final info = audit.packageInfo;
 
@@ -177,7 +178,9 @@ class ViewPresenter {
           'maintenance': score.maintenance,
           if (score.penalty != 0) 'penalty': score.penalty,
           if (score.penaltyItems.isNotEmpty)
-            'penalty_items': score.penaltyItems.map((p) => {'label': p.label, 'points': p.points}).toList(),
+            'penalty_items': score.penaltyItems
+                .map((p) => {'label': p.label, 'points': p.points})
+                .toList(),
         },
         'publisher': info.publisherId,
         'pub_score': info.panaScore,
@@ -197,7 +200,9 @@ class ViewPresenter {
             'open_issues': audit.githubMetrics!.openIssues,
             'commits_90d': audit.githubMetrics!.commitCountLast90Days,
             if (audit.githubMetrics!.lastCommitDate != null)
-              'last_commit': audit.githubMetrics!.lastCommitDate!.toUtc().toIso8601String(),
+              'last_commit': audit.githubMetrics!.lastCommitDate!
+                  .toUtc()
+                  .toIso8601String(),
           },
         if (score.redFlags.isNotEmpty)
           'red_flags': score.redFlags
@@ -206,10 +211,15 @@ class ViewPresenter {
                     'message': f.message,
                   })
               .toList(),
-        if (audit.vulnerabilities.isNotEmpty) 'vulnerabilities': audit.vulnerabilities.map((v) => v.toJson()).toList(),
-        if (audit.issues.isNotEmpty) 'issues': audit.issues.map((i) => i.toJson()).toList(),
+        if (audit.vulnerabilities.isNotEmpty)
+          'vulnerabilities':
+              audit.vulnerabilities.map((v) => v.toJson()).toList(),
+        if (audit.issues.isNotEmpty)
+          'issues': audit.issues.map((i) => i.toJson()).toList(),
         if (audit.recommendations.isNotEmpty)
-          'recommendations': audit.recommendations.map((r) => {'level': r.level.name, 'message': r.message}).toList(),
+          'recommendations': audit.recommendations
+              .map((r) => {'level': r.level.name, 'message': r.message})
+              .toList(),
       },
       'performance': {
         'time_ms': elapsed.inMilliseconds,
@@ -251,17 +261,21 @@ class ViewPresenter {
   void _showVerboseScoreBreakdown(Score score) {
     _logger.info('Score Breakdown');
 
-    _printDimensionRow('Vitality', score.vitality, 40, score.breakdown.vitalityDetails);
-    _printDimensionRow('Tech Health', score.technicalHealth, 30, score.breakdown.technicalHealthDetails);
+    _printDimensionRow(
+        'Vitality', score.vitality, 40, score.breakdown.vitalityDetails);
+    _printDimensionRow('Tech Health', score.technicalHealth, 30,
+        score.breakdown.technicalHealthDetails);
     _printDimensionRow('Trust', score.trust, 20, score.breakdown.trustDetails);
-    _printDimensionRow('Maintenance', score.maintenance, 10, score.breakdown.maintenanceDetails);
+    _printDimensionRow('Maintenance', score.maintenance, 10,
+        score.breakdown.maintenanceDetails);
 
     if (score.penaltyItems.isNotEmpty) {
       _showPenalties(score.penalty, score.penaltyItems);
     }
 
     _logger.info('  ${'─' * 42}');
-    _logger.info('  ${'Total'.padRight(13)} ${''.padRight(7)} ${_formatScore(score.total)}');
+    _logger.info(
+        '  ${'Total'.padRight(13)} ${''.padRight(7)} ${_formatScore(score.total)}');
   }
 
   void _printDimensionRow(String label, int value, int max, String detail) {
@@ -305,19 +319,24 @@ class ViewPresenter {
 
     final publisherIcon = info.isTrustedPublisher ? green.wrap('✓') : '';
     final publisherText = info.publisherId ?? 'None (unverified)';
-    final publisherColored = info.isTrustedPublisher ? green.wrap(publisherText) : lightGray.wrap(publisherText);
+    final publisherColored = info.isTrustedPublisher
+        ? green.wrap(publisherText)
+        : lightGray.wrap(publisherText);
 
     _logger.info('  Publisher:   $publisherColored $publisherIcon');
 
-    final pubScoreIndicator = _barRenderer.renderPubScoreIndicator(info.panaScore);
-    _logger.info('  Pub Score:   ${info.panaScore}/${info.maxPoints} $pubScoreIndicator');
+    final pubScoreIndicator =
+        _barRenderer.renderPubScoreIndicator(info.panaScore);
+    _logger.info(
+        '  Pub Score:   ${info.panaScore}/${info.maxPoints} $pubScoreIndicator');
 
     final popularityDots = _barRenderer.renderPopularityDots(info.popularity);
     _logger.info('  Popularity:  ${info.popularity}% $popularityDots');
 
     _logger.info('  Likes:       ${NumberFormatter.formatGrouped(info.likes)}');
 
-    final updateStatus = _barRenderer.renderUpdateStatus(info.daysSinceLastUpdate);
+    final updateStatus =
+        _barRenderer.renderUpdateStatus(info.daysSinceLastUpdate);
     final updateText = DateFormatter.formatWithRelative(info.lastPublished);
     _logger.info('  Last Update: $updateText $updateStatus');
 
@@ -346,19 +365,24 @@ class ViewPresenter {
     final starsFormatted = NumberFormatter.formatCompact(githubMetrics.stars);
     _logger.info('  Stars:       ⭐ $starsFormatted');
 
-    _logger.info('  Forks:       ${NumberFormatter.formatGrouped(githubMetrics.forks)}');
+    _logger.info(
+        '  Forks:       ${NumberFormatter.formatGrouped(githubMetrics.forks)}');
 
     final issuesColor = githubMetrics.openIssues > 100 ? yellow : green;
-    final issuesFormatted = NumberFormatter.formatGrouped(githubMetrics.openIssues);
-    _logger.info('  Open Issues: ${issuesColor.wrap(issuesFormatted.toString())!}');
+    final issuesFormatted =
+        NumberFormatter.formatGrouped(githubMetrics.openIssues);
+    _logger.info(
+        '  Open Issues: ${issuesColor.wrap(issuesFormatted.toString())!}');
 
     if (githubMetrics.commitCountLast90Days > 0) {
-      final commitsFormatted = NumberFormatter.formatGrouped(githubMetrics.commitCountLast90Days);
+      final commitsFormatted =
+          NumberFormatter.formatGrouped(githubMetrics.commitCountLast90Days);
       _logger.info('  Activity:    $commitsFormatted commits (90d)');
     }
 
     if (githubMetrics.lastCommitDate != null) {
-      final lastCommit = DateFormatter.formatWithRelative(githubMetrics.lastCommitDate!);
+      final lastCommit =
+          DateFormatter.formatWithRelative(githubMetrics.lastCommitDate!);
       _logger.info('  Last Commit: $lastCommit');
     }
   }
@@ -446,7 +470,8 @@ class ViewPresenter {
     final ms = elapsed.inMilliseconds;
     final timeStr = darkGray.wrap('⏱️  ${ms}ms');
     final callsStr = requestCount > 0
-        ? darkGray.wrap('($requestCount API call${requestCount == 1 ? '' : 's'})')
+        ? darkGray
+            .wrap('($requestCount API call${requestCount == 1 ? '' : 's'})')
         : darkGray.wrap('(cached — 0 API calls)');
     _logger.info('$timeStr $callsStr');
   }
