@@ -210,7 +210,7 @@ class AuditIssue {
   factory AuditIssue.discontinued(String packageName) {
     return AuditIssue(
       type: AuditIssueType.discontinued,
-      message: 'Package $packageName is discontinued',
+      message: 'Package $packageName is discontinued. Do not adopt in new projects.',
       severity: AuditIssueSeverity.critical,
     );
   }
@@ -225,7 +225,7 @@ class AuditIssue {
   }) {
     return AuditIssue(
       type: AuditIssueType.vulnerability,
-      message: '$count critical vulnerabilities found: ${cveIds.join(", ")}',
+      message: '$count critical CVE(s) detected: ${cveIds.join(", ")}.',
       severity: AuditIssueSeverity.critical,
     );
   }
@@ -238,7 +238,7 @@ class AuditIssue {
   }) {
     return AuditIssue(
       type: AuditIssueType.lowScore,
-      message: 'Score $score is below threshold $threshold',
+      message: 'Score $score is below the minimum threshold of $threshold.',
       severity: AuditIssueSeverity.warning,
     );
   }
@@ -247,7 +247,7 @@ class AuditIssue {
   factory AuditIssue.stale({required int daysSinceUpdate}) {
     return AuditIssue(
       type: AuditIssueType.stale,
-      message: 'No updates for $daysSinceUpdate days',
+      message: 'No release in $daysSinceUpdate days. Package maintenance is uncertain.',
       severity: AuditIssueSeverity.warning,
     );
   }

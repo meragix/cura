@@ -161,7 +161,7 @@ cura check --json > report.json
 # Offline mode (cached data only, no GitHub calls)
 cura check --no-github
 
-# Silent mode — check the exit code in scripts
+# Silent mode. Check the exit code in scripts.
 cura check --quiet
 echo $?   # 0 = all passed, 1 = failures
 ```
@@ -191,9 +191,69 @@ cura view dio --verbose
 cura view dio --json | jq '.score.total'
 ```
 
-**Output:**
+#### Healthy package
 
-![cura view](screenshots/cura-view.png)
+![cura view (good package)](screenshots/cura-view-good-pkg.png)
+
+#### At-risk package
+
+![cura view (at-risk package)](screenshots/cura-view-bad-pkg.png)
+
+#### At-risk package with `--verbose`
+
+![cura view (at-risk package, verbose)](screenshots/cura-view-bad-pkg-verbose.png)
+
+#### JSON output (`--json`)
+
+```json
+{
+  "timestamp": "2026-03-09T14:22:10.000Z",
+  "package": {
+    "name": "dio",
+    "version": "5.4.3+1",
+    "status": "excellent",
+    "score": {
+      "total": 91,
+      "grade": "A+",
+      "vitality": 35,
+      "technical_health": 28,
+      "trust": 18,
+      "maintenance": 10
+    },
+    "publisher": "fluttercommunity.dev",
+    "pub_score": 130,
+    "max_points": 130,
+    "popularity": 97,
+    "likes": 5823,
+    "last_published": "2024-11-15T08:30:00.000Z",
+    "repository": "github.com/cfug/dio",
+    "platforms": ["android", "ios", "linux", "macos", "web", "windows"],
+    "is_flutter_favorite": false,
+    "is_null_safe": true,
+    "is_dart3_compatible": true,
+    "github": {
+      "stars": 12400,
+      "forks": 1312,
+      "open_issues": 87,
+      "commits_90d": 24,
+      "last_commit": "2024-11-10T11:45:00.000Z"
+    },
+    "recommendations": [
+      {
+        "level": "advisory",
+        "message": "Package health is verified. Suitable for production use."
+      }
+    ]
+  },
+  "performance": {
+    "time_ms": 342,
+    "api_calls": 3,
+    "from_cache": false
+  }
+}
+```
+
+> Pipe into [`jq`](https://stedolan.github.io/jq/) for scripting: `cura view dio --json | jq '.package.score.total'`
 
 ---
 
@@ -282,7 +342,7 @@ Total Score = Vitality (40) + Technical Health (30) + Trust (20) + Maintenance (
             clamped to [0, 100]
 ```
 
-### Vitality — 40 pts
+### Vitality (40 pts)
 
 Reflects the recency and frequency of package updates.
 
@@ -299,7 +359,7 @@ Reflects the recency and frequency of package updates.
 
 **GitHub activity bonus (+5 pts):** Applies when the repository recorded more than 10 commits in the last 90 days.
 
-### Technical Health — 30 pts
+### Technical Health (30 pts)
 
 | Criterion                          | Points |
 |------------------------------------|--------|
@@ -308,7 +368,7 @@ Reflects the recency and frequency of package updates.
 | Dart 3 compatible                  |      3 |
 | Platform breadth (beyond 1st, max) |    0–2 |
 
-### Trust — 20 pts
+### Trust (20 pts)
 
 | Criterion                  | Points |
 |----------------------------|--------|
@@ -316,7 +376,7 @@ Reflects the recency and frequency of package updates.
 | Download popularity        |   0–10 |
 | GitHub stars > 1 000       |     +3 |
 
-### Maintenance — 10 pts
+### Maintenance (10 pts)
 
 | Criterion              | Points |
 |------------------------|--------|
@@ -363,9 +423,9 @@ A score of **0** is forced (regardless of trusted-publisher status) when:
 ```text
 CLI flags               (highest priority)
   ↓
-./.cura/config.yaml     (project config — commit to share with your team)
+./.cura/config.yaml     (project config, commit to share with your team)
   ↓
-~/.cura/config.yaml     (global config — machine-level preferences)
+~/.cura/config.yaml     (global config, machine-level preferences)
   ↓
 Built-in defaults       (lowest priority)
 ```
@@ -398,7 +458,7 @@ show_suggestions: true
 ### Example: project config
 
 ```yaml
-# ./.cura/config.yaml — commit this to enforce team standards
+# ./.cura/config.yaml. Commit this to enforce team standards.
 min_score: 85
 fail_on_vulnerable: true
 fail_on_discontinued: true
