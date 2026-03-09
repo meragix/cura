@@ -43,6 +43,7 @@ class ConsoleLogger {
   bool get isVerbose => _level == Level.verbose;
   bool get isQuiet => _quiet;
   bool get isNormal => _level == Level.info;
+  bool get useColors => _useColors;
 
   // ==========================================================================
   // BASIC LOGGING

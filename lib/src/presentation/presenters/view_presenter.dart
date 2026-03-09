@@ -42,7 +42,7 @@ class ViewPresenter {
   ViewPresenter({required ConsoleLogger logger})
       : _logger = logger,
         _errorFormatter = ErrorFormatter(logger),
-        _barRenderer = BarRenderer();
+        _barRenderer = BarRenderer(useColors: logger.useColors);
 
   // --------------------------------------------------------------------------
   // Public API
@@ -208,7 +208,7 @@ class ViewPresenter {
           'vulnerabilities': audit.vulnerabilities.map((v) => v.toJson()).toList(),
         if (audit.issues.isNotEmpty)
           'issues': audit.issues.map((i) => i.toJson()).toList(),
-        if (audit.suggestions.isNotEmpty) 'suggestions': audit.suggestions,
+        if (audit.suggestions.isNotEmpty) 'recommendations': audit.suggestions,
       },
       'performance': {
         'time_ms': elapsed.inMilliseconds,
@@ -363,7 +363,7 @@ class ViewPresenter {
     _logger.alert('Issues Detected', level: AlertLevel.warning);
 
     for (final issue in issues) {
-      _logger.info('  ● ${issue.message}');
+      _logger.info('  → ${issue.message}');
     }
   }
 

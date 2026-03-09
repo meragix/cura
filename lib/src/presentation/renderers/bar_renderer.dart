@@ -7,72 +7,50 @@ class BarRenderer {
 
   const BarRenderer({bool useColors = true}) : _useColors = useColors;
 
-  /// Render score breakdown as visual bars
+  /// Render score breakdown as visual bars.
   ///
-  /// Example: █ Vitality  ▓ Tech  █ Trust  ▒ Maint
+  /// The char identifies the dimension; the color reflects its health:
+  /// green ≥ 75 %, yellow ≥ 50 %, red < 50 %, dot < 10 %.
+  ///
+  /// Example: █ Vitality  ▓ Tech  ▒ Trust  ░ Maint
   String renderScoreBreakdown(Score score) {
     final parts = <String>[];
 
-    // Vitality (40 max)
-    parts.add(_renderBar(
-      label: 'Vitality',
-      value: score.vitality,
-      max: 40,
-      color: green,
-      char: '█',
-    ));
-
-    // Technical Health (30 max)
-    parts.add(_renderBar(
-      label: 'Tech',
-      value: score.technicalHealth,
-      max: 30,
-      color: blue,
-      char: '▓',
-    ));
-
-    // Trust (20 max)
-    parts.add(_renderBar(
-      label: 'Trust',
-      value: score.trust,
-      max: 20,
-      color: cyan,
-      char: '█',
-    ));
-
-    // Maintenance (10 max)
-    parts.add(_renderBar(
-      label: 'Maint',
-      value: score.maintenance,
-      max: 10,
-      color: magenta,
-      char: '▒',
-    ));
+    parts.add(_renderBar(label: 'Vitality', value: score.vitality, max: 40, char: '█'));
+    parts.add(_renderBar(label: 'Tech', value: score.technicalHealth, max: 30, char: '▓'));
+    parts.add(_renderBar(label: 'Trust', value: score.trust, max: 20, char: '▒'));
+    parts.add(_renderBar(label: 'Maint', value: score.maintenance, max: 10, char: '░'));
 
     return parts.join('  ');
   }
 
-  /// Render single category bar
+  /// Render single category bar.
+  ///
+  /// Color is driven by [value]/[max] percentage:
+  /// - ≥ 75 % → green
+  /// - ≥ 50 % → yellow
+  /// - ≥ 10 % → red
+  /// - <  10 % → lightGray dot
   String _renderBar({
     required String label,
     required int value,
     required int max,
-    required AnsiCode color,
     required String char,
   }) {
-    // Calculate bar length (proportional)
     final percentage = (value / max * 100).round();
 
-    // Empty bar for very low scores
     if (percentage < 10) {
-      final emptyChar = '·';
-      return _useColors
-          ? '${lightGray.wrap(emptyChar)} $label'
-          : '$emptyChar $label';
+      return _useColors ? '${lightGray.wrap('·')} $label' : '· $label';
     }
 
-    // Filled bar
-    return _useColors ? '${color.wrap(char)} $label' : '$char $label';
+    if (!_useColors) return '$char $label';
+
+    final color = percentage >= 75
+        ? green
+        : percentage >= 50
+            ? yellow
+            : red;
+    return '${color.wrap(char)} $label';
   }
 
   /// Render popularity dots (●●●)
