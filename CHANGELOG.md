@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-03-10
+
 ### Added
 
 - **`UpdateChecker` port** (`lib/src/domain/ports/update_checker.dart`): Abstract contract for update checking; `VersionCommand` now depends on the port, not the concrete service — consistent with the hexagonal architecture.
