@@ -95,15 +95,42 @@ class YamlConfigRepository implements ConfigRepository {
     return _readValue(config, key) as T?;
   }
 
-  /// Writes a single value to the project config file.
+  /// Writes a single value to the project config file using a surgical
+  /// YAML edit that preserves comments and formatting.
   ///
-  /// Loads the current merged config, applies the change with [_writeValue],
-  /// then persists the updated config via [save].  Unknown keys are silently
-  /// ignored.
+  /// If the project config file does not exist yet, it is created from the
+  /// default project template before the edit is applied.
+  ///
+  /// Unknown keys are silently ignored.
   @override
   Future<void> setValue(String key, dynamic value) async {
-    final config = await load();
-    await save(_writeValue(config, key, value));
+    final projectFile = File(_projectConfigPath);
+
+    if (!await projectFile.exists()) {
+      await projectFile.parent.create(recursive: true);
+      await projectFile.writeAsString(
+        ConfigDefaults.defaultConfig.toYamlString(isProject: true),
+      );
+    }
+
+    var content = await projectFile.readAsString();
+
+    // Uncomment the github_token line when it is still commented out.
+    if (key == 'github_token') {
+      content = _uncommentKey(content, 'github_token');
+    }
+
+    final editor = YamlEditor(content);
+    try {
+      editor.update(key.split('.'), value);
+      await projectFile.writeAsString(editor.toString());
+
+      if (key == 'github_token') {
+        await _ensureSecurePermissions(projectFile);
+      }
+    } catch (e) {
+      throw StateError('Failed to update config key "$key": $e');
+    }
   }
 
   // ===========================================================================
@@ -167,122 +194,26 @@ class YamlConfigRepository implements ConfigRepository {
     };
   }
 
-  /// Returns a copy of [config] with the field identified by [key] set to
-  /// [value].
-  ///
-  /// Supports both `snake_case` and `camelCase` key variants.  Returns
-  /// [config] unchanged when [key] is not recognised.
-  CuraConfig _writeValue(CuraConfig config, String key, dynamic value) {
-    return switch (key) {
-      // Appearance
-      'theme' => config.copyWith(theme: value as String),
-      'use_colors' || 'useColors' => config.copyWith(useColors: value as bool),
-      'use_emojis' || 'useEmojis' => config.copyWith(useEmojis: value as bool),
-      // Cache
-      'cache_max_age_hours' ||
-      'cacheMaxAgeHours' =>
-        config.copyWith(cacheMaxAgeHours: value as int),
-      'enable_cache' ||
-      'enableCache' =>
-        config.copyWith(enableCache: value as bool),
-      'auto_update' ||
-      'autoUpdate' =>
-        config.copyWith(autoUpdate: value as bool),
-      // Scoring
-      'min_score' || 'minScore' => config.copyWith(minScore: value as int),
-      // Performance
-      'max_concurrency' ||
-      'maxConcurrency' =>
-        config.copyWith(maxConcurrency: value as int),
-      'timeout_seconds' ||
-      'timeoutSeconds' =>
-        config.copyWith(timeoutSeconds: value as int),
-      'max_retries' ||
-      'maxRetries' =>
-        config.copyWith(maxRetries: value as int),
-      // Behaviour
-      'fail_on_vulnerable' ||
-      'failOnVulnerable' =>
-        config.copyWith(failOnVulnerable: value as bool),
-      'fail_on_discontinued' ||
-      'failOnDiscontinued' =>
-        config.copyWith(failOnDiscontinued: value as bool),
-      'show_suggestions' ||
-      'showSuggestions' =>
-        config.copyWith(showSuggestions: value as bool),
-      'max_suggestions_per_package' ||
-      'maxSuggestionsPerPackage' =>
-        config.copyWith(maxSuggestionsPerPackage: value as int),
-      // Logging
-      'verbose_logging' ||
-      'verboseLogging' =>
-        config.copyWith(verboseLogging: value as bool),
-      'quiet' => config.copyWith(quiet: value as bool),
-      // API
-      'github_token' ||
-      'githubToken' =>
-        config.copyWith(githubToken: value as String),
-      _ => config,
-    };
-  }
-
-  // cura config set --local irait écrire dans .cura/config.yaml (le fichier projet) au lieu du global.
-  // todo: update setValue method with temps method and remove it
-  @override
-  Future<void> updateKey(String key, dynamic value) async {
-    final _globalConfigFile = File(_globalConfigPath);
-
-    String content = await _globalConfigFile.readAsString();
-
-    // Traitement spécial pour le github_token (décommenter si nécessaire)
-    if (key == 'github_token') {
-      content = _uncommentKey(content, 'github_token');
-    }
-
-    final editor = YamlEditor(content);
-
-    try {
-      // Update chirurgical : préserve commentaires et formatage
-      // Gère les clés imbriquées (ex: ['score_weights', 'trust'])
-      final path = key.split('.');
-      editor.update(path, value);
-
-      await _globalConfigFile.writeAsString(editor.toString());
-
-      // On sécurise immédiatement après l'écriture
-      await _ensureSecurePermissions(_globalConfigFile);
-    } catch (e) {
-      throw StateError("Impossible de modifier la clé $key : $e");
-    }
-  }
-
-  //todo: refactor this in the future
+  /// Removes the leading `#` comment marker from a line that starts with
+  /// `# <key>:` so that the key becomes active in the YAML file.
   String _uncommentKey(String content, String key) {
-    // Regex : cherche une ligne commençant par #, optionnellement des espaces, puis la clé
     final pattern =
         RegExp(r'^#\s*(' + RegExp.escape(key) + r':.*)$', multiLine: true);
-
     if (content.contains(pattern)) {
-      // On retire le caractère '#' au début de la ligne trouvée
       return content.replaceAllMapped(pattern, (match) => match.group(1)!);
     }
     return content;
   }
 
-  //todo: refactor this in the future
-  Future<void> _ensureSecurePermissions(File _configFile) async {
+  /// Sets file permissions to `600` (owner read/write only) on non-Windows
+  /// platforms.  Failures are silently swallowed to avoid blocking the caller
+  /// in restricted environments.
+  Future<void> _ensureSecurePermissions(File configFile) async {
     if (Platform.isWindows) return;
-
     try {
-      // chmod 600 : Lecture/Écriture pour le propriétaire uniquement
-      final result = await Process.run('chmod', ['600', _configFile.path]);
-
-      if (result.exitCode != 0) {
-        // On log en silencieux ou on ignore, pour ne pas bloquer l'usage
-        // mais un Senior mettrait un log de debug ici.
-      }
-    } catch (e) {
-      // Échec silencieux (ex: environnement sans chmod)
+      await Process.run('chmod', ['600', configFile.path]);
+    } catch (_) {
+      // Silent failure: chmod may be unavailable in some environments.
     }
   }
 }

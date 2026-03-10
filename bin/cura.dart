@@ -319,14 +319,19 @@ String _resolveProjectConfigPath() {
     final configPath = p.join(current.path, '.cura', 'config.yaml');
     if (File(configPath).existsSync()) return configPath;
 
-    // Stop si on trouve un pubspec.yaml mais pas de config cura (racine atteinte)
-    if (File(p.join(current.path, 'pubspec.yaml')).existsSync()) return '';
+    // Stop at the project root (pubspec.yaml found but no .cura/config.yaml).
+    // Return the path where the project config would be created.
+    if (File(p.join(current.path, 'pubspec.yaml')).existsSync()) {
+      return p.join(current.path, '.cura', 'config.yaml');
+    }
 
     final parent = current.parent;
-    if (parent.path == current.path) break; // Racine système atteinte
+    if (parent.path == current.path) break; // Filesystem root reached.
     current = parent;
   }
-  return '';
+
+  // No pubspec.yaml found anywhere — default to the current directory.
+  return p.join(Directory.current.path, '.cura', 'config.yaml');
 }
 
 /// Prints a hand-crafted help message and exits.

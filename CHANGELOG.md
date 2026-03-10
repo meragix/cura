@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`config set` wrote to global instead of project config**: `ConfigSetCommand` was calling `updateKey()`, which performed a surgical YAML edit on `~/.cura/config.yaml`. It now calls `setValue()`, which targets `./.cura/config.yaml` (creating it from the project template if absent) while still preserving comments and formatting via `YamlEditor`.
+- **Project config path resolved to empty string**: `_resolveProjectConfigPath()` returned `''` when no `.cura/config.yaml` was found, making `config set` fail silently or write to the wrong location. It now returns the correct path where the file would be created (`<project_root>/.cura/config.yaml`).
+- **`ConfigRepository` had a dead `updateKey()` method**: The `updateKey()` declaration was still in the port interface despite being marked for removal. It has been removed; `setValue()` is now the single write API.
+- **`ConfigHierarchy.getOverrides()` missing 7 fields**: `maxSuggestionsPerPackage`, `verboseLogging`, `quiet`, `githubToken`, `score_weights.*`, `ignore_packages`, and `trusted_publishers` were not compared. All fields are now covered; list fields are compared after sorting to avoid false positives from ordering differences.
+
 - **Theme not applied to renderers**: `BarRenderer` and `TableRenderer` were using hardcoded mason_logger ANSI codes. Both now read colours from `ThemeManager.current` so custom themes take full effect.
 - **Theme not applied to presenters**: `ViewPresenter` and `CheckPresenter` contained ~30 hardcoded colour calls (`cyan.wrap`, `red.wrap`, etc.). All replaced with theme tokens via a `_c(text, color)` helper that also respects `_useColors`.
 - **`useColors: false` not respected**: `ConsoleLogger.warn()`, `error()`, `debug()`, and `alert()` always coloured output regardless of the `use_colors` config flag.
