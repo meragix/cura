@@ -72,7 +72,7 @@ class ConfigHierarchy {
       }
     }
 
-    check('theme', g.theme, p.theme);
+    check('theme', g.resolvedTheme, p.resolvedTheme);
     check('min_score', g.minScore, p.minScore);
     check('use_colors', g.useColors, p.useColors);
     check('use_emojis', g.useEmojis, p.useEmojis);

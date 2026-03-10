@@ -24,7 +24,17 @@ import 'package:yaml/yaml.dart';
 class CuraConfig {
   // ── Appearance ──────────────────────────────────────────────────────────────
 
-  final String theme;
+  /// Raw theme value — `null` when the config file did not declare a theme.
+  ///
+  /// Use [resolvedTheme] to always get a non-null theme name (falling back to
+  /// `'dark'`).  [mergeWith] uses this field to distinguish "explicitly set"
+  /// from "defaulted", so a project config that omits `theme:` never silently
+  /// overrides a global `theme: light`.
+  final String? theme;
+
+  /// The active theme name, defaulting to `'dark'` when not explicitly set.
+  String get resolvedTheme => theme ?? 'dark';
+
   final bool useColors;
   final bool useEmojis;
 
@@ -73,7 +83,7 @@ class CuraConfig {
   // ── Constructor ─────────────────────────────────────────────────────────────
 
   const CuraConfig({
-    this.theme = 'dark',
+    this.theme = 'dark', // explicit default for code-created instances
     this.useColors = true,
     this.useEmojis = true,
     this.cacheMaxAgeHours = 24,
@@ -149,12 +159,16 @@ class CuraConfig {
   /// Returns a new config where every field is taken from [other] (typically
   /// the project config), with this config (typically global) as the fallback.
   ///
-  /// The [githubToken] is the only field where the global value is preferred
-  /// when [other] has none, because API tokens are usually stored globally.
+  /// [theme] falls back to the global value when the project config did not
+  /// declare one (`other.theme == null`), so a global `theme: light` is not
+  /// silently overridden by the project's default `'dark'`.
+  ///
+  /// [githubToken] also falls back to the global value because API tokens are
+  /// typically stored in the global config.
   CuraConfig mergeWith(CuraConfig? other) {
     if (other == null) return this;
     return CuraConfig(
-      theme: other.theme,
+      theme: other.theme ?? this.theme,
       useColors: other.useColors,
       useEmojis: other.useEmojis,
       cacheMaxAgeHours: other.cacheMaxAgeHours,
@@ -258,7 +272,8 @@ class CuraConfig {
         (raw is YamlList) ? raw.map((e) => e.toString()).toList() : const [];
 
     return CuraConfig(
-      theme: yaml['theme'] as String? ?? 'dark',
+      // null when the key is absent → mergeWith will fall back to global theme.
+      theme: yaml['theme'] as String?,
       useColors: yaml['use_colors'] as bool? ?? true,
       useEmojis: yaml['use_emojis'] as bool? ?? true,
       cacheMaxAgeHours:
@@ -321,7 +336,7 @@ class CuraConfig {
 # =============================================================================
 # APPEARANCE
 # =============================================================================
-theme: $theme                         # dark | light | minimal
+theme: $resolvedTheme                  # dark | light | minimal
 use_emojis: $useEmojis                # Show emojis in output
 use_colors: $useColors                # Enable coloured output
 

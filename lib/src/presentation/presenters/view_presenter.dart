@@ -11,6 +11,8 @@ import 'package:cura/src/presentation/formatters/error_formatter.dart';
 import 'package:cura/src/presentation/formatters/number_formatter.dart';
 import 'package:cura/src/presentation/loggers/console_logger.dart';
 import 'package:cura/src/presentation/renderers/bar_renderer.dart';
+import 'package:cura/src/presentation/themes/theme.dart';
+import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 /// Presentation layer orchestrator for the `cura view` command.
@@ -44,6 +46,13 @@ class ViewPresenter {
       : _logger = logger,
         _errorFormatter = ErrorFormatter(logger),
         _barRenderer = BarRenderer(useColors: logger.useColors);
+
+  CuraTheme get _theme => ThemeManager.current;
+  bool get _useColors => _logger.useColors;
+
+  /// Wraps [text] with [color] only when colours are enabled.
+  String _c(String text, AnsiCode color) =>
+      _useColors ? color.wrap(text) ?? text : text;
 
   // --------------------------------------------------------------------------
   // Public API
@@ -239,8 +248,8 @@ class ViewPresenter {
   /// Renders the package name, version, overall score, and letter grade.
   void _showHeader(PackageAuditResult audit) {
     final statusIcon = _getStatusIcon(audit.score.total);
-    final packageName = cyan.wrap(audit.name)!;
-    final version = lightGray.wrap('v${audit.version}')!;
+    final packageName = _c(audit.name, _theme.primary);
+    final version = _c('v${audit.version}', _theme.textSecondary);
 
     _logger.info(' $statusIcon $packageName $version');
     _logger.spacer();
@@ -281,12 +290,12 @@ class ViewPresenter {
   void _printDimensionRow(String label, int value, int max, String detail) {
     final pct = value / max;
     final icon = pct >= 0.75
-        ? green.wrap('✓')!
+        ? _c('✓', _theme.success)
         : pct >= 0.50
-            ? yellow.wrap('!')!
-            : red.wrap('✗')!;
+            ? _c('!', _theme.warning)
+            : _c('✗', _theme.error);
     final ratio = '${value.toString().padLeft(2)}/$max'.padRight(6);
-    final detailStr = detail.isNotEmpty ? lightGray.wrap('  $detail')! : '';
+    final detailStr = detail.isNotEmpty ? _c('  $detail', _theme.muted) : '';
     _logger.info('  ${label.padRight(13)} $ratio  $icon$detailStr');
   }
 
@@ -296,17 +305,17 @@ class ViewPresenter {
     final isClamped = itemsSum < appliedPenalty; // items sum to more negative
 
     final ratio = '$appliedPenalty/0'.padRight(6);
-    _logger.info('  ${'Penalties'.padRight(13)} $ratio  ${red.wrap('✗')!}');
+    _logger.info('  ${'Penalties'.padRight(13)} $ratio  ${_c('✗', _theme.error)}');
 
     for (var i = 0; i < items.length; i++) {
       final isLast = i == items.length - 1 && !isClamped;
       final connector = isLast ? '└─' : '├─';
       final label = '${items[i].label}:'.padRight(22);
-      _logger.info('    $connector $label${red.wrap('${items[i].points}')!}');
+      _logger.info('    $connector $label${_c('${items[i].points}', _theme.error)}');
     }
 
     if (isClamped) {
-      _logger.info('    └─ ${lightGray.wrap('(clamped to $appliedPenalty)')}');
+      _logger.info('    └─ ${_c('(clamped to $appliedPenalty)', _theme.muted)}');
     }
   }
 
@@ -317,11 +326,11 @@ class ViewPresenter {
 
     _logger.info('Key Metrics');
 
-    final publisherIcon = info.isTrustedPublisher ? green.wrap('✓') : '';
+    final publisherIcon = info.isTrustedPublisher ? _c('✓', _theme.success) : '';
     final publisherText = info.publisherId ?? 'None (unverified)';
     final publisherColored = info.isTrustedPublisher
-        ? green.wrap(publisherText)
-        : lightGray.wrap(publisherText);
+        ? _c(publisherText, _theme.success)
+        : _c(publisherText, _theme.muted);
 
     _logger.info('  Publisher:   $publisherColored $publisherIcon');
 
@@ -342,7 +351,7 @@ class ViewPresenter {
 
     if (info.repositoryUrl != null) {
       final repoUrl = info.repositoryUrl!.replaceFirst('https://', '');
-      _logger.info('  Repository:  ${cyan.wrap(repoUrl)}');
+      _logger.info('  Repository:  ${_c(repoUrl, _theme.primary)}');
     } else {
       _logger.warn('  Repository:  None');
     }
@@ -368,11 +377,12 @@ class ViewPresenter {
     _logger.info(
         '  Forks:       ${NumberFormatter.formatGrouped(githubMetrics.forks)}');
 
-    final issuesColor = githubMetrics.openIssues > 100 ? yellow : green;
+    final issuesColor =
+        githubMetrics.openIssues > 100 ? _theme.warning : _theme.success;
     final issuesFormatted =
         NumberFormatter.formatGrouped(githubMetrics.openIssues);
     _logger.info(
-        '  Open Issues: ${issuesColor.wrap(issuesFormatted.toString())!}');
+        '  Open Issues: ${_c(issuesFormatted.toString(), issuesColor)}');
 
     if (githubMetrics.commitCountLast90Days > 0) {
       final commitsFormatted =
@@ -419,9 +429,9 @@ class ViewPresenter {
     _logger.alert('Risk Signals', level: AlertLevel.error);
     for (final flag in flags) {
       final icon = switch (flag.severity) {
-        RedFlagSeverity.critical => red.wrap('●')!,
-        RedFlagSeverity.warning => yellow.wrap('●')!,
-        RedFlagSeverity.info => lightGray.wrap('●')!,
+        RedFlagSeverity.critical => _c('●', _theme.error),
+        RedFlagSeverity.warning => _c('●', _theme.warning),
+        RedFlagSeverity.info => _c('●', _theme.muted),
       };
       _logger.info('  $icon ${flag.message}');
     }
@@ -435,13 +445,13 @@ class ViewPresenter {
   /// - action   → cyan →
   /// - advisory → gray →
   void _showRecommendations(List<Recommendation> recs) {
-    _logger.info(green.wrap('Recommendations')!);
+    _logger.info(_c('Recommendations', _theme.success));
     for (final rec in recs) {
       final icon = switch (rec.level) {
-        RecommendationLevel.critical => red.wrap('✗')!,
-        RecommendationLevel.warning => yellow.wrap('!')!,
-        RecommendationLevel.action => cyan.wrap('→')!,
-        RecommendationLevel.advisory => lightGray.wrap('→')!,
+        RecommendationLevel.critical => _c('✗', _theme.error),
+        RecommendationLevel.warning => _c('!', _theme.warning),
+        RecommendationLevel.action => _c('→', _theme.primary),
+        RecommendationLevel.advisory => _c('→', _theme.muted),
       };
       _logger.info('  $icon ${rec.message}');
     }
@@ -455,11 +465,11 @@ class ViewPresenter {
     if (audit.fromCache && audit.cachedAt != null) {
       final age = DateTime.now().toUtc().difference(audit.cachedAt!.toUtc());
       final ageStr = _formatAge(age);
-      final label = lightGray.wrap('Cache:')!;
-      _logger.info('$label ${green.wrap('✓ Hit')} ($ageStr old, valid)');
+      final label = _c('Cache:', _theme.muted);
+      _logger.info('$label ${_c('✓ Hit', _theme.success)} ($ageStr old, valid)');
     } else {
-      final label = lightGray.wrap('Cache:')!;
-      _logger.info('$label ${red.wrap('✗ Miss')}, fetching...');
+      final label = _c('Cache:', _theme.muted);
+      _logger.info('$label ${_c('✗ Miss', _theme.error)}, fetching...');
     }
   }
 
@@ -468,11 +478,12 @@ class ViewPresenter {
   /// Example: `⏱️  342ms (5 API calls)`
   void _showTiming(Duration elapsed, int requestCount) {
     final ms = elapsed.inMilliseconds;
-    final timeStr = darkGray.wrap('⏱️  ${ms}ms');
+    final timeStr = _c('⏱️  ${ms}ms', _theme.muted);
     final callsStr = requestCount > 0
-        ? darkGray
-            .wrap('($requestCount API call${requestCount == 1 ? '' : 's'})')
-        : darkGray.wrap('(cached — 0 API calls)');
+        ? _c(
+            '($requestCount API call${requestCount == 1 ? '' : 's'})',
+            _theme.muted)
+        : _c('(cached — 0 API calls)', _theme.muted);
     _logger.info('$timeStr $callsStr');
   }
 
@@ -507,20 +518,20 @@ class ViewPresenter {
   String _formatScore(int score) {
     final scoreStr = '$score/100';
 
-    if (score >= 90) return green.wrap(scoreStr)!;
-    if (score >= 70) return lightGreen.wrap(scoreStr)!;
-    if (score >= 50) return yellow.wrap(scoreStr)!;
-    return red.wrap(scoreStr)!;
+    if (score >= 90) return _c(scoreStr, _theme.scoreExcellent);
+    if (score >= 70) return _c(scoreStr, _theme.scoreGood);
+    if (score >= 50) return _c(scoreStr, _theme.scoreFair);
+    return _c(scoreStr, _theme.scorePoor);
   }
 
   /// Returns [grade] wrapped in parentheses with ANSI colour applied.
   String _formatGrade(String grade) {
     final gradeText = '($grade)';
 
-    if (grade.startsWith('A')) return green.wrap(gradeText)!;
-    if (grade.startsWith('B')) return lightGreen.wrap(gradeText)!;
-    if (grade.startsWith('C')) return yellow.wrap(gradeText)!;
-    return red.wrap(gradeText)!;
+    if (grade.startsWith('A')) return _c(gradeText, _theme.scoreExcellent);
+    if (grade.startsWith('B')) return _c(gradeText, _theme.scoreGood);
+    if (grade.startsWith('C')) return _c(gradeText, _theme.scoreFair);
+    return _c(gradeText, _theme.scorePoor);
   }
 
   /// Returns a colour-coded severity badge for the given [severity] enum value.
@@ -531,11 +542,11 @@ class ViewPresenter {
     final severityStr = severity.toString().split('.').last.toUpperCase();
 
     return switch (severityStr) {
-      'CRITICAL' => red.wrap('🔴 CRITICAL')!,
-      'HIGH' => red.wrap('🟠 HIGH')!,
-      'MEDIUM' => yellow.wrap('🟡 MEDIUM')!,
-      'LOW' => green.wrap('🟢 LOW')!,
-      _ => lightGray.wrap('⚪ UNKNOWN')!,
+      'CRITICAL' => _c('🔴 CRITICAL', _theme.error),
+      'HIGH' => _c('🟠 HIGH', _theme.error),
+      'MEDIUM' => _c('🟡 MEDIUM', _theme.warning),
+      'LOW' => _c('🟢 LOW', _theme.success),
+      _ => _c('⚪ UNKNOWN', _theme.muted),
     };
   }
 }

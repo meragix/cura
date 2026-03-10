@@ -67,12 +67,14 @@ class ConsoleLogger {
 
   /// Log warning message (yellow).
   void warn(String message) {
-    _logger.warn('${theme.warning.wrap(message)}', tag: '');
+    final styled = _useColors ? theme.warning.wrap(message) ?? message : message;
+    _logger.warn(styled, tag: '');
   }
 
   /// Log error message (red).
   void error(String message) {
-    _logger.err('${theme.error.wrap(message)}');
+    final styled = _useColors ? theme.error.wrap(message) ?? message : message;
+    _logger.err(styled);
   }
 
   /// Log detail/dim message.
@@ -84,7 +86,8 @@ class ConsoleLogger {
   /// Log debug message (only visible in verbose mode).
   void debug(String message) {
     if (_quiet) return;
-    _logger.detail(lightGray.wrap('🐛 $message'));
+    final styled = _useColors ? theme.muted.wrap('🐛 $message') : '🐛 $message';
+    _logger.detail(styled);
   }
 
   // ==========================================================================
@@ -228,14 +231,19 @@ class ConsoleLogger {
 
   /// Log a coloured alert message.
   void alert(String message, {AlertLevel level = AlertLevel.info}) {
-    final styled = switch (level) {
-      AlertLevel.info => cyan.wrap(message),
-      AlertLevel.success => green.wrap(message),
-      AlertLevel.warning => yellow.wrap(message),
-      AlertLevel.error => red.wrap(message),
-    };
+    final String styled;
+    if (_useColors) {
+      styled = switch (level) {
+        AlertLevel.info => theme.info.wrap(message) ?? message,
+        AlertLevel.success => theme.success.wrap(message) ?? message,
+        AlertLevel.warning => theme.warning.wrap(message) ?? message,
+        AlertLevel.error => theme.error.wrap(message) ?? message,
+      };
+    } else {
+      styled = message;
+    }
 
-    _logger.info(_applyEmoji(styled ?? message, _getAlertEmoji(level)));
+    _logger.info(_applyEmoji(styled, _getAlertEmoji(level)));
   }
 
   // ==========================================================================
@@ -280,11 +288,19 @@ class ConsoleLogger {
 
   String _getAlertEmoji(AlertLevel level) {
     if (!_useEmojis) return '';
+    if (!_useColors) {
+      return switch (level) {
+        AlertLevel.info => 'i',
+        AlertLevel.success => '✓',
+        AlertLevel.warning => '!',
+        AlertLevel.error => '✗',
+      };
+    }
     return switch (level) {
-      AlertLevel.info => cyan.wrap('i')!,
-      AlertLevel.success => green.wrap('✓')!,
-      AlertLevel.warning => yellow.wrap('!')!,
-      AlertLevel.error => red.wrap('✗')!,
+      AlertLevel.info => theme.info.wrap('i')!,
+      AlertLevel.success => theme.success.wrap('✓')!,
+      AlertLevel.warning => theme.warning.wrap('!')!,
+      AlertLevel.error => theme.error.wrap('✗')!,
     };
   }
 }

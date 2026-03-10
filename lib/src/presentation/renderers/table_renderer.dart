@@ -1,7 +1,7 @@
 import 'package:cli_table/cli_table.dart';
 import 'package:cura/src/domain/entities/package_audit_result.dart';
 import 'package:cura/src/presentation/formatters/date_formatter.dart';
-import 'package:mason_logger/mason_logger.dart';
+import 'package:cura/src/presentation/themes/theme_manager.dart';
 
 class TableRenderer {
   final bool _useColors;
@@ -22,9 +22,6 @@ class TableRenderer {
         'Last Update',
       ],
       columnWidths: [25, 7, 8, 15],
-      // style: TableStyle(
-      //   border: _useColors ? _coloredBorder() : _plainBorder(),
-      // ),
     );
 
     // Rows (display the first and last 15)
@@ -35,7 +32,7 @@ class TableRenderer {
         ? <PackageAuditResult>[]
         : sorted.skip(sorted.length - 3).toList();
 
-    void _addRows(Table table, List<PackageAuditResult> list) {
+    void addRows(Table table, List<PackageAuditResult> list) {
       for (final result in list) {
         table.add([
           _formatPackageName(result),
@@ -46,11 +43,11 @@ class TableRenderer {
       }
     }
 
-    _addRows(table, top);
+    addRows(table, top);
 
     if (!showAll) {
       table.add(['...', '...', '...', '...']);
-      _addRows(table, bottom);
+      addRows(table, bottom);
     }
 
     return table.toString();
@@ -64,6 +61,7 @@ class TableRenderer {
     required int total,
     required int overallScore,
   }) {
+    final theme = ThemeManager.current;
     final healthyPct = (healthy / total * 100).round();
     final warningPct = (warning / total * 100).round();
     final criticalPct = (critical / total * 100).round();
@@ -71,18 +69,17 @@ class TableRenderer {
     final table = Table(
       header: ['Category', 'Count', 'Percentage'],
       columnWidths: [15, 8, 12],
-      //style: TableStyle(border: _plainBorder()),
     );
 
     table.add([
-      _colorStatus('✅ Healthy', green),
+      _useColors ? theme.success.wrap('✅ Healthy')! : '✅ Healthy',
       '$healthy packages',
       '$healthyPct%',
     ]);
 
     if (warning > 0) {
       table.add([
-        _colorStatus('⚠️  Warning', yellow),
+        _useColors ? theme.warning.wrap('⚠️  Warning')! : '⚠️  Warning',
         '$warning packages',
         '$warningPct%',
       ]);
@@ -90,7 +87,7 @@ class TableRenderer {
 
     if (critical > 0) {
       table.add([
-        _colorStatus('❌ Critical', red),
+        _useColors ? theme.error.wrap('❌ Critical')! : '❌ Critical',
         '$critical packages',
         '$criticalPct%',
       ]);
@@ -104,6 +101,7 @@ class TableRenderer {
   // ==========================================================================
 
   String _formatPackageName(PackageAuditResult result) {
+    final theme = ThemeManager.current;
     var name = result.name;
 
     // Truncate if too long
@@ -111,22 +109,23 @@ class TableRenderer {
       name = '${name.substring(0, 19)}...';
     }
 
-    return _useColors ? cyan.wrap(name)! : name;
+    return _useColors ? theme.primary.wrap(name)! : name;
   }
 
   String _formatScore(int score) {
+    final theme = ThemeManager.current;
     final scoreStr = score.toString().padLeft(3);
 
     if (!_useColors) return scoreStr;
 
-    // Color based on score
-    if (score >= 90) return green.wrap(scoreStr)!;
-    if (score >= 70) return lightGreen.wrap(scoreStr)!;
-    if (score >= 50) return yellow.wrap(scoreStr)!;
-    return red.wrap(scoreStr)!;
+    if (score >= 90) return theme.scoreExcellent.wrap(scoreStr)!;
+    if (score >= 70) return theme.scoreGood.wrap(scoreStr)!;
+    if (score >= 50) return theme.scoreFair.wrap(scoreStr)!;
+    return theme.scorePoor.wrap(scoreStr)!;
   }
 
   String _formatStatus(AuditStatus status, bool isStable) {
+    final theme = ThemeManager.current;
     final icon = switch (status) {
       AuditStatus.excellent => '  ✓',
       AuditStatus.good => '  ✓',
@@ -135,33 +134,27 @@ class TableRenderer {
       AuditStatus.discontinued => '  ✗',
     };
 
-    // Add star for stable packages
-    // final suffix = isStable ? ' ⭐' : '';
-
-    if (!_useColors) return '$icon';
+    if (!_useColors) return icon;
 
     final colored = switch (status) {
-      AuditStatus.excellent || AuditStatus.good => green.wrap(icon),
-      AuditStatus.warning => yellow.wrap(icon),
-      AuditStatus.critical || AuditStatus.discontinued => red.wrap(icon),
+      AuditStatus.excellent || AuditStatus.good => theme.success.wrap(icon),
+      AuditStatus.warning => theme.warning.wrap(icon),
+      AuditStatus.critical || AuditStatus.discontinued =>
+        theme.error.wrap(icon),
     };
 
-    return '$colored';
+    return colored ?? icon;
   }
 
   String _formatLastUpdate(int days) {
+    final theme = ThemeManager.current;
     final formatted = DateFormatter.formatCompactDays(days);
 
     if (!_useColors) return formatted;
 
-    // Color based on age
-    if (days <= 90) return green.wrap(formatted)!;
-    if (days <= 365) return lightGreen.wrap(formatted)!;
-    if (days <= 730) return yellow.wrap(formatted)!;
-    return red.wrap(formatted)!;
-  }
-
-  String _colorStatus(String text, AnsiCode color) {
-    return _useColors ? color.wrap(text)! : text;
+    if (days <= 90) return theme.scoreExcellent.wrap(formatted)!;
+    if (days <= 365) return theme.scoreGood.wrap(formatted)!;
+    if (days <= 730) return theme.scoreFair.wrap(formatted)!;
+    return theme.scorePoor.wrap(formatted)!;
   }
 }

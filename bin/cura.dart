@@ -56,8 +56,30 @@ Future<void> main(List<String> arguments) async {
   final configRepo = await _initializeConfiguration();
   final config = await configRepo.load();
 
-  // Apply the theme before any UI
-  ThemeManager.setTheme(config.theme);
+  // Apply theme — resolution order (highest priority last, so each step can
+  // override the previous one):
+  //   1. Auto-detect from environment (CURA_THEME env var, CI, macOS/Linux)
+  //      OR the explicit theme from the config file if one was set.
+  //   2. --theme CLI flag (per-run override).
+  if (config.theme != null) {
+    // User explicitly set a theme in a config file → honour it.
+    ThemeManager.setTheme(config.theme!);
+  } else {
+    // No theme in any config file → let the environment decide
+    // (CURA_THEME env var → CI → macOS appearance → Linux GTK → dark).
+    ThemeManager.autoDetect();
+  }
+  final themeFlag = _extractFlag(arguments, '--theme');
+  if (themeFlag != null) {
+    if (!ThemeManager.isValidTheme(themeFlag)) {
+      print(
+        'Error: unknown theme "$themeFlag". '
+        'Available: ${ThemeManager.availableThemes().join(", ")}',
+      );
+      exit(1);
+    }
+    ThemeManager.setTheme(themeFlag);
+  }
 
   // ===========================================================================
   // PHASE 2 : INFRASTRUCTURE LAYER (External adapters)
@@ -120,6 +142,8 @@ Future<void> main(List<String> arguments) async {
   // Auto-detect CI environments ($CI is set by GitHub Actions, GitLab CI,
   // CircleCI, Bitrise, and most other CI platforms). In CI mode: no colors,
   // no emojis, no spinners — plain text output for log readability.
+  // Note: ThemeManager was already set to 'minimal' by autoDetect() above when
+  // no explicit theme is configured, so no additional theme override is needed.
   final isCI = Platform.environment['CI']?.isNotEmpty == true;
   final isQuiet = arguments.contains('--quiet') || arguments.contains('-q');
   final logger = isCI
@@ -198,9 +222,13 @@ Future<void> main(List<String> arguments) async {
   // PHASE 7 : EXECUTION & CLEANUP
   // ===========================================================================
 
+  // Strip --theme <value> before passing to the runner (it is not a registered
+  // command option and would cause an "unknown option" error).
+  final filteredArgs = _stripFlag(arguments, '--theme');
+
   try {
     final exitCode = await errorHandler.handle(
-      () async => await runner.run(arguments) ?? 0,
+      () async => await runner.run(filteredArgs) ?? 0,
     );
     exit(exitCode);
   } finally {
@@ -309,8 +337,9 @@ Available commands:
   version     Print version information
 
 Global options:
-  -h, --help       Show this help message
-  -v, --version    Print version information
+  -h, --help            Show this help message
+  -v, --version         Print version information
+      --theme <name>    Override theme for this run: dark | light | minimal
 
 Examples:
   cura check                          # Audit the current project
@@ -322,4 +351,36 @@ Examples:
 
 For more information, visit: ${AppInfo.homepage}
 ''');
+}
+
+// =============================================================================
+// CLI FLAG HELPERS
+// =============================================================================
+
+/// Returns the value that follows [flag] in [args], or `null` if absent.
+///
+/// Supports both `--flag value` and `--flag=value` forms.
+String? _extractFlag(List<String> args, String flag) {
+  for (var i = 0; i < args.length; i++) {
+    if (args[i] == flag && i + 1 < args.length) return args[i + 1];
+    if (args[i].startsWith('$flag=')) return args[i].substring(flag.length + 1);
+  }
+  return null;
+}
+
+/// Returns a copy of [args] with [flag] and its value removed.
+List<String> _stripFlag(List<String> args, String flag) {
+  final result = <String>[];
+  var i = 0;
+  while (i < args.length) {
+    if (args[i] == flag && i + 1 < args.length) {
+      i += 2; // skip --flag value
+    } else if (args[i].startsWith('$flag=')) {
+      i += 1; // skip --flag=value
+    } else {
+      result.add(args[i]);
+      i++;
+    }
+  }
+  return result;
 }

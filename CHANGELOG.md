@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`--theme <name>` global flag**: Override the active theme for a single run (`dark` / `light` / `minimal`) without editing the config file.
+- **`ThemeManager.isValidTheme()`**: Returns whether a theme name is registered; used by validation points.
+- **`CuraTheme.styleInfo()` / `BaseCuraTheme.styleInfo()`**: Completes the style-helper set alongside `stylePrimary`, `styleSuccess`, `styleWarning`, `styleError`.
+
+### Fixed
+
+- **Theme not applied to renderers**: `BarRenderer` and `TableRenderer` were using hardcoded mason_logger ANSI codes. Both now read colours from `ThemeManager.current` so custom themes take full effect.
+- **Theme not applied to presenters**: `ViewPresenter` and `CheckPresenter` contained ~30 hardcoded colour calls (`cyan.wrap`, `red.wrap`, etc.). All replaced with theme tokens via a `_c(text, color)` helper that also respects `_useColors`.
+- **`useColors: false` not respected**: `ConsoleLogger.warn()`, `error()`, `debug()`, and `alert()` always coloured output regardless of the `use_colors` config flag.
+- **`autoDetect()` was dead code**: `ThemeManager.autoDetect()` was never called. The startup flow now calls it when no theme is explicitly set in any config file, enabling automatic dark/light detection on macOS and CI→minimal fallback.
+- **CI theme desync**: In CI environments, `ThemeManager` now correctly mirrors the minimal logger (via `autoDetect()`), preventing themed output if code paths bypass the logger.
+- **`config set theme xyz` caused a startup crash**: Writing an invalid theme name to the config file would throw an unhandled `ArgumentError` on the next run. `ConfigSetCommand` now validates the name before persisting.
+- **`mergeWith` silently discarded global theme**: When a project config did not declare `theme:`, `CuraConfig.fromYaml` defaulted it to `'dark'`, overriding a global `theme: light`. `theme` is now nullable in `CuraConfig`; `fromYaml` returns `null` for absent keys and `mergeWith` uses `other.theme ?? this.theme`.
+- **`MinimalTheme.isDark` was `true`**: A no-colour theme is not a dark theme. Corrected to `false`.
+
 ## [0.10.0] - 2026-03-09
 
 ### Added
@@ -193,7 +210,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operational local cache.
 - ScoreCalculator unit tests (>80% coverage)
 
-[unreleased]: https://github.com/meragix/cura/compare/cura-0.9.0...HEAD
+[unreleased]: https://github.com/meragix/cura/compare/cura-0.10.0...HEAD
+[0.10.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.9.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.8.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.7.0]: https://github.com/meragix/cura/releases/tag/cura-0.7.0

@@ -1,5 +1,6 @@
 import 'package:args/command_runner.dart';
 import 'package:cura/src/domain/ports/config_repository.dart';
+import 'package:cura/src/presentation/themes/theme_manager.dart';
 
 /// Sub-command: `cura config set <key> <value>`
 ///
@@ -46,6 +47,15 @@ class ConfigSetCommand extends Command<int> {
 
     final key = argResults!.rest[0];
     final value = argResults!.rest[1];
+
+    // Validate theme names before persisting to avoid a startup crash.
+    if ((key == 'theme') && !ThemeManager.isValidTheme(value)) {
+      print(
+        'Error: unknown theme "$value". '
+        'Available: ${ThemeManager.availableThemes().join(", ")}',
+      );
+      return 1;
+    }
 
     try {
       await _configRepository.updateKey(key, _parseValue(value));

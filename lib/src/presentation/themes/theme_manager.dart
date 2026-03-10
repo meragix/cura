@@ -93,6 +93,10 @@ class ThemeManager {
   /// Returns the names of all registered themes.
   static List<String> availableThemes() => List.unmodifiable(_themes.keys);
 
+  /// Returns `true` if [themeName] is a registered theme (case-insensitive).
+  static bool isValidTheme(String themeName) =>
+      _themes.containsKey(themeName.toLowerCase());
+
   /// Registers a custom [theme] under [name].
   ///
   /// If [name] matches an existing theme it will be replaced.

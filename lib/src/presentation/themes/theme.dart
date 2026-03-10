@@ -86,6 +86,7 @@ abstract class CuraTheme {
   String styleSuccess(String text);
   String styleWarning(String text);
   String styleError(String text);
+  String styleInfo(String text);
 }
 
 /// Abstract base class that provides [CuraTheme] style-helper defaults.
@@ -112,4 +113,7 @@ abstract class BaseCuraTheme implements CuraTheme {
 
   @override
   String styleError(String text) => error.wrap(text)!;
+
+  @override
+  String styleInfo(String text) => info.wrap(text)!;
 }
