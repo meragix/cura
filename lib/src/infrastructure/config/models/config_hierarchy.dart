@@ -72,7 +72,7 @@ class ConfigHierarchy {
       }
     }
 
-    check('theme', g.theme, p.theme);
+    check('theme', g.resolvedTheme, p.resolvedTheme);
     check('min_score', g.minScore, p.minScore);
     check('use_colors', g.useColors, p.useColors);
     check('use_emojis', g.useEmojis, p.useEmojis);
@@ -85,6 +85,55 @@ class ConfigHierarchy {
     check('fail_on_vulnerable', g.failOnVulnerable, p.failOnVulnerable);
     check('fail_on_discontinued', g.failOnDiscontinued, p.failOnDiscontinued);
     check('show_suggestions', g.showSuggestions, p.showSuggestions);
+    check(
+      'max_suggestions_per_package',
+      g.maxSuggestionsPerPackage,
+      p.maxSuggestionsPerPackage,
+    );
+    check('verbose_logging', g.verboseLogging, p.verboseLogging);
+    check('quiet', g.quiet, p.quiet);
+    check('github_token', g.githubToken ?? '', p.githubToken ?? '');
+    check(
+      'score_weights.vitality',
+      g.scoreWeights.vitality,
+      p.scoreWeights.vitality,
+    );
+    check(
+      'score_weights.technical_health',
+      g.scoreWeights.technicalHealth,
+      p.scoreWeights.technicalHealth,
+    );
+    check('score_weights.trust', g.scoreWeights.trust, p.scoreWeights.trust);
+    check(
+      'score_weights.maintenance',
+      g.scoreWeights.maintenance,
+      p.scoreWeights.maintenance,
+    );
+
+    // List fields — compare as sorted joined strings to detect element changes.
+    final gIgnored = (g.ignoredPackages..sort()).join(',');
+    final pIgnored = (p.ignoredPackages..sort()).join(',');
+    if (gIgnored != pIgnored) {
+      overrides.add(
+        ConfigOverride(
+          key: 'ignore_packages',
+          globalValue: g.ignoredPackages.join(', '),
+          projectValue: p.ignoredPackages.join(', '),
+        ),
+      );
+    }
+
+    final gTrusted = (g.trustedPublishers..sort()).join(',');
+    final pTrusted = (p.trustedPublishers..sort()).join(',');
+    if (gTrusted != pTrusted) {
+      overrides.add(
+        ConfigOverride(
+          key: 'trusted_publishers',
+          globalValue: g.trustedPublishers.join(', '),
+          projectValue: p.trustedPublishers.join(', '),
+        ),
+      );
+    }
 
     return overrides;
   }

@@ -27,8 +27,20 @@ void main() {
         expect(VersionUtils.compare('v1.2.3', '1.2.3'), 0);
       });
 
-      test('handles pre-release versions', () {
-        expect(VersionUtils.compare('1.0.0-beta', '1.0.0'), 0);
+      test('pre-release is less than stable for same base version', () {
+        // Semver spec: 1.0.0-beta < 1.0.0
+        expect(VersionUtils.compare('1.0.0-beta', '1.0.0'), -1);
+        expect(VersionUtils.compare('1.0.0', '1.0.0-beta'), 1);
+      });
+
+      test('two pre-release versions with same base are equal', () {
+        expect(VersionUtils.compare('1.0.0-beta', '1.0.0-rc'), 0);
+      });
+
+      test('pre-release does not affect major/minor/patch ordering', () {
+        // 1.1.0-beta is still newer than 1.0.0 stable
+        expect(VersionUtils.compare('1.1.0-beta', '1.0.0'), 1);
+        expect(VersionUtils.compare('1.0.0', '1.1.0-beta'), -1);
       });
     });
 
@@ -43,6 +55,14 @@ void main() {
 
       test('returns false when versions are equal', () {
         expect(VersionUtils.isNewer('1.0.0', '1.0.0'), false);
+      });
+
+      test('stable is newer than pre-release of same base', () {
+        expect(VersionUtils.isNewer('1.0.0', '1.0.0-beta'), true);
+      });
+
+      test('pre-release is not newer than stable of same base', () {
+        expect(VersionUtils.isNewer('1.0.0-beta', '1.0.0'), false);
       });
     });
   });

@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-03-10
+
+### Added
+
+- **`UpdateChecker` port** (`lib/src/domain/ports/update_checker.dart`): Abstract contract for update checking; `VersionCommand` now depends on the port, not the concrete service — consistent with the hexagonal architecture.
+- **Update check on `--version` flag**: `cura --version` now runs a lightweight update check and prints a notice to stderr when a newer version is available (stdout stays clean for scripts).
+- **`VersionCommand` unit tests**: 13 tests covering `--short` mode, full output, update check integration, `v` alias, and port contract.
+
+### Fixed
+
+- **`VersionUtils` pre-release handling**: `1.0.0-beta` was incorrectly treated as equal to `1.0.0`. Per semver spec, pre-release < stable for the same base — users on a pre-release are now notified when the stable version ships.
+- **`cyan.wrap` bypassed `useColors`** in `VersionCommand._showDetailedVersion()`: the homepage URL was always coloured regardless of `use_colors` config. Now uses the theme token with the standard `_c()` guard.
+- **`UpdateCheckerService` response parsing**: no null-checks before casting `response.data['latest']['version']`. Now validates each field explicitly and throws a descriptive error if the shape is unexpected.
+- **Missing `sendTimeout`** on the update check HTTP request: only `receiveTimeout` was set; `sendTimeout` is now configured as well.
+- **`AppInfo.getDetailedInfo()` was dead code**: `VersionCommand` built its own output and never called this method. Removed.
+
+- **`--theme <name>` global flag**: Override the active theme for a single run (`dark` / `light` / `minimal`) without editing the config file.
+- **`ThemeManager.isValidTheme()`**: Returns whether a theme name is registered; used by validation points.
+- **`CuraTheme.styleInfo()` / `BaseCuraTheme.styleInfo()`**: Completes the style-helper set alongside `stylePrimary`, `styleSuccess`, `styleWarning`, `styleError`.
+- **`--no-cache` global flag**: Bypass the file cache for a single run without editing the config file (e.g. `cura check --no-cache`).
+- **Cache unit tests**: `TtlStrategy`, `JsonFileSystemCache`, and `CachedAggregator` are now covered by 38 unit tests.
+
+### Fixed
+
+- **`cura config set --global` flag**: A new `--global` (`-g`) flag lets you write any key directly to the global config (`~/.cura/config.yaml`). Without the flag, writes still target the project config (`./.cura/config.yaml`).
+- **`github_token` always saved to global config**: `cura config set github_token ghp_…` now routes to `~/.cura/config.yaml` regardless of whether `--global` is passed, because API tokens are personal credentials that must not be committed to VCS. A note is printed to remind the user when the flag was omitted.
+- **`ConfigRepository.setValue()` accepts a `global` parameter**: The port and `YamlConfigRepository` now take `{bool global = false}`, making the write target explicit and testable.
+
+- **Theme not applied to renderers**: `BarRenderer` and `TableRenderer` were using hardcoded mason_logger ANSI codes. Both now read colours from `ThemeManager.current` so custom themes take full effect.
+- **Theme not applied to presenters**: `ViewPresenter` and `CheckPresenter` contained ~30 hardcoded colour calls (`cyan.wrap`, `red.wrap`, etc.). All replaced with theme tokens via a `_c(text, color)` helper that also respects `_useColors`.
+- **`useColors: false` not respected**: `ConsoleLogger.warn()`, `error()`, `debug()`, and `alert()` always coloured output regardless of the `use_colors` config flag.
+- **`autoDetect()` was dead code**: `ThemeManager.autoDetect()` was never called. The startup flow now calls it when no theme is explicitly set in any config file, enabling automatic dark/light detection on macOS and CI→minimal fallback.
+- **CI theme desync**: In CI environments, `ThemeManager` now correctly mirrors the minimal logger (via `autoDetect()`), preventing themed output if code paths bypass the logger.
+- **`config set theme xyz` caused a startup crash**: Writing an invalid theme name to the config file would throw an unhandled `ArgumentError` on the next run. `ConfigSetCommand` now validates the name before persisting.
+- **`mergeWith` silently discarded global theme**: When a project config did not declare `theme:`, `CuraConfig.fromYaml` defaulted it to `'dark'`, overriding a global `theme: light`. `theme` is now nullable in `CuraConfig`; `fromYaml` returns `null` for absent keys and `mergeWith` uses `other.theme ?? this.theme`.
+- **`MinimalTheme.isDark` was `true`**: A no-colour theme is not a dark theme. Corrected to `false`.
+- **`enable_cache: false` was ignored**: `CachedAggregator` was always instantiated regardless of `config.enableCache`. The startup now conditionally wraps `MultiApiAggregator` only when caching is enabled.
+- **`cache_max_age_hours` was ignored**: The configured TTL value was never passed to `TtlStrategy`. It is now forwarded as `defaultTtl` so the 70–89 popularity tier honours the user setting.
+- **`cache clear` confirmed before deleting**: `JsonFileSystemCache.clearAll()` used fire-and-forget deletions, returning before files were actually removed. Deletions are now awaited sequentially.
+- **Dead code in `TtlStrategy`**: `getPackageTtl()`, `getAlternativesTtl()`, and `getScoresTtl()` were never called. Removed.
+- **Dead constants in `CacheConstants`**: Six unused TTL/limit constants removed; the hardcoded cache path in the entry point replaced with `CacheConstants.cacheSubDir`.
+
 ## [0.10.0] - 2026-03-09
 
 ### Added
@@ -193,7 +235,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operational local cache.
 - ScoreCalculator unit tests (>80% coverage)
 
-[unreleased]: https://github.com/meragix/cura/compare/cura-0.9.0...HEAD
+[unreleased]: https://github.com/meragix/cura/compare/cura-0.10.0...HEAD
+[0.10.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.9.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.8.0]: https://github.com/meragix/cura/releases/tag/cura-0.8.0
 [0.7.0]: https://github.com/meragix/cura/releases/tag/cura-0.7.0

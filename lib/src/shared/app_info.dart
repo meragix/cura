@@ -64,17 +64,4 @@ class AppInfo {
   static Future<String> getFullVersion() async {
     return '$name v${await getVersion()}';
   }
-
-  /// Returns a multi-line details block used by the `version` command.
-  static Future<String> getDetailedInfo() async {
-    final version = await getVersion();
-
-    return '''
-$name v$version
-$description
-
-Author:   $author
-Homepage: $homepage
-''';
-  }
 }

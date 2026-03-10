@@ -52,10 +52,13 @@ abstract class ConfigRepository {
   /// silently ignored — the config is saved unchanged.  Use [getValue] to
   /// verify that the key was recognised after a [setValue] call.
   ///
+  /// When [global] is `true` the value is written to the global config file
+  /// (`~/.cura/config.yaml`); otherwise it targets the project config file
+  /// (`./.cura/config.yaml`).  `github_token` always targets the global file
+  /// regardless of this flag, because API tokens are personal credentials that
+  /// must not be committed to version control.
+  ///
   /// Throws a [TypeError] when [value] cannot be cast to the field's expected
   /// type (e.g. passing a [String] for a boolean field).
-  Future<void> setValue(String key, dynamic value);
-
-  //todo: to be removed
-  Future<void> updateKey(String key, dynamic value);
+  Future<void> setValue(String key, dynamic value, {bool global = false});
 }

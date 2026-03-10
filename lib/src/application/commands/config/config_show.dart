@@ -45,7 +45,7 @@ class ConfigShowCommand extends Command<int> {
 
     // ── Appearance ─────────────────────────────────────────────────────────
     print('  [Appearance]');
-    _row('theme', config.theme);
+    _row('theme', config.resolvedTheme);
     _row('use_colors', config.useColors);
     _row('use_emojis', config.useEmojis);
     print('');

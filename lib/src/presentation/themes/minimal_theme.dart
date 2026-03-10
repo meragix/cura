@@ -11,7 +11,7 @@ class MinimalTheme extends BaseCuraTheme {
   final String name = 'minimal';
 
   @override
-  final bool isDark = true;
+  final bool isDark = false;
 
   // ── Brand ─────────────────────────────────────────────────────────────────
 
@@ -109,4 +109,7 @@ class MinimalTheme extends BaseCuraTheme {
 
   @override
   String styleError(String text) => text;
+
+  @override
+  String styleInfo(String text) => text;
 }

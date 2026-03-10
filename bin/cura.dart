@@ -8,6 +8,7 @@ import 'package:cura/src/application/commands/version_command.dart';
 import 'package:cura/src/application/commands/view_command.dart';
 import 'package:cura/src/domain/ports/config_repository.dart';
 import 'package:cura/src/domain/ports/package_data_aggregator.dart';
+import 'package:cura/src/domain/ports/update_checker.dart';
 import 'package:cura/src/infrastructure/cache/json_file_system_cache.dart';
 import 'package:cura/src/infrastructure/services/update_checker_service.dart';
 import 'package:cura/src/domain/usecases/calculate_score.dart';
@@ -26,6 +27,7 @@ import 'package:cura/src/presentation/presenters/view_presenter.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:cura/src/shared/app_info.dart';
 import 'package:cura/src/shared/constants/app_constants.dart';
+import 'package:cura/src/shared/constants/cache_constants.dart';
 import 'package:cura/src/shared/utils/http_helper.dart';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
@@ -41,6 +43,9 @@ Future<void> main(List<String> arguments) async {
   if (arguments.contains('--version')) {
     final version = await AppInfo.getFullVersion();
     print(version);
+    // Run a lightweight update check. The notice is written to stderr so that
+    // `$(cura --version)` in scripts still captures only the bare version.
+    await _checkUpdateToStderr(await AppInfo.getVersion());
     exit(0);
   }
 
@@ -56,8 +61,30 @@ Future<void> main(List<String> arguments) async {
   final configRepo = await _initializeConfiguration();
   final config = await configRepo.load();
 
-  // Apply the theme before any UI
-  ThemeManager.setTheme(config.theme);
+  // Apply theme — resolution order (highest priority last, so each step can
+  // override the previous one):
+  //   1. Auto-detect from environment (CURA_THEME env var, CI, macOS/Linux)
+  //      OR the explicit theme from the config file if one was set.
+  //   2. --theme CLI flag (per-run override).
+  if (config.theme != null) {
+    // User explicitly set a theme in a config file → honour it.
+    ThemeManager.setTheme(config.theme!);
+  } else {
+    // No theme in any config file → let the environment decide
+    // (CURA_THEME env var → CI → macOS appearance → Linux GTK → dark).
+    ThemeManager.autoDetect();
+  }
+  final themeFlag = _extractFlag(arguments, '--theme');
+  if (themeFlag != null) {
+    if (!ThemeManager.isValidTheme(themeFlag)) {
+      print(
+        'Error: unknown theme "$themeFlag". '
+        'Available: ${ThemeManager.availableThemes().join(", ")}',
+      );
+      exit(1);
+    }
+    ThemeManager.setTheme(themeFlag);
+  }
 
   // ===========================================================================
   // PHASE 2 : INFRASTRUCTURE LAYER (External adapters)
@@ -76,24 +103,37 @@ Future<void> main(List<String> arguments) async {
 
   // JSON file cache — create the directory on first run, then evict stale entries.
   final cache = JsonFileSystemCache(
-    cacheDir: '${_homeDir()}/.cura/cache',
+    cacheDir: '${_homeDir()}/${CacheConstants.cacheSubDir}',
   );
-  await cache.initialize();
-  await cache.cleanupExpired();
 
-  // Update checker — reuses the same HTTP client; stays silent on any failure.
-  final updateChecker = UpdateCheckerService(httpClient: httpClient);
+  final noCache = arguments.contains('--no-cache');
+  final cacheEnabled = config.enableCache && !noCache;
 
-  // Decorator: CachedAggregator wraps MultiApiAggregator to add transparent caching.
-  final aggregator = CachedAggregator(
-    delegate: MultiApiAggregator(
-      pubDevClient: pubDevClient,
-      githubClient: githubClient,
-      osvClient: osvClient,
-      maxConcurrency: config.maxConcurrency,
-    ),
-    cache: cache,
+  if (cacheEnabled) {
+    await cache.initialize();
+    await cache.cleanupExpired();
+  }
+
+  // Update checker — typed as the port so VersionCommand stays decoupled from
+  // the concrete service implementation.
+  final UpdateChecker updateChecker =
+      UpdateCheckerService(httpClient: httpClient);
+
+  // Decorator: CachedAggregator wraps MultiApiAggregator only when caching is
+  // enabled (config.enableCache == true and --no-cache flag is absent).
+  final baseAggregator = MultiApiAggregator(
+    pubDevClient: pubDevClient,
+    githubClient: githubClient,
+    osvClient: osvClient,
+    maxConcurrency: config.maxConcurrency,
   );
+  final PackageDataAggregator aggregator = cacheEnabled
+      ? CachedAggregator(
+          delegate: baseAggregator,
+          cache: cache,
+          cacheMaxAgeHours: config.cacheMaxAgeHours,
+        )
+      : baseAggregator;
 
   // ===========================================================================
   // PHASE 3 : DOMAIN LAYER (Use cases)
@@ -120,6 +160,8 @@ Future<void> main(List<String> arguments) async {
   // Auto-detect CI environments ($CI is set by GitHub Actions, GitLab CI,
   // CircleCI, Bitrise, and most other CI platforms). In CI mode: no colors,
   // no emojis, no spinners — plain text output for log readability.
+  // Note: ThemeManager was already set to 'minimal' by autoDetect() above when
+  // no explicit theme is configured, so no additional theme override is needed.
   final isCI = Platform.environment['CI']?.isNotEmpty == true;
   final isQuiet = arguments.contains('--quiet') || arguments.contains('-q');
   final logger = isCI
@@ -198,9 +240,13 @@ Future<void> main(List<String> arguments) async {
   // PHASE 7 : EXECUTION & CLEANUP
   // ===========================================================================
 
+  // Strip --theme <value> before passing to the runner (it is not a registered
+  // command option and would cause an "unknown option" error).
+  final filteredArgs = _stripFlag(arguments, '--theme');
+
   try {
     final exitCode = await errorHandler.handle(
-      () async => await runner.run(arguments) ?? 0,
+      () async => await runner.run(filteredArgs) ?? 0,
     );
     exit(exitCode);
   } finally {
@@ -279,14 +325,19 @@ String _resolveProjectConfigPath() {
     final configPath = p.join(current.path, '.cura', 'config.yaml');
     if (File(configPath).existsSync()) return configPath;
 
-    // Stop si on trouve un pubspec.yaml mais pas de config cura (racine atteinte)
-    if (File(p.join(current.path, 'pubspec.yaml')).existsSync()) return '';
+    // Stop at the project root (pubspec.yaml found but no .cura/config.yaml).
+    // Return the path where the project config would be created.
+    if (File(p.join(current.path, 'pubspec.yaml')).existsSync()) {
+      return p.join(current.path, '.cura', 'config.yaml');
+    }
 
     final parent = current.parent;
-    if (parent.path == current.path) break; // Racine système atteinte
+    if (parent.path == current.path) break; // Filesystem root reached.
     current = parent;
   }
-  return '';
+
+  // No pubspec.yaml found anywhere — default to the current directory.
+  return p.join(Directory.current.path, '.cura', 'config.yaml');
 }
 
 /// Prints a hand-crafted help message and exits.
@@ -309,8 +360,9 @@ Available commands:
   version     Print version information
 
 Global options:
-  -h, --help       Show this help message
-  -v, --version    Print version information
+  -h, --help            Show this help message
+  -v, --version         Print version information
+      --theme <name>    Override theme for this run: dark | light | minimal
 
 Examples:
   cura check                          # Audit the current project
@@ -322,4 +374,69 @@ Examples:
 
 For more information, visit: ${AppInfo.homepage}
 ''');
+}
+
+// =============================================================================
+// CLI FLAG HELPERS
+// =============================================================================
+
+/// Returns the value that follows [flag] in [args], or `null` if absent.
+///
+/// Supports both `--flag value` and `--flag=value` forms.
+String? _extractFlag(List<String> args, String flag) {
+  for (var i = 0; i < args.length; i++) {
+    if (args[i] == flag && i + 1 < args.length) return args[i + 1];
+    if (args[i].startsWith('$flag=')) return args[i].substring(flag.length + 1);
+  }
+  return null;
+}
+
+/// Returns a copy of [args] with [flag] and its value removed.
+List<String> _stripFlag(List<String> args, String flag) {
+  final result = <String>[];
+  var i = 0;
+  while (i < args.length) {
+    if (args[i] == flag && i + 1 < args.length) {
+      i += 2; // skip --flag value
+    } else if (args[i].startsWith('$flag=')) {
+      i += 1; // skip --flag=value
+    } else {
+      result.add(args[i]);
+      i++;
+    }
+  }
+  return result;
+}
+
+// =============================================================================
+// UPDATE CHECK HELPER (used by --version early-exit)
+// =============================================================================
+
+/// Runs a lightweight update check and writes a notice to [stderr] when a
+/// newer version is available.
+///
+/// Writing to stderr keeps stdout clean so `$(cura --version)` in scripts
+/// captures only the bare version string without noise.
+Future<void> _checkUpdateToStderr(String currentVersion) async {
+  try {
+    final client = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+    ));
+    try {
+      final checker = UpdateCheckerService(httpClient: client);
+      final info = await checker.checkForUpdate(currentVersion);
+      if (info != null && info.updateAvailable) {
+        stderr.writeln(
+          '\nUpdate available: ${info.latestVersion} '
+          '(current: ${info.currentVersion})',
+        );
+        stderr.writeln('Run: dart pub global activate cura\n');
+      }
+    } finally {
+      client.close();
+    }
+  } catch (_) {
+    // Update check failure must never affect the --version exit path.
+  }
 }

@@ -4,7 +4,8 @@ import 'package:cura/src/domain/entities/package_audit_result.dart';
 import 'package:cura/src/presentation/formatters/error_formatter.dart';
 import 'package:cura/src/presentation/loggers/console_logger.dart';
 import 'package:cura/src/presentation/renderers/table_renderer.dart';
-
+import 'package:cura/src/presentation/themes/theme.dart';
+import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 /// Presentation layer orchestrator for the `cura check` command.
@@ -48,7 +49,13 @@ class CheckPresenter {
     bool showSuggestions = true,
   })  : _logger = logger,
         _errorFormatter = ErrorFormatter(logger),
-        _tableRenderer = TableRenderer();
+        _tableRenderer = TableRenderer(useColors: logger.useColors);
+
+  CuraTheme get _theme => ThemeManager.current;
+  bool get _useColors => _logger.useColors;
+
+  String _c(String text, AnsiCode color) =>
+      _useColors ? color.wrap(text) ?? text : text;
 
   // --------------------------------------------------------------------------
   // Stage 1: Header
@@ -164,8 +171,8 @@ class CheckPresenter {
     _logger.info(tableStr);
 
     final legend = '${styleItalic.wrap('Legend')}: '
-        '${yellow.wrap('! Needs review')}  '
-        '${red.wrap('✗ Critical')}';
+        '${_c('! Needs review', _theme.warning)}  '
+        '${_c('✗ Critical', _theme.error)}';
     _logger.info(legend);
 
     // ------------------------------------------------------------------
@@ -193,13 +200,13 @@ class CheckPresenter {
 
     if (healthy > 0) {
       _logger.info(
-          '  ${green.wrap("Healthy:")}  $healthy/$total (${(healthy / total * 100).round()}%)');
+          '  ${_c("Healthy:", _theme.success)}  $healthy/$total (${(healthy / total * 100).round()}%)');
     }
     if (warning > 0) {
-      _logger.info('  ${yellow.wrap("Warning:")}  $warning');
+      _logger.info('  ${_c("Warning:", _theme.warning)}  $warning');
     }
     if (critical > 0) {
-      _logger.info('  ${red.wrap("Critical:")} $critical');
+      _logger.info('  ${_c("Critical:", _theme.error)} $critical');
     }
 
     _logger.info('');
@@ -223,7 +230,7 @@ class CheckPresenter {
 
       for (final result in criticalResults) {
         _logger.error(
-            '  ${red.wrap('✗')} ${red.wrap(styleBold.wrap(result.name))} (score: ${result.score.total})');
+            '  ${_c('✗', _theme.error)} ${_c(styleBold.wrap(result.name) ?? result.name, _theme.error)} (score: ${result.score.total})');
 
         for (final issue in result.issues) {
           _logger.info('    └─ ${issue.message}');
@@ -244,8 +251,11 @@ class CheckPresenter {
     _logger.spacer();
     final elapsed = _getElapsedSeconds(stopwatch);
     _logger.info(
-      darkGray.wrap('⏱️  Total time: ${elapsed}s '
-          '($_cacheHits from cache, $_apiCalls HTTP requests)')!,
+      _c(
+        '⏱️  Total time: ${elapsed}s '
+        '($_cacheHits from cache, $_apiCalls HTTP requests)',
+        _theme.muted,
+      ),
     );
 
     // ------------------------------------------------------------------

@@ -1,7 +1,14 @@
 class VersionUtils {
   const VersionUtils._();
 
-  /// Compare two semantic versions
+  /// Compares two semantic version strings.
+  ///
+  /// Handles optional `v` prefix (`v1.2.3` == `1.2.3`) and build metadata
+  /// (`1.0.0+001` is treated as `1.0.0`).
+  ///
+  /// Pre-release versions follow the semver spec: a pre-release tag makes a
+  /// version *less than* the same base version without a tag. For example:
+  /// `1.0.0-beta` < `1.0.0` < `1.0.1-alpha`.
   ///
   /// Returns:
   ///   -1 if v1 < v2
@@ -26,21 +33,29 @@ class VersionUtils {
       return parts1.patch.compareTo(parts2.patch);
     }
 
-    // Equal
+    // Semver pre-release rule: pre-release < stable for the same base version.
+    // e.g. 1.0.0-beta < 1.0.0 — notifies users on a pre-release that
+    // the stable version is available.
+    if (parts1.hasPreRelease && !parts2.hasPreRelease) return -1;
+    if (!parts1.hasPreRelease && parts2.hasPreRelease) return 1;
+
     return 0;
   }
 
-  /// Check if v1 is newer than v2
+  /// Returns `true` when [v1] is strictly newer than [v2].
   static bool isNewer(String v1, String v2) {
     return compare(v1, v2) > 0;
   }
 
-  /// Parse version string
+  /// Parses a version string into its numeric components.
   static _VersionParts _parseParts(String version) {
     // Remove 'v' prefix if present
     version = version.replaceFirst(RegExp(r'^v'), '');
 
-    // Remove pre-release/build metadata (e.g., 1.0.0-beta+001)
+    // Detect pre-release before stripping it (e.g. 1.0.0-beta, 1.0.0-rc.1)
+    final hasPreRelease = version.contains('-');
+
+    // Remove pre-release and build metadata (e.g. 1.0.0-beta+001 → 1.0.0)
     version = version.split('-').first.split('+').first;
 
     final parts = version.split('.');
@@ -49,6 +64,7 @@ class VersionUtils {
       major: int.tryParse(parts.elementAtOrNull(0) ?? '0') ?? 0,
       minor: int.tryParse(parts.elementAtOrNull(1) ?? '0') ?? 0,
       patch: int.tryParse(parts.elementAtOrNull(2) ?? '0') ?? 0,
+      hasPreRelease: hasPreRelease,
     );
   }
 }
@@ -57,11 +73,13 @@ class _VersionParts {
   final int major;
   final int minor;
   final int patch;
+  final bool hasPreRelease;
 
   const _VersionParts({
     required this.major,
     required this.minor,
     required this.patch,
+    required this.hasPreRelease,
   });
 }
 
