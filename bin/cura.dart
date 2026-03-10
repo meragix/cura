@@ -8,6 +8,7 @@ import 'package:cura/src/application/commands/version_command.dart';
 import 'package:cura/src/application/commands/view_command.dart';
 import 'package:cura/src/domain/ports/config_repository.dart';
 import 'package:cura/src/domain/ports/package_data_aggregator.dart';
+import 'package:cura/src/domain/ports/update_checker.dart';
 import 'package:cura/src/infrastructure/cache/json_file_system_cache.dart';
 import 'package:cura/src/infrastructure/services/update_checker_service.dart';
 import 'package:cura/src/domain/usecases/calculate_score.dart';
@@ -42,6 +43,9 @@ Future<void> main(List<String> arguments) async {
   if (arguments.contains('--version')) {
     final version = await AppInfo.getFullVersion();
     print(version);
+    // Run a lightweight update check. The notice is written to stderr so that
+    // `$(cura --version)` in scripts still captures only the bare version.
+    await _checkUpdateToStderr(await AppInfo.getVersion());
     exit(0);
   }
 
@@ -110,8 +114,10 @@ Future<void> main(List<String> arguments) async {
     await cache.cleanupExpired();
   }
 
-  // Update checker — reuses the same HTTP client; stays silent on any failure.
-  final updateChecker = UpdateCheckerService(httpClient: httpClient);
+  // Update checker — typed as the port so VersionCommand stays decoupled from
+  // the concrete service implementation.
+  final UpdateChecker updateChecker =
+      UpdateCheckerService(httpClient: httpClient);
 
   // Decorator: CachedAggregator wraps MultiApiAggregator only when caching is
   // enabled (config.enableCache == true and --no-cache flag is absent).
@@ -400,4 +406,37 @@ List<String> _stripFlag(List<String> args, String flag) {
     }
   }
   return result;
+}
+
+// =============================================================================
+// UPDATE CHECK HELPER (used by --version early-exit)
+// =============================================================================
+
+/// Runs a lightweight update check and writes a notice to [stderr] when a
+/// newer version is available.
+///
+/// Writing to stderr keeps stdout clean so `$(cura --version)` in scripts
+/// captures only the bare version string without noise.
+Future<void> _checkUpdateToStderr(String currentVersion) async {
+  try {
+    final client = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+    ));
+    try {
+      final checker = UpdateCheckerService(httpClient: client);
+      final info = await checker.checkForUpdate(currentVersion);
+      if (info != null && info.updateAvailable) {
+        stderr.writeln(
+          '\nUpdate available: ${info.latestVersion} '
+          '(current: ${info.currentVersion})',
+        );
+        stderr.writeln('Run: dart pub global activate cura\n');
+      }
+    } finally {
+      client.close();
+    }
+  } catch (_) {
+    // Update check failure must never affect the --version exit path.
+  }
 }

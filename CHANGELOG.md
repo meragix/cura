@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`UpdateChecker` port** (`lib/src/domain/ports/update_checker.dart`): Abstract contract for update checking; `VersionCommand` now depends on the port, not the concrete service — consistent with the hexagonal architecture.
+- **Update check on `--version` flag**: `cura --version` now runs a lightweight update check and prints a notice to stderr when a newer version is available (stdout stays clean for scripts).
+- **`VersionCommand` unit tests**: 13 tests covering `--short` mode, full output, update check integration, `v` alias, and port contract.
+
+### Fixed
+
+- **`VersionUtils` pre-release handling**: `1.0.0-beta` was incorrectly treated as equal to `1.0.0`. Per semver spec, pre-release < stable for the same base — users on a pre-release are now notified when the stable version ships.
+- **`cyan.wrap` bypassed `useColors`** in `VersionCommand._showDetailedVersion()`: the homepage URL was always coloured regardless of `use_colors` config. Now uses the theme token with the standard `_c()` guard.
+- **`UpdateCheckerService` response parsing**: no null-checks before casting `response.data['latest']['version']`. Now validates each field explicitly and throws a descriptive error if the shape is unexpected.
+- **Missing `sendTimeout`** on the update check HTTP request: only `receiveTimeout` was set; `sendTimeout` is now configured as well.
+- **`AppInfo.getDetailedInfo()` was dead code**: `VersionCommand` built its own output and never called this method. Removed.
+
 - **`--theme <name>` global flag**: Override the active theme for a single run (`dark` / `light` / `minimal`) without editing the config file.
 - **`ThemeManager.isValidTheme()`**: Returns whether a theme name is registered; used by validation points.
 - **`CuraTheme.styleInfo()` / `BaseCuraTheme.styleInfo()`**: Completes the style-helper set alongside `stylePrimary`, `styleSuccess`, `styleWarning`, `styleError`.

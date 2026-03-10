@@ -1,8 +1,9 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
-import 'package:cura/src/infrastructure/services/update_checker_service.dart';
+import 'package:cura/src/domain/ports/update_checker.dart';
 import 'package:cura/src/presentation/loggers/console_logger.dart';
+import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:cura/src/shared/app_info.dart';
 import 'package:mason_logger/mason_logger.dart';
 
@@ -14,11 +15,11 @@ import 'package:mason_logger/mason_logger.dart';
 ///   cura v                 — alias for `cura version`
 class VersionCommand extends Command<int> {
   final ConsoleLogger _logger;
-  final UpdateCheckerService _updateChecker;
+  final UpdateChecker _updateChecker;
 
   VersionCommand({
     required ConsoleLogger logger,
-    required UpdateCheckerService updateChecker,
+    required UpdateChecker updateChecker,
   })  : _logger = logger,
         _updateChecker = updateChecker {
     argParser.addFlag(
@@ -56,6 +57,11 @@ class VersionCommand extends Command<int> {
   }
 
   Future<void> _showDetailedVersion(String version) async {
+    final theme = ThemeManager.current;
+    final useColors = _logger.useColors;
+    String c(String text, AnsiCode color) =>
+        useColors ? color.wrap(text) ?? text : text;
+
     _logger.spacer();
     _logger.info('═' * 65);
     _logger.spacer();
@@ -69,7 +75,7 @@ class VersionCommand extends Command<int> {
 
     _logger.info('Information:');
     _logger.info('  Author:      ${AppInfo.author}');
-    _logger.info('  Homepage:    ${cyan.wrap(AppInfo.homepage)}');
+    _logger.info('  Homepage:    ${c(AppInfo.homepage, theme.primary)}');
     _logger.info('  License:     MIT');
 
     _logger.spacer();
