@@ -107,7 +107,8 @@ class YamlConfigRepository implements ConfigRepository {
   /// The target file is created from the appropriate default template when it
   /// does not yet exist.  Unknown keys are silently ignored.
   @override
-  Future<void> setValue(String key, dynamic value, {bool global = false}) async {
+  Future<void> setValue(String key, dynamic value,
+      {bool global = false}) async {
     final isTokenKey = key == 'github_token' || key == 'githubToken';
     final writeToGlobal = global || isTokenKey;
     final targetPath = writeToGlobal ? _globalConfigPath : _projectConfigPath;

@@ -73,10 +73,12 @@ class ConfigSetCommand extends Command<int> {
     }
 
     try {
-      await _configRepository.setValue(key, _parseValue(value), global: isGlobal);
+      await _configRepository.setValue(key, _parseValue(value),
+          global: isGlobal);
 
       if (isTokenKey && !isGlobal) {
-        print('Note: github_token saved to global config (~/.cura/config.yaml).');
+        print(
+            'Note: github_token saved to global config (~/.cura/config.yaml).');
       }
       print('✓ $key = $value');
       return 0;
