@@ -38,8 +38,7 @@ ConsoleLogger _quietLogger() => ConsoleLogger(
     updateChecker: mockChecker,
   );
 
-  final runner = CommandRunner<int>('cura', 'test runner')
-    ..addCommand(command);
+  final runner = CommandRunner<int>('cura', 'test runner')..addCommand(command);
 
   return (runner, mockChecker);
 }
@@ -61,8 +60,7 @@ void main() {
     test('has "v" alias', () {
       final command = VersionCommand(
         logger: _quietLogger(),
-        updateChecker: MockUpdateChecker()
-          ..mockCheckForUpdate(null),
+        updateChecker: MockUpdateChecker()..mockCheckForUpdate(null),
       );
       expect(command.aliases, contains('v'));
     });
@@ -70,8 +68,7 @@ void main() {
     test('has --short flag', () {
       final command = VersionCommand(
         logger: _quietLogger(),
-        updateChecker: MockUpdateChecker()
-          ..mockCheckForUpdate(null),
+        updateChecker: MockUpdateChecker()..mockCheckForUpdate(null),
       );
       expect(command.argParser.options.containsKey('short'), isTrue);
     });

@@ -305,17 +305,20 @@ class ViewPresenter {
     final isClamped = itemsSum < appliedPenalty; // items sum to more negative
 
     final ratio = '$appliedPenalty/0'.padRight(6);
-    _logger.info('  ${'Penalties'.padRight(13)} $ratio  ${_c('✗', _theme.error)}');
+    _logger
+        .info('  ${'Penalties'.padRight(13)} $ratio  ${_c('✗', _theme.error)}');
 
     for (var i = 0; i < items.length; i++) {
       final isLast = i == items.length - 1 && !isClamped;
       final connector = isLast ? '└─' : '├─';
       final label = '${items[i].label}:'.padRight(22);
-      _logger.info('    $connector $label${_c('${items[i].points}', _theme.error)}');
+      _logger.info(
+          '    $connector $label${_c('${items[i].points}', _theme.error)}');
     }
 
     if (isClamped) {
-      _logger.info('    └─ ${_c('(clamped to $appliedPenalty)', _theme.muted)}');
+      _logger
+          .info('    └─ ${_c('(clamped to $appliedPenalty)', _theme.muted)}');
     }
   }
 
@@ -326,7 +329,8 @@ class ViewPresenter {
 
     _logger.info('Key Metrics');
 
-    final publisherIcon = info.isTrustedPublisher ? _c('✓', _theme.success) : '';
+    final publisherIcon =
+        info.isTrustedPublisher ? _c('✓', _theme.success) : '';
     final publisherText = info.publisherId ?? 'None (unverified)';
     final publisherColored = info.isTrustedPublisher
         ? _c(publisherText, _theme.success)
@@ -381,8 +385,8 @@ class ViewPresenter {
         githubMetrics.openIssues > 100 ? _theme.warning : _theme.success;
     final issuesFormatted =
         NumberFormatter.formatGrouped(githubMetrics.openIssues);
-    _logger.info(
-        '  Open Issues: ${_c(issuesFormatted.toString(), issuesColor)}');
+    _logger
+        .info('  Open Issues: ${_c(issuesFormatted.toString(), issuesColor)}');
 
     if (githubMetrics.commitCountLast90Days > 0) {
       final commitsFormatted =
@@ -466,7 +470,8 @@ class ViewPresenter {
       final age = DateTime.now().toUtc().difference(audit.cachedAt!.toUtc());
       final ageStr = _formatAge(age);
       final label = _c('Cache:', _theme.muted);
-      _logger.info('$label ${_c('✓ Hit', _theme.success)} ($ageStr old, valid)');
+      _logger
+          .info('$label ${_c('✓ Hit', _theme.success)} ($ageStr old, valid)');
     } else {
       final label = _c('Cache:', _theme.muted);
       _logger.info('$label ${_c('✗ Miss', _theme.error)}, fetching...');
@@ -480,8 +485,7 @@ class ViewPresenter {
     final ms = elapsed.inMilliseconds;
     final timeStr = _c('⏱️  ${ms}ms', _theme.muted);
     final callsStr = requestCount > 0
-        ? _c(
-            '($requestCount API call${requestCount == 1 ? '' : 's'})',
+        ? _c('($requestCount API call${requestCount == 1 ? '' : 's'})',
             _theme.muted)
         : _c('(cached — 0 API calls)', _theme.muted);
     _logger.info('$timeStr $callsStr');

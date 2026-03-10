@@ -45,9 +45,7 @@ class BarRenderer {
     final percentage = (value / max * 100).round();
 
     if (percentage < 10) {
-      return _useColors
-          ? '${theme.muted.wrap('·')} $label'
-          : '· $label';
+      return _useColors ? '${theme.muted.wrap('·')} $label' : '· $label';
     }
 
     if (!_useColors) return '$char $label';

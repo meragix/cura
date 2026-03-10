@@ -67,7 +67,8 @@ class ConsoleLogger {
 
   /// Log warning message (yellow).
   void warn(String message) {
-    final styled = _useColors ? theme.warning.wrap(message) ?? message : message;
+    final styled =
+        _useColors ? theme.warning.wrap(message) ?? message : message;
     _logger.warn(styled, tag: '');
   }
 

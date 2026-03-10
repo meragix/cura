@@ -2,16 +2,21 @@ import 'package:args/command_runner.dart';
 import 'package:cura/src/domain/ports/config_repository.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
 
-/// Sub-command: `cura config set <key> <value>`
+/// Sub-command: `cura config set [--global] <key> <value>`
 ///
-/// Updates a single configuration value in the **project** config file
-/// (`./.cura/config.yaml`), creating it if it does not already exist.
+/// Updates a single configuration value, writing to the project config file
+/// (`./.cura/config.yaml`) by default, or to the global config file
+/// (`~/.cura/config.yaml`) when `--global` is passed.
+///
+/// `github_token` is always written to the **global** config regardless of
+/// the flag, because API tokens are personal credentials that must not be
+/// committed to version control.
 ///
 /// Both `snake_case` and `camelCase` key variants are accepted:
 /// ```sh
 /// cura config set min_score 80
-/// cura config set minScore 80          # equivalent
-/// cura config set github_token ghp_…
+/// cura config set minScore 80              # equivalent
+/// cura config set --global github_token ghp_…
 /// cura config set theme light
 /// cura config set fail_on_vulnerable false
 /// ```
@@ -26,7 +31,15 @@ class ConfigSetCommand extends Command<int> {
 
   /// Creates the sub-command backed by [configRepository].
   ConfigSetCommand({required ConfigRepository configRepository})
-      : _configRepository = configRepository;
+      : _configRepository = configRepository {
+    argParser.addFlag(
+      'global',
+      abbr: 'g',
+      negatable: false,
+      help: 'Write to the global config (~/.cura/config.yaml) instead of the '
+          'project config (./.cura/config.yaml).',
+    );
+  }
 
   @override
   String get name => 'set';
@@ -35,7 +48,7 @@ class ConfigSetCommand extends Command<int> {
   String get description => 'Set a configuration value.';
 
   @override
-  String get invocation => 'cura config set <key> <value>';
+  String get invocation => 'cura config set [--global] <key> <value>';
 
   @override
   Future<int> run() async {
@@ -47,6 +60,8 @@ class ConfigSetCommand extends Command<int> {
 
     final key = argResults!.rest[0];
     final value = argResults!.rest[1];
+    final isGlobal = argResults!['global'] as bool;
+    final isTokenKey = key == 'github_token' || key == 'githubToken';
 
     // Validate theme names before persisting to avoid a startup crash.
     if ((key == 'theme') && !ThemeManager.isValidTheme(value)) {
@@ -58,7 +73,11 @@ class ConfigSetCommand extends Command<int> {
     }
 
     try {
-      await _configRepository.setValue(key, _parseValue(value));
+      await _configRepository.setValue(key, _parseValue(value), global: isGlobal);
+
+      if (isTokenKey && !isGlobal) {
+        print('Note: github_token saved to global config (~/.cura/config.yaml).');
+      }
       print('✓ $key = $value');
       return 0;
     } catch (e) {

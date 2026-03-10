@@ -139,7 +139,8 @@ class TableRenderer {
     final colored = switch (status) {
       AuditStatus.excellent || AuditStatus.good => theme.success.wrap(icon),
       AuditStatus.warning => theme.warning.wrap(icon),
-      AuditStatus.critical || AuditStatus.discontinued =>
+      AuditStatus.critical ||
+      AuditStatus.discontinued =>
         theme.error.wrap(icon),
     };
 

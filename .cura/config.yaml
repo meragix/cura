@@ -1,0 +1,16 @@
+# Cura Project Configuration
+# Overrides ~/.cura/config.yaml for this project only.
+
+# =============================================================================
+# PROJECT OVERRIDES
+# =============================================================================
+
+github_token: ghp_DKIQJViA98jR1SpFCE1FLYcp0sMQch2v1qL5
+min_score: 70
+
+# Uncomment to override global settings:
+# theme: dark
+# show_suggestions: true
+# cache_max_age_hours: 24
+# fail_on_vulnerable: true
+# fail_on_discontinued: true

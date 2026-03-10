@@ -95,38 +95,45 @@ class YamlConfigRepository implements ConfigRepository {
     return _readValue(config, key) as T?;
   }
 
-  /// Writes a single value to the project config file using a surgical
-  /// YAML edit that preserves comments and formatting.
+  /// Writes a single value using a surgical YAML edit that preserves comments
+  /// and formatting.
   ///
-  /// If the project config file does not exist yet, it is created from the
-  /// default project template before the edit is applied.
+  /// The target file is chosen as follows:
+  /// - `github_token` / `githubToken` → **always** the global config, because
+  ///   API tokens are personal credentials that must not be committed to VCS.
+  /// - [global] `true` → global config (`~/.cura/config.yaml`).
+  /// - otherwise → project config (`./.cura/config.yaml`).
   ///
-  /// Unknown keys are silently ignored.
+  /// The target file is created from the appropriate default template when it
+  /// does not yet exist.  Unknown keys are silently ignored.
   @override
-  Future<void> setValue(String key, dynamic value) async {
-    final projectFile = File(_projectConfigPath);
+  Future<void> setValue(String key, dynamic value, {bool global = false}) async {
+    final isTokenKey = key == 'github_token' || key == 'githubToken';
+    final writeToGlobal = global || isTokenKey;
+    final targetPath = writeToGlobal ? _globalConfigPath : _projectConfigPath;
+    final targetFile = File(targetPath);
 
-    if (!await projectFile.exists()) {
-      await projectFile.parent.create(recursive: true);
-      await projectFile.writeAsString(
-        ConfigDefaults.defaultConfig.toYamlString(isProject: true),
+    if (!await targetFile.exists()) {
+      await targetFile.parent.create(recursive: true);
+      await targetFile.writeAsString(
+        ConfigDefaults.defaultConfig.toYamlString(isProject: !writeToGlobal),
       );
     }
 
-    var content = await projectFile.readAsString();
+    var content = await targetFile.readAsString();
 
     // Uncomment the github_token line when it is still commented out.
-    if (key == 'github_token') {
+    if (isTokenKey) {
       content = _uncommentKey(content, 'github_token');
     }
 
     final editor = YamlEditor(content);
     try {
       editor.update(key.split('.'), value);
-      await projectFile.writeAsString(editor.toString());
+      await targetFile.writeAsString(editor.toString());
 
-      if (key == 'github_token') {
-        await _ensureSecurePermissions(projectFile);
+      if (isTokenKey) {
+        await _ensureSecurePermissions(targetFile);
       }
     } catch (e) {
       throw StateError('Failed to update config key "$key": $e');

@@ -25,7 +25,8 @@ void main() {
     test('creates cacheDir and aggregated sub-directory', () async {
       final dir = Directory.systemTemp.path;
       final newCache = JsonFileSystemCache(
-        cacheDir: '$dir/cura_init_test_${DateTime.now().microsecondsSinceEpoch}',
+        cacheDir:
+            '$dir/cura_init_test_${DateTime.now().microsecondsSinceEpoch}',
       );
       await newCache.initialize();
       expect(
@@ -113,8 +114,8 @@ void main() {
   group('delete', () {
     test('removes the entry', () async {
       final data = {'v': 1};
-      await cache.put(
-          'aggregated', 'to_delete', data, DateTime.now().add(const Duration(hours: 1)));
+      await cache.put('aggregated', 'to_delete', data,
+          DateTime.now().add(const Duration(hours: 1)));
       await cache.delete('aggregated', 'to_delete');
 
       expect(await cache.get('aggregated', 'to_delete'), isNull);
@@ -143,7 +144,8 @@ void main() {
       expect(await cache.get('aggregated', 'pkg_b'), isNull);
     });
 
-    test('clearAll is sequential — get after clearAll sees empty cache', () async {
+    test('clearAll is sequential — get after clearAll sees empty cache',
+        () async {
       final future = DateTime.now().add(const Duration(hours: 1));
       await cache.put('aggregated', 'x', {'v': 1}, future);
 
@@ -255,8 +257,8 @@ void main() {
       final future = DateTime.now().add(const Duration(hours: 1));
       await cache.put('aggregated', 'env_pkg', {'score': 42}, future);
 
-      final raw = await File('${tempDir.path}/aggregated/env_pkg.json')
-          .readAsString();
+      final raw =
+          await File('${tempDir.path}/aggregated/env_pkg.json').readAsString();
       final envelope = jsonDecode(raw) as Map<String, dynamic>;
 
       expect(envelope['schemaVersion'], 1);

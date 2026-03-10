@@ -41,7 +41,8 @@ PackageInfo _makePackageInfo({String name = 'dio', int popularity = 80}) {
   );
 }
 
-AggregatedPackageData _makeAggregated({String name = 'dio', int popularity = 80}) {
+AggregatedPackageData _makeAggregated(
+    {String name = 'dio', int popularity = 80}) {
   return AggregatedPackageData(
     packageInfo: _makePackageInfo(name: name, popularity: popularity),
     githubMetrics: null,
@@ -86,7 +87,8 @@ void main() {
     test('delegates to underlying aggregator on miss', () async {
       final data = _makeAggregated();
       when(() => mockDelegate.fetchAll('dio')).thenAnswer(
-        (_) async => PackageResult.success(data: data, fromCache: false, requestCount: 3),
+        (_) async => PackageResult.success(
+            data: data, fromCache: false, requestCount: 3),
       );
 
       final result = await aggregator.fetchAll('dio');
@@ -105,7 +107,8 @@ void main() {
       );
 
       await aggregator.fetchAll('dio'); // miss → populates cache
-      final result2 = await aggregator.fetchAll('dio'); // hit → no delegate call
+      final result2 =
+          await aggregator.fetchAll('dio'); // hit → no delegate call
 
       // Delegate called exactly once (first request only)
       verify(() => mockDelegate.fetchAll('dio')).called(1);
@@ -148,8 +151,8 @@ void main() {
     test('returns requestCount=0 on cache hit', () async {
       final data = _makeAggregated();
       when(() => mockDelegate.fetchAll('dio')).thenAnswer(
-        (_) async =>
-            PackageResult.success(data: data, fromCache: false, requestCount: 4),
+        (_) async => PackageResult.success(
+            data: data, fromCache: false, requestCount: 4),
       );
 
       await aggregator.fetchAll('dio');
@@ -215,9 +218,8 @@ void main() {
         );
       }
 
-      final results = await aggregator
-          .fetchMany(['pkg_a', 'pkg_b', 'pkg_c'])
-          .toList();
+      final results =
+          await aggregator.fetchMany(['pkg_a', 'pkg_b', 'pkg_c']).toList();
 
       expect(results.length, 3);
       final names = results
