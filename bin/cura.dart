@@ -26,6 +26,7 @@ import 'package:cura/src/presentation/presenters/view_presenter.dart';
 import 'package:cura/src/presentation/themes/theme_manager.dart';
 import 'package:cura/src/shared/app_info.dart';
 import 'package:cura/src/shared/constants/app_constants.dart';
+import 'package:cura/src/shared/constants/cache_constants.dart';
 import 'package:cura/src/shared/utils/http_helper.dart';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
@@ -98,24 +99,35 @@ Future<void> main(List<String> arguments) async {
 
   // JSON file cache — create the directory on first run, then evict stale entries.
   final cache = JsonFileSystemCache(
-    cacheDir: '${_homeDir()}/.cura/cache',
+    cacheDir: '${_homeDir()}/${CacheConstants.cacheSubDir}',
   );
-  await cache.initialize();
-  await cache.cleanupExpired();
+
+  final noCache = arguments.contains('--no-cache');
+  final cacheEnabled = config.enableCache && !noCache;
+
+  if (cacheEnabled) {
+    await cache.initialize();
+    await cache.cleanupExpired();
+  }
 
   // Update checker — reuses the same HTTP client; stays silent on any failure.
   final updateChecker = UpdateCheckerService(httpClient: httpClient);
 
-  // Decorator: CachedAggregator wraps MultiApiAggregator to add transparent caching.
-  final aggregator = CachedAggregator(
-    delegate: MultiApiAggregator(
-      pubDevClient: pubDevClient,
-      githubClient: githubClient,
-      osvClient: osvClient,
-      maxConcurrency: config.maxConcurrency,
-    ),
-    cache: cache,
+  // Decorator: CachedAggregator wraps MultiApiAggregator only when caching is
+  // enabled (config.enableCache == true and --no-cache flag is absent).
+  final baseAggregator = MultiApiAggregator(
+    pubDevClient: pubDevClient,
+    githubClient: githubClient,
+    osvClient: osvClient,
+    maxConcurrency: config.maxConcurrency,
   );
+  final PackageDataAggregator aggregator = cacheEnabled
+      ? CachedAggregator(
+          delegate: baseAggregator,
+          cache: cache,
+          cacheMaxAgeHours: config.cacheMaxAgeHours,
+        )
+      : baseAggregator;
 
   // ===========================================================================
   // PHASE 3 : DOMAIN LAYER (Use cases)

@@ -179,7 +179,7 @@ class JsonFileSystemCache {
 
       await for (final entity in root.list(recursive: true)) {
         if (entity is File && entity.path.endsWith(_jsonExt)) {
-          _fireAndForget(entity.delete());
+          await entity.delete();
         }
       }
     } catch (_) {}

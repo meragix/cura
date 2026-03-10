@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`--theme <name>` global flag**: Override the active theme for a single run (`dark` / `light` / `minimal`) without editing the config file.
 - **`ThemeManager.isValidTheme()`**: Returns whether a theme name is registered; used by validation points.
 - **`CuraTheme.styleInfo()` / `BaseCuraTheme.styleInfo()`**: Completes the style-helper set alongside `stylePrimary`, `styleSuccess`, `styleWarning`, `styleError`.
+- **`--no-cache` global flag**: Bypass the file cache for a single run without editing the config file (e.g. `cura check --no-cache`).
+- **Cache unit tests**: `TtlStrategy`, `JsonFileSystemCache`, and `CachedAggregator` are now covered by 38 unit tests.
 
 ### Fixed
 
@@ -23,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`config set theme xyz` caused a startup crash**: Writing an invalid theme name to the config file would throw an unhandled `ArgumentError` on the next run. `ConfigSetCommand` now validates the name before persisting.
 - **`mergeWith` silently discarded global theme**: When a project config did not declare `theme:`, `CuraConfig.fromYaml` defaulted it to `'dark'`, overriding a global `theme: light`. `theme` is now nullable in `CuraConfig`; `fromYaml` returns `null` for absent keys and `mergeWith` uses `other.theme ?? this.theme`.
 - **`MinimalTheme.isDark` was `true`**: A no-colour theme is not a dark theme. Corrected to `false`.
+- **`enable_cache: false` was ignored**: `CachedAggregator` was always instantiated regardless of `config.enableCache`. The startup now conditionally wraps `MultiApiAggregator` only when caching is enabled.
+- **`cache_max_age_hours` was ignored**: The configured TTL value was never passed to `TtlStrategy`. It is now forwarded as `defaultTtl` so the 70–89 popularity tier honours the user setting.
+- **`cache clear` confirmed before deleting**: `JsonFileSystemCache.clearAll()` used fire-and-forget deletions, returning before files were actually removed. Deletions are now awaited sequentially.
+- **Dead code in `TtlStrategy`**: `getPackageTtl()`, `getAlternativesTtl()`, and `getScoresTtl()` were never called. Removed.
+- **Dead constants in `CacheConstants`**: Six unused TTL/limit constants removed; the hardcoded cache path in the entry point replaced with `CacheConstants.cacheSubDir`.
 
 ## [0.10.0] - 2026-03-09
 

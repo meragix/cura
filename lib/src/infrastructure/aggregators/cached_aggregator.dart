@@ -40,12 +40,22 @@ class CachedAggregator implements PackageDataAggregator {
   final PackageDataAggregator _delegate;
   final JsonFileSystemCache _cache;
 
+  /// The default TTL in hours for the 70–89 popularity tier, sourced from
+  /// `CuraConfig.cacheMaxAgeHours`. Overrides the [TtlStrategy] built-in
+  /// default so the user-configured value actually takes effect.
+  final int _cacheMaxAgeHours;
+
   /// Creates a [CachedAggregator] that wraps [delegate] with [cache].
+  ///
+  /// [cacheMaxAgeHours] maps to `cache_max_age_hours` in the config file and
+  /// is forwarded to [TtlStrategy.getAggregatedTtl] as [defaultTtl].
   CachedAggregator({
     required PackageDataAggregator delegate,
     required JsonFileSystemCache cache,
+    int cacheMaxAgeHours = 12,
   })  : _delegate = delegate,
-        _cache = cache;
+        _cache = cache,
+        _cacheMaxAgeHours = cacheMaxAgeHours;
 
   // ---------------------------------------------------------------------------
   // PackageDataAggregator interface
@@ -125,6 +135,7 @@ class CachedAggregator implements PackageDataAggregator {
   ) async {
     final ttl = TtlStrategy.getAggregatedTtl(
       popularity: data.packageInfo.popularity,
+      defaultTtl: _cacheMaxAgeHours,
     );
     final expiresAt = DateTime.now().add(Duration(hours: ttl));
 
