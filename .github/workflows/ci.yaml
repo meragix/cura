@@ -47,7 +47,7 @@ jobs:
       #   run: dart run test
       
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: coverage/lcov.info
           fail_ci_if_error: fasle
